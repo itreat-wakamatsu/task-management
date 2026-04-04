@@ -26,16 +26,37 @@ export default function AnalyticsView() {
       setLoading(true)
       const since = new Date()
       since.setDate(since.getDate() - 30)
+      const sinceStr = since.toISOString().slice(0, 10)
 
-      const { data } = await supabase
+      // FK結合を使わず2ステップで取得（DB側にFK制約がなくても動作する）
+      const { data: recordRows } = await supabase
+        .from('app_records')
+        .select('id, target_date')
+        .eq('user_id', session.user.id)
+        .gte('target_date', sinceStr)
+
+      const recordIds = (recordRows || []).map(r => r.id)
+      const recordMap = Object.fromEntries((recordRows || []).map(r => [r.id, r]))
+
+      if (!recordIds.length) {
+        setRecords([])
+        setLoading(false)
+        return
+      }
+
+      const { data: details } = await supabase
         .from('app_record_details')
-        .select(`*, app_records!inner(user_id, target_date)`)
-        .eq('app_records.user_id', session.user.id)
-        .gte('app_records.target_date', since.toISOString().slice(0, 10))
+        .select('*')
+        .in('record_id', recordIds)
         .not('actual_end', 'is', null)
-        .order('app_records.target_date', { ascending: false })
 
-      setRecords(data || [])
+      // app_records の情報を各 detail に付加
+      const enriched = (details || []).map(r => ({
+        ...r,
+        app_records: recordMap[r.record_id] || null,
+      }))
+
+      setRecords(enriched)
       setLoading(false)
     }
     load()
