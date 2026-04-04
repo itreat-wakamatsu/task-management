@@ -1,8 +1,16 @@
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import styles from './LoginPage.module.css'
 
+const isDev = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development'
+
 export default function LoginPage() {
-  async function handleLogin() {
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [error,    setError]    = useState(null)
+  const [loading,  setLoading]  = useState(false)
+
+  async function handleGoogleLogin() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -12,16 +20,53 @@ export default function LoginPage() {
     })
   }
 
+  async function handleEmailLogin(e) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    if (err) setError(err.message)
+    setLoading(false)
+  }
+
   return (
     <div className={styles.wrap}>
       <div className={styles.card}>
         <div className={styles.logo}>⏱</div>
         <h1 className={styles.title}>タスクタイマー</h1>
         <p className={styles.sub}>Googleカレンダーと連携して、予定時間を守る習慣を作ります。</p>
-        <button className={styles.btn} onClick={handleLogin}>
+        <button className={styles.btn} onClick={handleGoogleLogin}>
           <GoogleIcon />
           Google アカウントでログイン
         </button>
+
+        {isDev && (
+          <div className={styles.devSection}>
+            <div className={styles.devLabel}>DEV MODE</div>
+            <form onSubmit={handleEmailLogin} className={styles.devForm}>
+              <input
+                className={styles.devInput}
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
+              <input
+                className={styles.devInput}
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
+              {error && <div className={styles.devError}>{error}</div>}
+              <button className={styles.devBtn} type="submit" disabled={loading}>
+                {loading ? 'ログイン中...' : 'メールでログイン'}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   )

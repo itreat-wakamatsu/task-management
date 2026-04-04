@@ -55,3 +55,57 @@
 .btn:hover {
   background: var(--color-bg-secondary);
 }
+
+.devSection {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 0.5px dashed var(--color-border-medium);
+}
+
+.devLabel {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #f59e0b;
+  margin-bottom: 0.75rem;
+}
+
+.devForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.devInput {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.devInput:focus { outline: none; border-color: #f59e0b; }
+
+.devError {
+  font-size: 0.75rem;
+  color: #e53e3e;
+  text-align: left;
+}
+
+.devBtn {
+  width: 100%;
+  padding: 7px;
+  border-radius: 8px;
+  border: 0.5px solid #f59e0b;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.devBtn:hover:not(:disabled) { background: #FDE68A; }
+.devBtn:disabled { opacity: 0.5; cursor: not-allowed; }
