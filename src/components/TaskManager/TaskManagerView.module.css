@@ -33,7 +33,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.75rem;
-  min-width: 600px;
+  min-width: 700px;
 }
 .table th {
   text-align: left;
@@ -47,9 +47,14 @@
 .table td { padding: 8px 9px; border-bottom: 0.5px solid var(--color-border); vertical-align: middle; }
 .table tr:last-child td { border-bottom: none; }
 
+.rowOverdue { background: #FFF5F5; }
+.rowOverdue:hover { background: #FFE8E8; }
+
 .tdId    { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--color-text-tertiary); }
 .tdTitle { font-weight: 600; }
 .tdSub   { font-size: 0.6875rem; color: var(--color-text-secondary); }
+.tdDate  { font-size: 0.6875rem; color: var(--color-text-secondary); font-family: var(--font-mono); white-space: nowrap; }
+.tdOverdue { color: #C53030; font-weight: 600; }
 
 .clientChip { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
 

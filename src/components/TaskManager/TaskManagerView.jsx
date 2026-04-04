@@ -2,24 +2,37 @@ import { useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import TaskEditModal from './TaskEditModal'
+import BacklogBadge  from '@/components/Backlog/BacklogBadge'
 import styles from './TaskManagerView.module.css'
 
 const STATUS_LABELS = ['未着手', '進行中', '完了']
 const STATUS_STYLES = ['statusPending', 'statusRunning', 'statusDone']
 
+function todayStr() {
+  const t = new Date()
+  return [t.getFullYear(), String(t.getMonth()+1).padStart(2,'0'), String(t.getDate()).padStart(2,'0')].join('-')
+}
+
+function fmtDate(d) {
+  if (!d) return '–'
+  return d.slice(0, 10).replace(/-/g, '/')
+}
+
 export default function TaskManagerView() {
   const { appTasks, setAppTasks, addAppTask, clients, projects, categories, session } = useStore()
   const [filterClient,    setFilterClient]    = useState('')
   const [filterStatus,    setFilterStatus]    = useState('')
-  const [filterRecurring, setFilterRecurring] = useState('')  // '' | 'true' | 'false'
+  const [filterRecurring, setFilterRecurring] = useState('')
   const [editTarget,      setEditTarget]      = useState(null)
   const [showNew,         setShowNew]         = useState(false)
 
+  const today = todayStr()
+
   const filtered = appTasks.filter(t => {
-    if (filterClient    && t.client_id !== parseInt(filterClient)) return false
-    if (filterStatus !== '' && t.status !== parseInt(filterStatus)) return false
-    if (filterRecurring === 'true'  && !t.is_recurring) return false
-    if (filterRecurring === 'false' &&  t.is_recurring) return false
+    if (filterClient    && t.client_id !== parseInt(filterClient))     return false
+    if (filterStatus !== '' && t.status !== parseInt(filterStatus))    return false
+    if (filterRecurring === 'true'  && !t.is_recurring)                return false
+    if (filterRecurring === 'false' &&  t.is_recurring)                return false
     return true
   })
 
@@ -47,7 +60,6 @@ export default function TaskManagerView() {
 
   return (
     <div>
-      {/* フィルターバー */}
       <div className={styles.filterBar}>
         <select value={filterClient} onChange={e => setFilterClient(e.target.value)}>
           <option value="">全クライアント</option>
@@ -67,7 +79,6 @@ export default function TaskManagerView() {
         <button className={styles.btnAdd} onClick={() => setShowNew(true)}>＋ 新規タスク</button>
       </div>
 
-      {/* テーブル */}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -79,20 +90,26 @@ export default function TaskManagerView() {
               <th>第一区分</th>
               <th>第二区分</th>
               <th>ステータス</th>
+              <th>開始日</th>
+              <th>期日</th>
               <th>フラグ</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(task => {
-              const cl = clients.find(c => c.id === task.client_id)
-              const pj = projects.find(p => p.id === task.project_id)
-              const c1 = categories.find(c => c.id === task.category_id)
-              const c2 = categories.find(c => c.id === task.subcategory_id)
+              const cl       = clients.find(c => c.id === task.client_id)
+              const pj       = projects.find(p => p.id === task.project_id)
+              const c1       = categories.find(c => c.id === task.category_id)
+              const c2       = categories.find(c => c.id === task.subcategory_id)
+              const isOverdue = task.due_date && task.due_date < today && task.status !== 2
               return (
-                <tr key={task.id}>
+                <tr key={task.id} className={isOverdue ? styles.rowOverdue : ''}>
                   <td className={styles.tdId}>{task.id}</td>
-                  <td className={styles.tdTitle}>{task.title}</td>
+                  <td className={styles.tdTitle}>
+                    {task.backlog_issue_key && <BacklogBadge size={14} />}
+                    {task.title}
+                  </td>
                   <td>
                     {cl && (
                       <span className={styles.clientChip} style={{ background: `${cl.color}18`, color: cl.color }}>
@@ -108,6 +125,10 @@ export default function TaskManagerView() {
                       {STATUS_LABELS[task.status]}
                     </span>
                   </td>
+                  <td className={styles.tdDate}>{fmtDate(task.start_date)}</td>
+                  <td className={`${styles.tdDate} ${isOverdue ? styles.tdOverdue : ''}`}>
+                    {fmtDate(task.due_date)}
+                  </td>
                   <td>
                     {task.is_recurring && <span className={styles.recBadge}>定期</span>}
                   </td>
@@ -119,7 +140,7 @@ export default function TaskManagerView() {
               )
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={9} className={styles.empty}>タスクがありません</td></tr>
+              <tr><td colSpan={11} className={styles.empty}>タスクがありません</td></tr>
             )}
           </tbody>
         </table>

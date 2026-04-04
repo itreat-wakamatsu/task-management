@@ -18,27 +18,38 @@ export const useStore = create((set, get) => ({
   setAppTasks:   (appTasks)   => set({ appTasks }),
 
   // ── Today ──
-  todayEvents:  [],  // カレンダーイベント + 実績を合わせた作業中リスト
+  todayEvents:   [],
   activeEventId: null,
   isPaused:      false,
   pausedAt:      null,
 
-  // 開発環境専用: 任意の日付で動作確認するための仮想日付（本番では null）
   devDate: import.meta.env.DEV ? new Date() : null,
 
   addAppTask: (task) => set(s => ({ appTasks: [task, ...s.appTasks] })),
 
-  setTodayEvents:  (evts)  => set({ todayEvents: evts }),
+  setTodayEvents:   (evts) => set({ todayEvents: evts }),
   setActiveEventId: (id)   => set({ activeEventId: id }),
-  setIsPaused:     (v)    => set({ isPaused: v }),
-  setPausedAt:     (d)    => set({ pausedAt: d }),
-  setDevDate:      (d)    => set({ devDate: d }),
+  setIsPaused:      (v)    => set({ isPaused: v }),
+  setPausedAt:      (d)    => set({ pausedAt: d }),
+  setDevDate:       (d)    => set({ devDate: d }),
 
-  /** イベントを1件更新 */
   updateEvent: (id, patch) =>
     set(s => ({
       todayEvents: s.todayEvents.map(e => e.id === id ? { ...e, ...patch } : e),
     })),
+
+  // ── Backlog ──
+  backlogToken: null,
+  setBacklogToken: (token) => set({ backlogToken: token }),
+
+  loadBacklogToken: async (userId) => {
+    const { data } = await supabase
+      .from('backlog_tokens')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+    set({ backlogToken: data ?? null })
+  },
 
   // ── Master data loaders ──
   loadMasters: async () => {
@@ -68,7 +79,6 @@ export const useStore = create((set, get) => ({
     set({ appTasks: data || [] })
   },
 
-  /** タスクの usage_count をインクリメント（紐付け確定時） */
   incrementUsage: async (taskId) => {
     await supabase.rpc('increment', { table: 'app_tasks', id: taskId, column: 'usage_count' })
     set(s => ({

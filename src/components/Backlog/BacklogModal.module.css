@@ -1,0 +1,130 @@
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 1rem;
+}
+.box {
+  background: var(--color-bg-primary);
+  border-radius: 14px;
+  border: 0.5px solid var(--color-border);
+  padding: 1.5rem;
+  width: 100%; max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+
+/* --- 設定画面 --- */
+.connectedCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #F0FAE8;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 0.5px solid #C3E59D;
+}
+.connectedDot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #4DAE00; flex-shrink: 0;
+}
+.connectedText { flex: 1; font-size: 0.8125rem; color: #275400; }
+.btnDisconnect {
+  font-size: 0.75rem; padding: 3px 10px; border-radius: 6px;
+  border: 0.5px solid #A32D2D; background: none;
+  color: #A32D2D; cursor: pointer; font-family: inherit;
+}
+
+.field { margin-bottom: 1rem; }
+.label { font-size: 0.6875rem; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
+.input {
+  width: 100%;
+  font-size: 0.875rem;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.input:focus { outline: none; border-color: #378ADD; }
+.hint {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.hint code { font-family: var(--font-mono); font-size: 0.6875rem; }
+
+/* --- インポート画面 --- */
+.importHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.importCount { font-size: 0.8125rem; color: var(--color-text-secondary); }
+.btnToggleAll {
+  font-size: 0.75rem; padding: 3px 10px; border-radius: 6px;
+  border: 0.5px solid var(--color-border-medium); background: none;
+  color: var(--color-text-secondary); cursor: pointer; font-family: inherit;
+}
+
+.issueList {
+  border: 0.5px solid var(--color-border);
+  border-radius: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+.issueRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--color-border);
+}
+.issueRow:last-child { border-bottom: none; }
+.issueRow:hover { background: var(--color-bg-secondary); }
+.issueRow input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+
+.issueBody { flex: 1; min-width: 0; }
+.issueKey { font-size: 0.6875rem; font-family: var(--font-mono); color: #4DAE00; margin-bottom: 2px; }
+.issueSummary { font-size: 0.8125rem; font-weight: 500; }
+.issueDates {
+  display: flex; gap: 12px; margin-top: 3px;
+  font-size: 0.6875rem; color: var(--color-text-tertiary);
+}
+
+.empty { padding: 1.5rem; text-align: center; font-size: 0.8125rem; color: var(--color-text-tertiary); }
+
+.error {
+  font-size: 0.8125rem;
+  color: #e53e3e;
+  background: #FFF5F5;
+  border: 0.5px solid #FEB2B2;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 0.75rem;
+}
+
+.footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 0.75rem; }
+.btnCancel {
+  font-size: 0.875rem; padding: 8px 14px; border-radius: 8px;
+  border: 0.5px solid var(--color-border-medium); background: none;
+  color: var(--color-text-secondary); cursor: pointer; font-family: inherit;
+}
+.btnPrimary {
+  font-size: 0.875rem; padding: 8px 18px; border-radius: 8px;
+  border: 0.5px solid #4DAE00; background: #F0FAE8;
+  color: #275400; cursor: pointer; font-family: inherit; font-weight: 600;
+}
+.btnPrimary:hover:not(:disabled) { background: #D6F3B8; }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }

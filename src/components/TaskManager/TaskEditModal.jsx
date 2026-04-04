@@ -3,14 +3,18 @@ import { useStore } from '@/store/useStore'
 import SearchableSelect from '@/components/shared/SearchableSelect'
 import styles from './TaskEditModal.module.css'
 
+const STATUS_LABELS = ['未着手', '進行中', '完了']
+
 /**
  * @param {object|null} task          - 編集対象タスク（null なら新規作成）
- * @param {object}      initialValues - 新規作成時の初期値（LinkModal からの引き継ぎ等）
+ * @param {object}      initialValues - 新規作成時の初期値
  * @param {Function}    onSave        - (patch) => void
  * @param {Function}    onClose       - () => void
  */
 export default function TaskEditModal({ task, initialValues = {}, onSave, onClose }) {
   const { clients, projects, categories } = useStore()
+
+  const isBacklog = !!task?.backlog_issue_key
 
   const [form, setForm] = useState({
     title:          task?.title          ?? initialValues.title          ?? '',
@@ -20,6 +24,8 @@ export default function TaskEditModal({ task, initialValues = {}, onSave, onClos
     category_id:    String(task?.category_id    ?? initialValues.category_id    ?? ''),
     subcategory_id: String(task?.subcategory_id ?? initialValues.subcategory_id ?? ''),
     is_recurring:   task?.is_recurring   ?? initialValues.is_recurring   ?? false,
+    start_date:     task?.start_date     ?? initialValues.start_date     ?? '',
+    due_date:       task?.due_date       ?? initialValues.due_date       ?? '',
   })
 
   const filteredProjects = projects.filter(p => p.client_id === parseInt(form.client_id))
@@ -51,32 +57,45 @@ export default function TaskEditModal({ task, initialValues = {}, onSave, onClos
       category_id:    form.category_id    ? parseInt(form.category_id)    : null,
       subcategory_id: form.subcategory_id ? parseInt(form.subcategory_id) : null,
       is_recurring:   form.is_recurring,
+      start_date:     form.start_date || null,
+      due_date:       form.due_date   || null,
     })
   }
 
   return (
     <div className={styles.backdrop} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.box}>
-        <div className={styles.title}>{task ? 'タスク編集' : '新規タスク作成'}</div>
-        {task && <div className={styles.sub}>ID: {task.id}</div>}
+        <div className={styles.titleRow}>
+          <span className={styles.title}>{task ? 'タスク編集' : '新規タスク作成'}</span>
+          {isBacklog && <span className={styles.backlogTag}>Backlog</span>}
+        </div>
+        {task && <div className={styles.sub}>ID: {task.id}{task.backlog_issue_key && ` / ${task.backlog_issue_key}`}</div>}
 
         <div className={styles.field}>
-          <label className={styles.label}>タスク名 *</label>
-          <input
-            className={styles.input}
-            value={form.title}
-            onChange={e => set('title', e.target.value)}
-            placeholder="タスク名を入力"
-          />
+          <label className={styles.label}>タスク名 *{isBacklog && <span className={styles.locked}>編集不可</span>}</label>
+          {isBacklog ? (
+            <div className={styles.readonlyField}>{form.title}</div>
+          ) : (
+            <input
+              className={styles.input}
+              value={form.title}
+              onChange={e => set('title', e.target.value)}
+              placeholder="タスク名を入力"
+            />
+          )}
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>ステータス</label>
-          <select className={styles.select} value={form.status} onChange={e => set('status', e.target.value)}>
-            <option value={0}>未着手</option>
-            <option value={1}>進行中</option>
-            <option value={2}>完了</option>
-          </select>
+          <label className={styles.label}>ステータス{isBacklog && <span className={styles.locked}>編集不可</span>}</label>
+          {isBacklog ? (
+            <div className={styles.readonlyField}>{STATUS_LABELS[form.status]}</div>
+          ) : (
+            <select className={styles.select} value={form.status} onChange={e => set('status', e.target.value)}>
+              <option value={0}>未着手</option>
+              <option value={1}>進行中</option>
+              <option value={2}>完了</option>
+            </select>
+          )}
         </div>
 
         <div className={styles.field}>
@@ -119,6 +138,27 @@ export default function TaskEditModal({ task, initialValues = {}, onSave, onClos
               onChange={v => set('subcategory_id', v)}
               placeholder="第二区分を選択"
               disabled={!form.category_id}
+            />
+          </div>
+        </div>
+
+        <div className={styles.dateRow}>
+          <div className={styles.field}>
+            <label className={styles.label}>開始日</label>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={form.start_date ?? ''}
+              onChange={e => set('start_date', e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>期日</label>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={form.due_date ?? ''}
+              onChange={e => set('due_date', e.target.value)}
             />
           </div>
         </div>

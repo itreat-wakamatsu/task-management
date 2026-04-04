@@ -14,8 +14,18 @@
   max-height: 90vh;
   overflow-y: auto;
 }
-.title { font-size: 1rem; font-weight: 600; margin-bottom: 3px; }
-.sub   { font-size: 0.75rem; color: var(--color-text-tertiary); font-family: var(--font-mono); margin-bottom: 1rem; }
+.titleRow  { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.title     { font-size: 1rem; font-weight: 600; }
+.sub       { font-size: 0.75rem; color: var(--color-text-tertiary); font-family: var(--font-mono); margin-bottom: 1rem; }
+
+.backlogTag {
+  font-size: 0.5625rem; font-weight: 700; padding: 1px 6px;
+  border-radius: 3px; background: #4DAE00; color: #fff;
+}
+.locked {
+  font-size: 0.5625rem; color: #4DAE00; margin-left: 5px;
+  font-weight: 400;
+}
 
 .field { margin-bottom: 0.75rem; }
 .label { font-size: 0.6875rem; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
@@ -28,11 +38,36 @@
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: inherit;
+  box-sizing: border-box;
 }
 .input:focus, .select:focus { outline: none; border-color: #378ADD; }
 .select:disabled { opacity: 0.5; }
 
-.catRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.readonlyField {
+  font-size: 0.875rem;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  min-height: 36px;
+}
+
+.catRow  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dateRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.dateInput {
+  width: 100%;
+  font-size: 0.875rem;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.dateInput:focus { outline: none; border-color: #378ADD; }
 
 .checkRow {
   display: flex; align-items: center; gap: 7px;
@@ -52,3 +87,4 @@
   color: #633806; cursor: pointer; font-family: inherit; font-weight: 600;
 }
 .btnSave:hover { background: #FAC775; }
+.btnSave:disabled { opacity: 0.5; cursor: not-allowed; }
