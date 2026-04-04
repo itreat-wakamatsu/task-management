@@ -1,0 +1,88 @@
+.wrap { margin-bottom: 1rem; }
+
+.row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.btnPause {
+  flex: 2;
+  padding: 11px;
+  border-radius: 12px;
+  border: 0.5px solid #378ADD;
+  background: #E6F1FB;
+  color: #185FA5;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btnPause:hover  { background: #B5D4F4; }
+.btnPause.pausing { background: #185FA5; color: #fff; border-color: #0C447C; }
+.btnPause.pausing:hover { background: #0C447C; }
+
+.btnEnd {
+  flex: 1;
+  padding: 11px;
+  border-radius: 12px;
+  border: 0.5px solid #E24B4A;
+  background: #FCEBEB;
+  color: #791F1F;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btnEnd:hover { background: #F7C1C1; }
+
+.btnReset {
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 0.5px solid var(--color-border-medium);
+  background: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btnReset:hover { background: var(--color-bg-secondary); }
+
+.adjToggleRow { text-align: right; margin-bottom: 4px; }
+.adjToggle {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 0.5px solid var(--color-border-medium);
+  background: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.adjToggle:hover { background: var(--color-bg-secondary); }
+
+.adjBox {
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 0.5px solid var(--color-border);
+  margin-bottom: 0.5rem;
+}
+.adjHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.adjLabel { font-size: 0.6875rem; color: var(--color-text-secondary); }
+.adjVal   { font-size: 0.8125rem; font-weight: 600; font-family: var(--font-mono); }
+
+.slider {
+  width: 100%;
+  accent-color: #EF9F27;
+  margin-bottom: 4px;
+}
+
+.adjHint { font-size: 0.625rem; color: var(--color-text-tertiary); line-height: 1.5; }

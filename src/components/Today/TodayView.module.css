@@ -1,0 +1,12 @@
+/* TodayView.module.css */
+.loading { text-align: center; padding: 3rem; color: var(--color-text-secondary); }
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.listLabel { font-size: 0.6875rem; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.06em; text-transform: uppercase; }
+.listCount { font-size: 0.6875rem; color: var(--color-text-tertiary); }
+.list { display: flex; flex-direction: column; gap: 6px; }
+.empty { text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 0.875rem; }

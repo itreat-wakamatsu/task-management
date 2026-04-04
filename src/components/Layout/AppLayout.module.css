@@ -1,0 +1,71 @@
+.shell {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 1rem 0 0.75rem;
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dateStr {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.appName {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.signOut {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.signOut:hover { background: var(--color-bg-secondary); }
+
+.tabs {
+  display: flex;
+  border-bottom: 0.5px solid var(--color-border);
+  margin-bottom: 1.25rem;
+}
+
+.tab {
+  padding: 9px 18px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -0.5px;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+.tab:hover { color: var(--color-text-primary); }
+.tab.active {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.main {
+  min-height: 400px;
+}

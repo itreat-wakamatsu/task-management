@@ -1,0 +1,27 @@
+.card {
+  background: var(--color-bg-primary);
+  border-radius: 12px;
+  border: 0.5px solid var(--color-border);
+  padding: 12px 14px;
+}
+.over { border-left: 3px solid #E24B4A; }
+.warn { border-left: 3px solid #EF9F27; }
+.ok   { border-left: 3px solid #639922; }
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+.title  { font-size: 0.8125rem; font-weight: 600; flex: 1; line-height: 1.35; }
+.eff    { font-size: 1rem; font-weight: 600; font-family: var(--font-mono); flex-shrink: 0; }
+.effR { color: #A32D2D; }
+.effA { color: #854F0B; }
+.effG { color: #3B6D11; }
+
+.chips    { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
+.chip     { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+.sessions { font-size: 0.5625rem; color: var(--color-text-tertiary); font-family: var(--font-mono); background: var(--color-bg-secondary); padding: 1px 4px; border-radius: 3px; }
+
+.barWrap    { height: 5px; background: var(--color-bg-secondary); border-radius: 3px; overflow: hidden; margin-bottom: 6px; position: relative; }
+.barPlan    { position: absolute; top: 0; left: 0; height: 100%; background: var(--color-border-medium); border-radius: 3px; }
+.barActual  { position: absolute; top: 0; left: 0; height: 100%; border-radius: 3px; opacity: 0.85; }
+
+.nums  { display: flex; justify-content: space-between; font-size: 0.6875rem; color: var(--color-text-tertiary); font-family: var(--font-mono); }
+.diff  { font-weight: 600; }

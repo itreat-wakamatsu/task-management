@@ -1,0 +1,97 @@
+.box {
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  border: 0.5px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  transition: background 0.3s, border-color 0.3s;
+}
+.run   { background: #FFFDF5; border-color: #EF9F27; }
+.over  { background: #FFF5F5; border-color: #E24B4A; }
+.pause { background: #EEF4FF; border-color: #378ADD; }
+
+.empty {
+  text-align: center;
+  padding: 2.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  border-radius: 12px;
+  border: 0.5px dashed var(--color-border-medium);
+  margin-bottom: 0.75rem;
+}
+
+.clientRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+}
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.projectName { color: var(--color-text-tertiary); }
+
+.taskName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  color: var(--color-text-primary);
+}
+
+.countdown {
+  font-family: var(--font-mono);
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -2px;
+  margin-bottom: 3px;
+}
+.cd_run   { color: #BA7517; }
+.cd_over  { color: #A32D2D; animation: blink 1.4s ease-in-out infinite; }
+.cd_pause { color: #185FA5; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+.label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.6rem;
+}
+.lbl_run   { color: var(--color-text-tertiary); }
+.lbl_over  { color: #A32D2D; font-weight: 600; }
+.lbl_pause { color: #185FA5; font-weight: 600; }
+
+.progressWrap {
+  height: 3px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.6rem;
+}
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s linear;
+}
+.pf_run   { background: #EF9F27; }
+.pf_over  { background: #E24B4A; }
+.pf_pause { background: #378ADD; }
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.adjustedMark { color: #BA7517; }
