@@ -14,7 +14,7 @@ const TABS = [
   { id: 'analytics', label: '集計・履歴' },
 ]
 
-const isDev = import.meta.env.DEV
+const isDev = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development'
 
 export default function AppLayout() {
   const [activeTab,      setActiveTab]      = useState('today')

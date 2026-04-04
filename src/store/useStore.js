@@ -23,7 +23,7 @@ export const useStore = create((set, get) => ({
   isPaused:      false,
   pausedAt:      null,
 
-  devDate: import.meta.env.DEV ? new Date() : null,
+  devDate: (import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development') ? new Date() : null,
 
   addAppTask: (task) => set(s => ({ appTasks: [task, ...s.appTasks] })),
 
