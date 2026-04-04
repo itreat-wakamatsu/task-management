@@ -18,6 +18,9 @@ export default function TimerHero({ event }) {
     return () => clearInterval(id)
   }, [activeEventId])
 
+  const client  = useStore(s => s.clients.find(c => c.id === event?.task?.client_id))
+  const project = useStore(s => s.projects.find(p => p.id === event?.task?.project_id))
+
   if (!event) {
     return (
       <div className={styles.empty}>
@@ -35,9 +38,6 @@ export default function TimerHero({ event }) {
   const isAdjusted = event.overrideElapsedMs != null
 
   const state = isPaused ? 'pause' : isOvertime ? 'over' : 'run'
-
-  const client = useStore(s => s.clients.find(c => c.id === event.task?.client_id))
-  const project = useStore(s => s.projects.find(p => p.id === event.task?.project_id))
 
   return (
     <div className={`${styles.box} ${styles[state]}`}>
