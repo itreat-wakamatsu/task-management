@@ -24,16 +24,16 @@
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  background: #F0FAE8;
+  background: var(--color-connected-bg);
   border-radius: 8px;
   margin-bottom: 1rem;
-  border: 0.5px solid #C3E59D;
+  border: 0.5px solid var(--color-connected-border);
 }
 .connectedDot {
   width: 8px; height: 8px; border-radius: 50%;
   background: #4DAE00; flex-shrink: 0;
 }
-.connectedText { flex: 1; font-size: 0.8125rem; color: #275400; }
+.connectedText { flex: 1; font-size: 0.8125rem; color: var(--color-connected-text); }
 .btnDisconnect {
   font-size: 0.75rem; padding: 3px 10px; border-radius: 6px;
   border: 0.5px solid #A32D2D; background: none;
@@ -107,9 +107,9 @@
 
 .error {
   font-size: 0.8125rem;
-  color: #e53e3e;
-  background: #FFF5F5;
-  border: 0.5px solid #FEB2B2;
+  color: var(--color-error-text);
+  background: var(--color-error-bg);
+  border: 0.5px solid var(--color-error-border);
   border-radius: 6px;
   padding: 8px 12px;
   margin-bottom: 0.75rem;
@@ -123,8 +123,8 @@
 }
 .btnPrimary {
   font-size: 0.875rem; padding: 8px 18px; border-radius: 8px;
-  border: 0.5px solid #4DAE00; background: #F0FAE8;
-  color: #275400; cursor: pointer; font-family: inherit; font-weight: 600;
+  border: 0.5px solid var(--color-connected-border); background: var(--color-connected-bg);
+  color: var(--color-connected-text); cursor: pointer; font-family: inherit; font-weight: 600;
 }
-.btnPrimary:hover:not(:disabled) { background: #D6F3B8; }
+.btnPrimary:hover:not(:disabled) { background: var(--color-green-bg); }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }

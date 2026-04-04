@@ -11,9 +11,9 @@
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
 .title  { font-size: 0.8125rem; font-weight: 600; flex: 1; line-height: 1.35; }
 .eff    { font-size: 1rem; font-weight: 600; font-family: var(--font-mono); flex-shrink: 0; }
-.effR { color: #A32D2D; }
-.effA { color: #854F0B; }
-.effG { color: #3B6D11; }
+.effR { color: var(--color-danger-text); }
+.effA { color: var(--color-warning-text); }
+.effG { color: var(--color-success-text); }
 
 .chips    { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
 .chip     { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }

@@ -74,7 +74,7 @@
 }
 .option:last-child { border-bottom: none; }
 .option:hover      { background: var(--color-bg-secondary); }
-.option.selected   { background: #FFFDF5; border-left: 2px solid #EF9F27; }
+.option.selected   { background: var(--color-selected-bg); border-left: 2px solid var(--color-amber-border); }
 
 .optId {
   font-size: 0.625rem;
@@ -102,13 +102,13 @@
   font-size: 0.625rem;
   padding: 1px 4px;
   border-radius: 3px;
-  background: #E1F5EE;
-  color: #085041;
+  background: var(--color-teal-bg);
+  color: var(--color-teal-text);
 }
 
 .score { font-size: 0.625rem; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
-.scoreHi  { background: #EAF3DE; color: #27500A; }
-.scoreMid { background: #FAEEDA; color: #633806; }
+.scoreHi  { background: var(--color-green-bg); color: var(--color-green-text); }
+.scoreMid { background: var(--color-amber-bg); color: var(--color-amber-text); }
 .scoreLow { background: var(--color-bg-secondary); color: var(--color-text-tertiary); }
 
 .empty { padding: 2rem; text-align: center; color: var(--color-text-tertiary); font-size: 0.8125rem; }
@@ -131,21 +131,21 @@
   font-family: inherit;
 }
 .btnNew:hover, .btnCancel:hover { background: var(--color-bg-secondary); }
-.btnUnlink { color: #A32D2D; border-color: #F09595; }
-.btnUnlink:hover { background: #FCEBEB; }
+.btnUnlink { color: var(--color-danger-text); border-color: var(--color-red-bg-hover); }
+.btnUnlink:hover { background: var(--color-red-bg); }
 
 .btnConfirm {
   font-size: 0.8125rem;
   padding: 7px 16px;
   border-radius: 8px;
-  border: 0.5px solid #EF9F27;
-  background: #FAEEDA;
-  color: #633806;
+  border: 0.5px solid var(--color-amber-border);
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;
   margin-left: auto;
   transition: background 0.15s;
 }
-.btnConfirm:hover:not(:disabled) { background: #FAC775; }
+.btnConfirm:hover:not(:disabled) { background: var(--color-amber-bg-hover); }
 .btnConfirm:disabled { opacity: 0.4; cursor: not-allowed; background: var(--color-bg-secondary); border-color: var(--color-border); color: var(--color-text-tertiary); }

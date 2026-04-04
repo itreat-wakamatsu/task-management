@@ -50,10 +50,10 @@
 .statCard  { background: var(--color-bg-secondary); border-radius: 8px; padding: 12px; text-align: center; }
 .statLabel { font-size: 0.6875rem; color: var(--color-text-secondary); margin-bottom: 4px; }
 .statVal   { font-size: 1.25rem; font-weight: 600; font-family: var(--font-mono); }
-.b { color: #185FA5; }
-.g { color: #3B6D11; }
-.r { color: #A32D2D; }
-.a { color: #854F0B; }
+.b { color: var(--color-info-text); }
+.g { color: var(--color-success-text); }
+.r { color: var(--color-danger-text); }
+.a { color: var(--color-warning-text); }
 
 .cardGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 540px) { .cardGrid { grid-template-columns: 1fr; } }

@@ -41,10 +41,10 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
-.badgeDone    { background: #EAF3DE; color: #27500A; }
-.badgeRun     { background: #FAEEDA; color: #633806; }
+.badgeDone    { background: var(--color-green-bg); color: var(--color-green-text); }
+.badgeRun     { background: var(--color-amber-bg); color: var(--color-amber-text); }
 .badgePending { background: var(--color-bg-secondary); color: var(--color-text-tertiary); }
-.badgePause   { background: #E6F1FB; color: #0C447C; }
+.badgePause   { background: var(--color-blue-bg);  color: var(--color-blue-text); }
 
 .row2 {
   display: flex;
@@ -76,19 +76,19 @@
 
 .chipUnlinked {
   font-size: 0.625rem;
-  background: #FAEEDA;
-  color: #854F0B;
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
   border: none;
   padding: 1px 6px;
   border-radius: 3px;
   cursor: pointer;
 }
-.chipUnlinked:hover { background: #FAC775; }
+.chipUnlinked:hover { background: var(--color-amber-bg-hover); }
 
 .autoTag {
   font-size: 0.5625rem;
-  background: #E1F5EE;
-  color: #085041;
+  background: var(--color-teal-bg);
+  color: var(--color-teal-text);
   padding: 0 3px;
   border-radius: 2px;
 }
@@ -110,13 +110,13 @@
   font-size: 0.6875rem;
   padding: 4px 10px;
   border-radius: 6px;
-  border: 0.5px solid #EF9F27;
-  background: #FAEEDA;
-  color: #633806;
+  border: 0.5px solid var(--color-amber-border);
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
   cursor: pointer;
   font-family: inherit;
 }
-.btnStart:hover { background: #FAC775; }
+.btnStart:hover { background: var(--color-amber-bg-hover); }
 
 .btnUndo {
   font-size: 0.6875rem;

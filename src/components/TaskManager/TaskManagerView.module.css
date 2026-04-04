@@ -19,14 +19,14 @@
   font-size: 0.75rem;
   padding: 5px 12px;
   border-radius: 7px;
-  border: 0.5px solid #EF9F27;
-  background: #FAEEDA;
-  color: #633806;
+  border: 0.5px solid var(--color-amber-border);
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
   cursor: pointer;
   margin-left: auto;
   font-family: inherit;
 }
-.btnAdd:hover { background: #FAC775; }
+.btnAdd:hover { background: var(--color-amber-bg-hover); }
 
 .tableWrap { overflow-x: auto; }
 .table {
@@ -47,8 +47,8 @@
 .table td { padding: 8px 9px; border-bottom: 0.5px solid var(--color-border); vertical-align: middle; }
 .table tr:last-child td { border-bottom: none; }
 
-.rowOverdue { background: #FFF5F5; }
-.rowOverdue:hover { background: #FFE8E8; }
+.rowOverdue { background: var(--color-red-bg); }
+.rowOverdue:hover { background: var(--color-red-bg-hover); }
 
 .tdId    { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--color-text-tertiary); }
 .tdTitle { font-weight: 600; }
@@ -60,10 +60,10 @@
 
 .status { font-size: 0.625rem; padding: 2px 6px; border-radius: 3px; }
 .statusPending { background: var(--color-bg-secondary); color: var(--color-text-secondary); }
-.statusRunning { background: #FAEEDA; color: #633806; }
-.statusDone    { background: #EAF3DE; color: #27500A; }
+.statusRunning { background: var(--color-amber-bg); color: var(--color-amber-text); }
+.statusDone    { background: var(--color-green-bg);  color: var(--color-green-text); }
 
-.recBadge { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; background: #E1F5EE; color: #085041; }
+.recBadge { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; background: var(--color-teal-bg); color: var(--color-teal-text); }
 
 .tdActions { display: flex; gap: 4px; }
 .btnEdit { font-size: 0.6875rem; background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 2px 5px; font-family: inherit; }
