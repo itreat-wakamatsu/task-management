@@ -10,9 +10,25 @@
 -- 再実行時は末尾の CLEANUP セクションを先に実行してください
 -- ============================================================
 
+-- DB が古いスキーマの場合に備えて不足カラムを補完
+ALTER TABLE clients            ADD COLUMN IF NOT EXISTS color          varchar(7)   NOT NULL DEFAULT '#378ADD';
+ALTER TABLE clients            ADD COLUMN IF NOT EXISTS display_name   varchar(255) NOT NULL DEFAULT '';
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS subcategory_id bigint REFERENCES project_categories(id);
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS is_recurring   boolean      NOT NULL DEFAULT false;
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS usage_count    int          NOT NULL DEFAULT 0;
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS updated_at     timestamptz  DEFAULT now();
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS deleted_at     timestamptz;
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS start_date     date;
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS due_date       date;
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS backlog_issue_id  bigint;
+ALTER TABLE app_tasks          ADD COLUMN IF NOT EXISTS backlog_issue_key varchar(50);
+ALTER TABLE app_record_details ADD COLUMN IF NOT EXISTS override_elapsed_ms int;
+ALTER TABLE app_record_details ADD COLUMN IF NOT EXISTS memo           text;
+ALTER TABLE app_record_details ADD COLUMN IF NOT EXISTS row_no         int NOT NULL DEFAULT 0;
+
 DO $$
 DECLARE
-  v_user_id uuid := 'REPLACE_WITH_DEMO_USER_ID';  -- ← ここを書き換える
+  v_user_id uuid := '03848b61-0166-433c-8993-2ca0eb98f9f0';  -- ← ここを書き換える
 
   -- クライアント
   v_cl_a  bigint; v_cl_b  bigint; v_cl_c  bigint;
