@@ -8,20 +8,23 @@ const STATUS_LABELS = ['未着手', '進行中', '完了']
 const STATUS_STYLES = ['statusPending', 'statusRunning', 'statusDone']
 
 export default function TaskManagerView() {
-  const { appTasks, setAppTasks, clients, projects, categories, session } = useStore()
-  const [filterClient, setFilterClient] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
-  const [editTarget,   setEditTarget]   = useState(null)
-  const [showNew,      setShowNew]      = useState(false)
+  const { appTasks, setAppTasks, addAppTask, clients, projects, categories, session } = useStore()
+  const [filterClient,    setFilterClient]    = useState('')
+  const [filterStatus,    setFilterStatus]    = useState('')
+  const [filterRecurring, setFilterRecurring] = useState('')  // '' | 'true' | 'false'
+  const [editTarget,      setEditTarget]      = useState(null)
+  const [showNew,         setShowNew]         = useState(false)
 
   const filtered = appTasks.filter(t => {
-    if (filterClient && t.client_id !== parseInt(filterClient)) return false
+    if (filterClient    && t.client_id !== parseInt(filterClient)) return false
     if (filterStatus !== '' && t.status !== parseInt(filterStatus)) return false
+    if (filterRecurring === 'true'  && !t.is_recurring) return false
+    if (filterRecurring === 'false' &&  t.is_recurring) return false
     return true
   })
 
   async function handleSave(id, patch) {
-    await supabase.from('app_tasks').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id)
+    await supabase.from('app_tasks').update(patch).eq('id', id)
     setAppTasks(appTasks.map(t => t.id === id ? { ...t, ...patch } : t))
     setEditTarget(null)
   }
@@ -32,7 +35,7 @@ export default function TaskManagerView() {
       .insert({ ...data, user_id: session.user.id })
       .select()
       .single()
-    if (created) setAppTasks([...appTasks, created])
+    if (created) addAppTask(created)
     setShowNew(false)
   }
 
@@ -56,6 +59,11 @@ export default function TaskManagerView() {
           <option value="1">進行中</option>
           <option value="2">完了</option>
         </select>
+        <select value={filterRecurring} onChange={e => setFilterRecurring(e.target.value)}>
+          <option value="">定期・非定期すべて</option>
+          <option value="true">定期のみ</option>
+          <option value="false">非定期のみ</option>
+        </select>
         <button className={styles.btnAdd} onClick={() => setShowNew(true)}>＋ 新規タスク</button>
       </div>
 
@@ -69,6 +77,7 @@ export default function TaskManagerView() {
               <th>クライアント</th>
               <th>案件</th>
               <th>第一区分</th>
+              <th>第二区分</th>
               <th>ステータス</th>
               <th>フラグ</th>
               <th></th>
@@ -76,9 +85,10 @@ export default function TaskManagerView() {
           </thead>
           <tbody>
             {filtered.map(task => {
-              const cl  = clients.find(c => c.id === task.client_id)
-              const pj  = projects.find(p => p.id === task.project_id)
-              const c1  = categories.find(c => c.id === task.category_id)
+              const cl = clients.find(c => c.id === task.client_id)
+              const pj = projects.find(p => p.id === task.project_id)
+              const c1 = categories.find(c => c.id === task.category_id)
+              const c2 = categories.find(c => c.id === task.subcategory_id)
               return (
                 <tr key={task.id}>
                   <td className={styles.tdId}>{task.id}</td>
@@ -92,6 +102,7 @@ export default function TaskManagerView() {
                   </td>
                   <td className={styles.tdSub}>{pj?.name || '–'}</td>
                   <td className={styles.tdSub}>{c1?.name || '–'}</td>
+                  <td className={styles.tdSub}>{c2?.name || '–'}</td>
                   <td>
                     <span className={`${styles.status} ${styles[STATUS_STYLES[task.status]]}`}>
                       {STATUS_LABELS[task.status]}
@@ -108,13 +119,12 @@ export default function TaskManagerView() {
               )
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={8} className={styles.empty}>タスクがありません</td></tr>
+              <tr><td colSpan={9} className={styles.empty}>タスクがありません</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* 編集モーダル */}
       {editTarget && (
         <TaskEditModal
           task={editTarget}

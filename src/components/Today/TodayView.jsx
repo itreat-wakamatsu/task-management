@@ -13,16 +13,20 @@ export default function TodayView() {
   const {
     session, todayEvents, setTodayEvents, activeEventId, setActiveEventId,
     isPaused, setIsPaused, setPausedAt, pausedAt, appTasks, updateEvent,
+    devDate,
   } = useStore()
+
+  // 開発環境では devDate、本番では当日
+  const targetDate = devDate ?? new Date()
 
   const [loading,     setLoading]     = useState(true)
   const [linkTarget,  setLinkTarget]  = useState(null)  // LinkModal 用
   const [todayRecord, setTodayRecord] = useState(null)  // app_records の行
 
-  // ── データ読み込み ──
+  // ── データ読み込み（devDate が変わったら再フェッチ） ──
   useEffect(() => {
     loadToday()
-  }, [])
+  }, [devDate?.toDateString()])
 
   async function loadToday() {
     setLoading(true)
@@ -31,10 +35,10 @@ export default function TodayView() {
       if (!token) throw new Error('Google アクセストークンがありません')
 
       // 1. Google Calendar から今日の予定を取得
-      const calEvents = await fetchTodayEvents(token)
+      const calEvents = await fetchTodayEvents(token, targetDate)
 
       // 2. 今日の app_record を取得（または作成）
-      const today = new Date().toISOString().slice(0, 10)
+      const today = targetDate.toISOString().slice(0, 10)
       let { data: record } = await supabase
         .from('app_records')
         .select('*')
@@ -201,10 +205,27 @@ export default function TodayView() {
     })
 
     if (ev.detailId) {
+      // すでに DB に行がある場合は update
       await supabase
         .from('app_record_details')
         .update({ task_id: newTaskId })
         .eq('id', ev.detailId)
+    } else if (todayRecord && newTaskId) {
+      // 未開始でも紐付けを DB に保存（タブ切り替えで消えないようにする）
+      const { data } = await supabase
+        .from('app_record_details')
+        .insert({
+          record_id:            todayRecord.id,
+          task_id:              newTaskId,
+          calendar_event_id:    ev.calendarEventId,
+          calendar_event_title: ev.calendarEventTitle,
+          planned_start:        ev.plannedStart?.toISOString(),
+          planned_end:          ev.plannedEnd?.toISOString(),
+          pause_log:            [],
+        })
+        .select()
+        .single()
+      if (data) updateEvent(eventId, { detailId: data.id })
     }
   }
 

@@ -12,9 +12,11 @@ const TABS = [
   { id: 'analytics', label: '集計・履歴' },
 ]
 
+const isDev = import.meta.env.DEV
+
 export default function AppLayout() {
   const [activeTab, setActiveTab] = useState('today')
-  const { session, loadMasters, loadAppTasks } = useStore()
+  const { session, loadMasters, loadAppTasks, devDate, setDevDate } = useStore()
 
   // マスタデータ初回読み込み
   useEffect(() => {
@@ -26,16 +28,43 @@ export default function AppLayout() {
     await supabase.auth.signOut()
   }
 
-  const today = new Date()
-  const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日（${'日月火水木金土'[today.getDay()]}）`
+  const displayDate = devDate ?? new Date()
+  const dateStr = `${displayDate.getFullYear()}年${displayDate.getMonth() + 1}月${displayDate.getDate()}日（${'日月火水木金土'[displayDate.getDay()]}）`
+
+  // <input type="date"> 用の値（YYYY-MM-DD）— toISOString() はUTC変換されるためローカル日付を使用
+  const dateInputValue = [
+    displayDate.getFullYear(),
+    String(displayDate.getMonth() + 1).padStart(2, '0'),
+    String(displayDate.getDate()).padStart(2, '0'),
+  ].join('-')
+
+  function handleDevDateChange(e) {
+    const [y, m, d] = e.target.value.split('-').map(Number)
+    const next = new Date(y, m - 1, d)
+    setDevDate(next)
+  }
 
   return (
     <div className={styles.shell}>
       {/* ヘッダー */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.dateStr}>{dateStr}</span>
-          <span className={styles.appName}>タスクタイマー</span>
+          <div className={styles.dateRow}>
+            <span className={styles.dateStr}>{dateStr}</span>
+            {isDev && (
+              <input
+                type="date"
+                className={styles.devDateInput}
+                value={dateInputValue}
+                onChange={handleDevDateChange}
+                title="開発用：表示日付を変更"
+              />
+            )}
+          </div>
+          <div className={styles.appNameRow}>
+            <span className={styles.appName}>タスクタイマー</span>
+            {isDev && <span className={styles.devBadge}>DEV</span>}
+          </div>
         </div>
         <button className={styles.signOut} onClick={handleSignOut} title="ログアウト">
           {session?.user?.email?.split('@')[0]}　⏏

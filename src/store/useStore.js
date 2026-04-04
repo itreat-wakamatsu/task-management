@@ -23,10 +23,16 @@ export const useStore = create((set, get) => ({
   isPaused:      false,
   pausedAt:      null,
 
+  // 開発環境専用: 任意の日付で動作確認するための仮想日付（本番では null）
+  devDate: import.meta.env.DEV ? new Date() : null,
+
+  addAppTask: (task) => set(s => ({ appTasks: [task, ...s.appTasks] })),
+
   setTodayEvents:  (evts)  => set({ todayEvents: evts }),
   setActiveEventId: (id)   => set({ activeEventId: id }),
   setIsPaused:     (v)    => set({ isPaused: v }),
   setPausedAt:     (d)    => set({ pausedAt: d }),
+  setDevDate:      (d)    => set({ devDate: d }),
 
   /** イベントを1件更新 */
   updateEvent: (id, patch) =>

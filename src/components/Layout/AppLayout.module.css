@@ -19,15 +19,50 @@
   gap: 2px;
 }
 
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .dateStr {
   font-size: 0.6875rem;
   color: var(--color-text-tertiary);
   font-family: var(--font-mono);
 }
 
+.devDateInput {
+  font-size: 0.625rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: 0.5px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1px 4px;
+  cursor: pointer;
+}
+.devDateInput:focus { outline: none; border-color: #f59e0b; }
+
+.appNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .appName {
   font-size: 1.0625rem;
   font-weight: 600;
+}
+
+.devBadge {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: #f59e0b;
+  border-radius: 3px;
+  padding: 1px 5px;
+  line-height: 1.5;
 }
 
 .signOut {

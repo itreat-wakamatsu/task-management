@@ -20,9 +20,9 @@ export function toJSTBoundary(date, isEnd = false) {
   return d.toISOString()
 }
 
-/** 今日の予定を取得 */
-export async function fetchTodayEvents(accessToken) {
-  const today = new Date()
+/** 今日の予定を取得（date を省略すると当日） */
+export async function fetchTodayEvents(accessToken, date = new Date()) {
+  const today = new Date(date)
   const timeMin = toJSTBoundary(today, false)
   const timeMax = toJSTBoundary(today, true)
 
