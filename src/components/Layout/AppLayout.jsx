@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { fetchTodayEvents, createCalendarEvent } from '@/lib/googleCalendar'
@@ -8,7 +8,8 @@ import TaskManagerView from '@/components/TaskManager/TaskManagerView'
 import AnalyticsView   from '@/components/Analytics/AnalyticsView'
 import BacklogModal    from '@/components/Backlog/BacklogModal'
 import BacklogBadge    from '@/components/Backlog/BacklogBadge'
-import AddToTodayModal from '@/components/Today/AddToTodayModal'
+import AddToTodayModal   from '@/components/Today/AddToTodayModal'
+import McpSettingsModal  from '@/components/Settings/McpSettingsModal'
 import styles from './AppLayout.module.css'
 
 const TABS = [
@@ -24,6 +25,8 @@ export default function AppLayout() {
   const [showBacklog,     setShowBacklog]    = useState(false)
   const [addToTodayTask,  setAddToTodayTask] = useState(null)
   const [showDatePicker,  setShowDatePicker] = useState(false)
+  const datePickerRef = useRef(null)
+  const [showMcpSettings, setShowMcpSettings] = useState(false)
   const {
     session, loadMasters, loadAppTasks, loadBacklogToken, backlogToken,
     devDate, setDevDate, setRawCalEvents, rawCalDate, rawCalEvents,
@@ -43,7 +46,7 @@ export default function AppLayout() {
     const token = session?.provider_token
     if (!token) return
     const targetDate = devDate ?? new Date()
-    const todayStr   = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`
+    const todayStr   = targetDate.toISOString().slice(0, 10)
     if (rawCalDate === todayStr) return
     fetchTodayEvents(token, targetDate)
       .then(events => setRawCalEvents(events, todayStr))
@@ -75,8 +78,7 @@ export default function AppLayout() {
         end:   { dateTime: end.toISOString(),   timeZone: 'Asia/Tokyo' },
       })
       // rawCalEvents と todayEvents に追加
-      const d = devDate ?? new Date()
-      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const todayStr = (devDate ?? new Date()).toISOString().slice(0, 10)
       setRawCalEvents([...rawCalEvents, newEv], todayStr)
       // TodayView 側のマージは次回ロード時に反映されるため、簡易的に todayEvents へ直接追加
       const merged = {
@@ -136,31 +138,32 @@ export default function AppLayout() {
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.dateRow}>
-            {showDatePicker ? (
-              <input
-                type="date"
-                className={styles.datePicker}
-                value={dateInputValue}
-                onChange={handleDateChange}
-                onBlur={() => setShowDatePicker(false)}
-                autoFocus
-              />
-            ) : (
-              <button
-                className={`${styles.dateTrigger} ${!isToday ? styles.dateTriggerOff : ''}`}
-                onClick={() => setShowDatePicker(true)}
-                title="日付を変更"
-              >
-                <span className={styles.dateStr}>{dateStr}</span>
-                <span className={styles.dateChevron}>▾</span>
-              </button>
-            )}
-            {!isToday && !showDatePicker && (
+            <button
+              className={`${styles.dateTrigger} ${!isToday ? styles.dateTriggerOff : ''}`}
+              onClick={() => setShowDatePicker(v => !v)}
+              title="日付を変更"
+            >
+              <span className={styles.dateStr}>{dateStr}</span>
+              <span className={styles.dateChevron}>{showDatePicker ? '▴' : '▾'}</span>
+            </button>
+            {!isToday && (
               <button className={styles.todayResetBtn} onClick={handleGoToToday}>
                 今日
               </button>
             )}
           </div>
+          {showDatePicker && (
+            <div className={styles.datePickerRow}>
+              <input
+                ref={datePickerRef}
+                type="date"
+                className={styles.datePicker}
+                value={dateInputValue}
+                onChange={handleDateChange}
+                autoFocus
+              />
+            </div>
+          )}
           <div className={styles.appNameRow}>
             <span className={styles.appName}>タスクタイマー</span>
             {isDev && <span className={styles.devBadge}>DEV</span>}
@@ -179,6 +182,13 @@ export default function AppLayout() {
           >
             <BacklogBadge size={13} />
             Backlog
+          </button>
+          <button
+            className={styles.btnMcp}
+            onClick={() => setShowMcpSettings(true)}
+            title="MCP 連携設定"
+          >
+            MCP
           </button>
           <button className={styles.signOut} onClick={handleSignOut} title="ログアウト">
             {session?.user?.email?.split('@')[0]}　⏏
@@ -206,7 +216,8 @@ export default function AppLayout() {
         {activeTab === 'analytics' && <AnalyticsView />}
       </main>
 
-      {showBacklog && <BacklogModal onClose={() => setShowBacklog(false)} />}
+      {showBacklog     && <BacklogModal      onClose={() => setShowBacklog(false)} />}
+      {showMcpSettings && <McpSettingsModal onClose={() => setShowMcpSettings(false)} />}
 
       {addToTodayTask && (
         <AddToTodayModal
