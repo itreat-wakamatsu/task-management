@@ -61,11 +61,6 @@
   margin-top: 1px;
 }
 
-/* ピッカー行 */
-.datePickerRow {
-  margin-top: 3px;
-}
-
 .datePicker {
   font-size: 0.6875rem;
   font-family: var(--font-mono);
@@ -175,4 +170,71 @@
 
 .main {
   min-height: 400px;
+}
+
+/* ─── モバイル対応 ─── */
+.freeTime {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.freeTimeNone {
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 0 0.75rem 2rem;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+    padding-bottom: 0.5rem;
+  }
+
+  .headerLeft {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .headerRight {
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .freeTime {
+    font-size: 0.6875rem;
+    width: 100%;
+    text-align: right;
+    order: -1;
+  }
+
+  .btnBacklog {
+    font-size: 0.6875rem;
+    padding: 3px 7px;
+  }
+
+  .signOut {
+    font-size: 0.6875rem;
+    padding: 3px 6px;
+  }
+
+  .appName {
+    font-size: 0.9375rem;
+  }
+
+  .tabs {
+    gap: 0;
+  }
+
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
 }

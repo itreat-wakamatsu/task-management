@@ -35,7 +35,8 @@ export default function TodayView() {
   } = useStore()
 
   const targetDate = devDate ?? new Date()
-  const todayStr   = targetDate.toISOString().slice(0, 10)
+  // UTC変換を避けてローカル日付文字列を生成
+  const todayStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`
 
   const [loading,      setLoading]      = useState(true)
   const [linkTarget,   setLinkTarget]   = useState(null)
