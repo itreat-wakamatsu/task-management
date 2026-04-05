@@ -8,7 +8,8 @@ import TaskManagerView from '@/components/TaskManager/TaskManagerView'
 import AnalyticsView   from '@/components/Analytics/AnalyticsView'
 import BacklogModal    from '@/components/Backlog/BacklogModal'
 import BacklogBadge    from '@/components/Backlog/BacklogBadge'
-import AddToTodayModal from '@/components/Today/AddToTodayModal'
+import AddToTodayModal   from '@/components/Today/AddToTodayModal'
+import McpSettingsModal  from '@/components/Settings/McpSettingsModal'
 import styles from './AppLayout.module.css'
 
 const TABS = [
@@ -25,6 +26,7 @@ export default function AppLayout() {
   const [addToTodayTask,  setAddToTodayTask] = useState(null)
   const [showDatePicker,  setShowDatePicker] = useState(false)
   const datePickerRef = useRef(null)
+  const [showMcpSettings, setShowMcpSettings] = useState(false)
   const {
     session, loadMasters, loadAppTasks, loadBacklogToken, backlogToken,
     devDate, setDevDate, setRawCalEvents, rawCalDate, rawCalEvents,
@@ -181,6 +183,13 @@ export default function AppLayout() {
             <BacklogBadge size={13} />
             Backlog
           </button>
+          <button
+            className={styles.btnMcp}
+            onClick={() => setShowMcpSettings(true)}
+            title="MCP 連携設定"
+          >
+            MCP
+          </button>
           <button className={styles.signOut} onClick={handleSignOut} title="ログアウト">
             {session?.user?.email?.split('@')[0]}　⏏
           </button>
@@ -207,7 +216,8 @@ export default function AppLayout() {
         {activeTab === 'analytics' && <AnalyticsView />}
       </main>
 
-      {showBacklog && <BacklogModal onClose={() => setShowBacklog(false)} />}
+      {showBacklog     && <BacklogModal      onClose={() => setShowBacklog(false)} />}
+      {showMcpSettings && <McpSettingsModal onClose={() => setShowMcpSettings(false)} />}
 
       {addToTodayTask && (
         <AddToTodayModal
