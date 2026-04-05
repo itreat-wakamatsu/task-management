@@ -6,8 +6,11 @@
  *   SUPABASE_SERVICE_ROLE_KEY サービスロールキー（管理者権限）
  *   SUPABASE_USER_ID          対象ユーザーの UUID
  *
- * 任意:
- *   GOOGLE_ACCESS_TOKEN       Google Calendar アクセストークン
+ * 任意（Google Calendar 使用時）:
+ *   GOOGLE_CLIENT_ID          Google OAuth クライアントID（推奨）
+ *   GOOGLE_CLIENT_SECRET      Google OAuth クライアントシークレット（推奨）
+ *     → 設定するとアプリログイン時に保存した refresh_token で自動更新される
+ *   GOOGLE_ACCESS_TOKEN       アクセストークン直接指定（非推奨・1時間で期限切れ）
  *   WORK_START_HOUR           勤務開始時刻（デフォルト 9）
  *   WORK_END_HOUR             勤務終了時刻（デフォルト 18）
  */
@@ -93,16 +96,72 @@ async function fetchMasters() {
   }
 }
 
-/** Google Calendar にリクエストを送る（トークンチェック込み） */
-function requireGoogleToken() {
+// ── Google アクセストークン自動更新 ────────────────────────
+let _cachedAccessToken  = null
+let _tokenExpiresAt     = 0
+
+/**
+ * Google アクセストークンを取得する。
+ * 優先順位:
+ *   1. キャッシュ済みトークン（有効期限内）
+ *   2. Supabase に保存された refresh_token で自動更新
+ *   3. 環境変数 GOOGLE_ACCESS_TOKEN（フォールバック）
+ */
+async function getGoogleAccessToken() {
+  // 1. キャッシュが有効なら返す（期限5分前に更新）
+  if (_cachedAccessToken && Date.now() < _tokenExpiresAt - 300_000) {
+    return _cachedAccessToken
+  }
+
+  // 2. Supabase の refresh_token で自動更新
+  const clientId     = process.env.GOOGLE_CLIENT_ID
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+  if (clientId && clientSecret) {
+    const { data, error } = await supabase
+      .from('user_google_tokens')
+      .select('refresh_token')
+      .eq('user_id', USER_ID)
+      .maybeSingle()
+
+    if (!error && data?.refresh_token) {
+      const res = await fetch('https://oauth2.googleapis.com/token', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type:    'refresh_token',
+          refresh_token: data.refresh_token,
+          client_id:     clientId,
+          client_secret: clientSecret,
+        }),
+      })
+      const json = await res.json()
+      if (res.ok && json.access_token) {
+        _cachedAccessToken = json.access_token
+        _tokenExpiresAt    = Date.now() + (json.expires_in ?? 3600) * 1000
+        return _cachedAccessToken
+      }
+      // refresh_token が失効している場合はエラーを詳細表示
+      if (json.error === 'invalid_grant') {
+        throw new Error(
+          'Google refresh_token が失効しています。\n' +
+          'アプリ（ブラウザ）に一度ログインし直してください。\n' +
+          '再ログイン後は自動で refresh_token が更新されます。'
+        )
+      }
+    }
+  }
+
+  // 3. フォールバック: 環境変数の access_token を直接使用
   const token = process.env.GOOGLE_ACCESS_TOKEN
-  if (!token) throw new Error(
-    'GOOGLE_ACCESS_TOKEN が設定されていません。\n' +
-    '.env に GOOGLE_ACCESS_TOKEN=ya29.xxx を追加してください。\n' +
-    '取得方法: ブラウザでアプリにログイン → DevTools > Application > ' +
-    'Local Storage > supabase.auth.token > provider_token の値を使用'
+  if (token) return token
+
+  throw new Error(
+    'Google アクセストークンを取得できません。\n' +
+    '推奨: .env に GOOGLE_CLIENT_ID と GOOGLE_CLIENT_SECRET を設定してください。\n' +
+    '     → 設定後はアプリにログインするだけで自動更新されます。\n' +
+    '一時: .env に GOOGLE_ACCESS_TOKEN=ya29.xxx を直接設定することもできます。'
   )
-  return token
 }
 
 // ── MCP サーバー初期化 ────────────────────────────────────
@@ -516,7 +575,7 @@ server.tool(
     end_date:   z.string().describe('終了日 YYYY-MM-DD'),
   },
   async ({ start_date, end_date }) => {
-    const token = requireGoogleToken()
+    const token = await getGoogleAccessToken()
 
     const timeMin = new Date(start_date); timeMin.setHours(0,  0,  0,   0)
     const timeMax = new Date(end_date);   timeMax.setHours(23, 59, 59, 999)
@@ -640,7 +699,7 @@ server.tool(
     description: z.string().optional().describe('予定の説明・メモ（任意）'),
   },
   async ({ title, start, end, description }) => {
-    const token = requireGoogleToken()
+    const token = await getGoogleAccessToken()
 
     const body = {
       summary:     title,
