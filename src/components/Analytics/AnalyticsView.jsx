@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import FeedbackCard from '@/components/shared/FeedbackCard'
+import SearchableSelect from '@/components/shared/SearchableSelect'
 import styles from './AnalyticsView.module.css'
 
 const SUBTABS = ['日別', '月別', 'タスク別', '案件別', 'カテゴリ別']
@@ -137,10 +138,14 @@ function DailyTab({ records, netM, planM, clients }) {
           <option value="14">直近14日</option>
           <option value="30">直近30日</option>
         </select>
-        <select value={filterCl} onChange={e => setFilterCl(e.target.value)}>
-          <option value="">全クライアント</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <div className={styles.filterItem}>
+          <SearchableSelect
+            options={clients.map(c => ({ value: String(c.id), label: c.display_name || c.name }))}
+            value={filterCl}
+            onChange={setFilterCl}
+            placeholder="全クライアント"
+          />
+        </div>
       </div>
       <StatGrid items={[
         { label: '記録日数',   value: Object.keys(byDate).length + '日', cls: 'b' },
@@ -252,14 +257,22 @@ function TaskTab({ records, netM, planM, appTasks, clients, projects }) {
   return (
     <div>
       <div className={styles.filterBar}>
-        <select value={filterCl} onChange={e => setFilterCl(e.target.value)}>
-          <option value="">全クライアント</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={filterPj} onChange={e => setFilterPj(e.target.value)}>
-          <option value="">全案件</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        <div className={styles.filterItem}>
+          <SearchableSelect
+            options={clients.map(c => ({ value: String(c.id), label: c.display_name || c.name }))}
+            value={filterCl}
+            onChange={setFilterCl}
+            placeholder="全クライアント"
+          />
+        </div>
+        <div className={styles.filterItem}>
+          <SearchableSelect
+            options={projects.map(p => ({ value: String(p.id), label: p.name }))}
+            value={filterPj}
+            onChange={setFilterPj}
+            placeholder="全案件"
+          />
+        </div>
       </div>
       <div className={styles.sortRow}>
         <span className={styles.sortLabel}>並び順：</span>
@@ -322,10 +335,14 @@ function ProjectTab({ records, netM, planM, appTasks, clients, projects }) {
   return (
     <div>
       <div className={styles.filterBar}>
-        <select value={filterCl} onChange={e => setFilterCl(e.target.value)}>
-          <option value="">全クライアント</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <div className={styles.filterItem}>
+          <SearchableSelect
+            options={clients.map(c => ({ value: String(c.id), label: c.display_name || c.name }))}
+            value={filterCl}
+            onChange={setFilterCl}
+            placeholder="全クライアント"
+          />
+        </div>
       </div>
       <StatGrid items={[
         { label: '案件数',     value: items.length + '件', cls: 'b' },
@@ -391,14 +408,22 @@ function CategoryTab({ records, netM, planM, appTasks, projects, categories, cli
   return (
     <div>
       <div className={styles.filterBar}>
-        <select value={filterCl} onChange={e => setFilterCl(e.target.value)}>
-          <option value="">全クライアント</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={filterPj} onChange={e => setFilterPj(e.target.value)}>
-          <option value="">全案件</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        <div className={styles.filterItem}>
+          <SearchableSelect
+            options={clients.map(c => ({ value: String(c.id), label: c.display_name || c.name }))}
+            value={filterCl}
+            onChange={setFilterCl}
+            placeholder="全クライアント"
+          />
+        </div>
+        <div className={styles.filterItem}>
+          <SearchableSelect
+            options={projects.map(p => ({ value: String(p.id), label: p.name }))}
+            value={filterPj}
+            onChange={setFilterPj}
+            placeholder="全案件"
+          />
+        </div>
       </div>
       <StatGrid items={[
         { label: '区分数',     value: Object.keys(byCat1).length + '区分', cls: 'b' },
