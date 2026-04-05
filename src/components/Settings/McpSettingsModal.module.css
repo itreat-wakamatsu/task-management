@@ -109,6 +109,35 @@
   line-height: 1.6;
 }
 
+/* MCP URL 行 */
+.urlRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-secondary);
+  border: 0.5px solid var(--color-border);
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+
+.urlCode {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  color: var(--color-text-secondary);
+}
+
+.urlRow .btnCopy {
+  align-self: auto;
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  padding: 3px 10px;
+}
+
 /* 設定JSON */
 .configBox {
   font-family: var(--font-mono);

@@ -47,7 +47,10 @@ export default function McpSettingsModal({ onClose }) {
     setRevoking(false)
   }
 
-  // Claude Desktop 用の設定JSON
+  // MCP URL（クエリパラメータ形式 — claude.ai Integrations などで使用）
+  const mcpUrl = apiKey ? `${appUrl}/api/mcp?key=${apiKey.key}` : ''
+
+  // Claude Desktop 用の設定JSON（Bearer ヘッダー形式）
   const desktopConfig = apiKey
     ? JSON.stringify({
         mcpServers: {
@@ -60,10 +63,13 @@ export default function McpSettingsModal({ onClose }) {
       }, null, 2)
     : ''
 
-  async function copy() {
-    await navigator.clipboard.writeText(desktopConfig)
-    setCopying(true)
-    setTimeout(() => setCopying(false), 2000)
+  const [copyTarget, setCopyTarget] = useState(null) // 'url' | 'config'
+
+  async function copy(target) {
+    const text = target === 'url' ? mcpUrl : desktopConfig
+    await navigator.clipboard.writeText(text)
+    setCopyTarget(target)
+    setTimeout(() => setCopyTarget(null), 2000)
   }
 
   return (
@@ -101,6 +107,20 @@ export default function McpSettingsModal({ onClose }) {
                 </div>
               </section>
 
+              {/* MCP URL（claude.ai Integrations など） */}
+              <section className={styles.section}>
+                <div className={styles.label}>MCP URL</div>
+                <p className={styles.desc}>
+                  Claude.ai の Integrations など、URL 一つで設定できるツール向けです。
+                </p>
+                <div className={styles.urlRow}>
+                  <code className={styles.urlCode}>{mcpUrl}</code>
+                  <button className={styles.btnCopy} onClick={() => copy('url')}>
+                    {copyTarget === 'url' ? '✓' : 'コピー'}
+                  </button>
+                </div>
+              </section>
+
               {/* Claude Desktop 設定 */}
               <section className={styles.section}>
                 <div className={styles.label}>Claude Desktop 設定</div>
@@ -108,8 +128,8 @@ export default function McpSettingsModal({ onClose }) {
                   以下の設定を Claude Desktop の設定ファイルに貼り付けてください。
                 </p>
                 <pre className={styles.configBox}>{desktopConfig}</pre>
-                <button className={styles.btnCopy} onClick={copy}>
-                  {copying ? '✓ コピーしました' : '設定をコピー'}
+                <button className={styles.btnCopy} onClick={() => copy('config')}>
+                  {copyTarget === 'config' ? '✓ コピーしました' : '設定をコピー'}
                 </button>
               </section>
 
