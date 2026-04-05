@@ -27,7 +27,7 @@ export const useStore = create((set, get) => ({
   rawCalEvents: [],
   rawCalDate:   null,
 
-  devDate: (import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development') ? new Date() : null,
+  devDate: new Date(),
 
   addAppTask: (task) => set(s => ({ appTasks: [task, ...s.appTasks] })),
 

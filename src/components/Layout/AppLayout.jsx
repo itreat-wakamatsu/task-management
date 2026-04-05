@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { fetchTodayEvents, createCalendarEvent } from '@/lib/googleCalendar'
@@ -20,9 +20,11 @@ const TABS = [
 const isDev = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development'
 
 export default function AppLayout() {
-  const [activeTab,      setActiveTab]      = useState('today')
-  const [showBacklog,    setShowBacklog]    = useState(false)
-  const [addToTodayTask, setAddToTodayTask] = useState(null)  // AddToTodayModal 用
+  const [activeTab,       setActiveTab]      = useState('today')
+  const [showBacklog,     setShowBacklog]    = useState(false)
+  const [addToTodayTask,  setAddToTodayTask] = useState(null)
+  const [showDatePicker,  setShowDatePicker] = useState(false)
+  const datePickerRef = useRef(null)
   const {
     session, loadMasters, loadAppTasks, loadBacklogToken, backlogToken,
     devDate, setDevDate, setRawCalEvents, rawCalDate, rawCalEvents,
@@ -102,9 +104,21 @@ export default function AppLayout() {
   ].join('-')
   const targetDateStr = dateInputValue
 
-  function handleDevDateChange(e) {
+  // 今日かどうか
+  const today = new Date()
+  const isToday = displayDate.getFullYear() === today.getFullYear() &&
+                  displayDate.getMonth()    === today.getMonth()    &&
+                  displayDate.getDate()     === today.getDate()
+
+  function handleDateChange(e) {
     const [y, m, d] = e.target.value.split('-').map(Number)
     setDevDate(new Date(y, m - 1, d))
+    setShowDatePicker(false)
+  }
+
+  function handleGoToToday() {
+    setDevDate(new Date())
+    setShowDatePicker(false)
   }
 
   // 残り空き時間の表示文字列
@@ -122,17 +136,32 @@ export default function AppLayout() {
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.dateRow}>
-            <span className={styles.dateStr}>{dateStr}</span>
-            {isDev && (
-              <input
-                type="date"
-                className={styles.devDateInput}
-                value={dateInputValue}
-                onChange={handleDevDateChange}
-                title="開発用：表示日付を変更"
-              />
+            <button
+              className={`${styles.dateTrigger} ${!isToday ? styles.dateTriggerOff : ''}`}
+              onClick={() => setShowDatePicker(v => !v)}
+              title="日付を変更"
+            >
+              <span className={styles.dateStr}>{dateStr}</span>
+              <span className={styles.dateChevron}>{showDatePicker ? '▴' : '▾'}</span>
+            </button>
+            {!isToday && (
+              <button className={styles.todayResetBtn} onClick={handleGoToToday}>
+                今日
+              </button>
             )}
           </div>
+          {showDatePicker && (
+            <div className={styles.datePickerRow}>
+              <input
+                ref={datePickerRef}
+                type="date"
+                className={styles.datePicker}
+                value={dateInputValue}
+                onChange={handleDateChange}
+                autoFocus
+              />
+            </div>
+          )}
           <div className={styles.appNameRow}>
             <span className={styles.appName}>タスクタイマー</span>
             {isDev && <span className={styles.devBadge}>DEV</span>}
