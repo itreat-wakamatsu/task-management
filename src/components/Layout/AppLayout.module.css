@@ -187,40 +187,44 @@
     padding: 0 0.75rem 2rem;
   }
 
+  /* ヘッダーを縦積みに変更（今日ボタン出現時も崩れない） */
   .header {
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
     padding-bottom: 0.5rem;
   }
 
   .headerLeft {
-    flex: 1 1 auto;
     min-width: 0;
   }
 
+  /* ボタン類は横並びで右寄せ */
   .headerRight {
-    flex: 0 0 auto;
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
     justify-content: flex-end;
-    gap: 4px;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
   }
 
   .freeTime {
     font-size: 0.6875rem;
-    width: 100%;
-    text-align: right;
-    order: -1;
+    margin-right: auto; /* 左端に配置し、ボタン群を右端に押し出す */
   }
 
   .btnBacklog {
     font-size: 0.6875rem;
     padding: 3px 7px;
+    flex-shrink: 0;
   }
 
   .signOut {
     font-size: 0.6875rem;
     padding: 3px 6px;
+    flex-shrink: 0;
   }
 
   .appName {
