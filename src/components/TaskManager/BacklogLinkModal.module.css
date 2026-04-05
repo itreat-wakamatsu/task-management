@@ -1,0 +1,93 @@
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300; padding: 1rem;
+}
+.box {
+  background: var(--color-bg-primary);
+  border-radius: 14px;
+  border: 0.5px solid var(--color-border);
+  padding: 1.25rem 1.5rem;
+  width: 100%; max-width: 460px;
+  max-height: 85vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.title { font-size: 0.9375rem; font-weight: 600; }
+.btnClose {
+  font-size: 1rem; background: none; border: none;
+  color: var(--color-text-tertiary); cursor: pointer; padding: 0 4px;
+}
+.btnClose:hover { color: var(--color-text-primary); }
+
+.desc {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.search {
+  width: 100%;
+  font-size: 0.875rem;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
+}
+.search:focus { outline: none; border-color: #378ADD; }
+
+.loading { padding: 1rem; text-align: center; color: var(--color-text-secondary); font-size: 0.875rem; }
+.error   { padding: 8px 12px; border-radius: 6px; background: #FEE2E2; color: #991B1B; font-size: 0.75rem; margin-bottom: 6px; }
+.empty   { padding: 1rem; text-align: center; color: var(--color-text-tertiary); font-size: 0.875rem; }
+
+.list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+
+.issueRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 0.5px solid transparent;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+}
+.issueRow:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-medium);
+}
+
+.issueKey {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  color: #4DAE00;
+  font-weight: 600;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.issueBody { flex: 1; }
+.issueSummary {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+.issueDates {
+  display: flex; gap: 12px;
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  margin-top: 3px;
+}

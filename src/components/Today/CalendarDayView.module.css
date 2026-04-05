@@ -1,0 +1,189 @@
+/* CalendarDayView.module.css */
+.wrap {
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  position: relative;
+  border: 0.5px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-primary);
+}
+
+.grid {
+  position: relative;
+  width: 100%;
+}
+
+.hourRow {
+  position: absolute;
+  left: 0; right: 0;
+  display: flex;
+  align-items: flex-start;
+  pointer-events: none;
+}
+.hourLabel {
+  width: 52px;
+  padding: 0 6px 0 8px;
+  font-size: 0.625rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  line-height: 1;
+  transform: translateY(-6px);
+}
+.hourLine {
+  flex: 1;
+  border-top: 0.5px solid var(--color-border);
+}
+
+/* ── 現在時刻ライン ── */
+.nowLine {
+  position: absolute;
+  left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.nowDot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #C53030;
+  margin-left: 48px;
+  flex-shrink: 0;
+}
+.nowBar {
+  flex: 1;
+  height: 1.5px;
+  background: #C53030;
+}
+
+/* ── イベントブロック ── */
+.event {
+  position: absolute;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  border-top: 0.5px solid transparent;
+  border-right: 0.5px solid transparent;
+  border-bottom: 0.5px solid transparent;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.1s, opacity 0.15s;
+  min-height: 20px;
+}
+.event:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+
+/* ステータス別スタイル */
+.eventDefault {
+  background: var(--color-amber-bg);
+  border-top-color: rgba(239, 159, 39, 0.35);
+  border-right-color: rgba(239, 159, 39, 0.35);
+  border-bottom-color: rgba(239, 159, 39, 0.35);
+  border-left-color: #EF9F27;
+}
+.eventActive {
+  background: var(--color-amber-bg);
+  border-top-color: #EF9F27;
+  border-right-color: #EF9F27;
+  border-bottom-color: #EF9F27;
+  border-left-color: #EF9F27;
+  box-shadow: 0 0 0 2px rgba(239, 159, 39, 0.25);
+}
+.eventDone {
+  background: var(--color-green-bg);
+  border-top-color: rgba(72, 187, 120, 0.3);
+  border-right-color: rgba(72, 187, 120, 0.3);
+  border-bottom-color: rgba(72, 187, 120, 0.3);
+  border-left-color: #48BB78;
+  opacity: 0.75;
+}
+.eventReadonly {
+  cursor: default;
+  background: var(--color-bg-secondary);
+  border-top-color: var(--color-border-medium);
+  border-right-color: var(--color-border-medium);
+  border-bottom-color: var(--color-border-medium);
+  border-left-color: var(--color-border-medium);
+}
+.eventHidden { opacity: 0.3; }
+
+.eventInner {
+  flex: 1;
+  padding: 3px 6px;
+  overflow: hidden;
+}
+.eventHeader {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 1px;
+}
+.eventTime {
+  font-size: 0.5625rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.eventTitle {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+}
+.eventClient {
+  font-size: 0.5625rem;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+}
+
+/* アクションボタン */
+.eventActions {
+  position: absolute;
+  top: 3px; right: 4px;
+  display: flex;
+  gap: 2px;
+}
+.btnPlay, .btnStop {
+  font-size: 0.5625rem;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.btnPlay { background: rgba(239, 159, 39, 0.7); color: white; }
+.btnPlay:hover { background: #EF9F27; }
+.btnStop { background: #C53030; color: white; }
+.btnStop:hover { opacity: 0.85; }
+
+.btnHideEv {
+  font-size: 0.5625rem;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.btnHideEv:hover { background: var(--color-bg-secondary); }
+
+/* リサイズハンドル */
+.resizeHandle {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 6px;
+  cursor: ns-resize;
+  background: linear-gradient(transparent, rgba(0,0,0,0.07));
+  border-radius: 0 0 4px 4px;
+}

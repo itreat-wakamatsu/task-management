@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
+import { fetchTodayEvents, createCalendarEvent } from '@/lib/googleCalendar'
+import { calcFreeMinutes } from '@/components/Today/AddToTodayModal'
 import TodayView       from '@/components/Today/TodayView'
 import TaskManagerView from '@/components/TaskManager/TaskManagerView'
 import AnalyticsView   from '@/components/Analytics/AnalyticsView'
 import BacklogModal    from '@/components/Backlog/BacklogModal'
 import BacklogBadge    from '@/components/Backlog/BacklogBadge'
+import AddToTodayModal from '@/components/Today/AddToTodayModal'
 import styles from './AppLayout.module.css'
 
 const TABS = [
@@ -19,7 +22,12 @@ const isDev = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'developme
 export default function AppLayout() {
   const [activeTab,      setActiveTab]      = useState('today')
   const [showBacklog,    setShowBacklog]    = useState(false)
-  const { session, loadMasters, loadAppTasks, loadBacklogToken, backlogToken, devDate, setDevDate } = useStore()
+  const [addToTodayTask, setAddToTodayTask] = useState(null)  // AddToTodayModal 用
+  const {
+    session, loadMasters, loadAppTasks, loadBacklogToken, backlogToken,
+    devDate, setDevDate, setRawCalEvents, rawCalDate, rawCalEvents,
+    todayEvents, setTodayEvents,
+  } = useStore()
 
   useEffect(() => {
     loadMasters()
@@ -29,8 +37,60 @@ export default function AppLayout() {
     }
   }, [session?.user?.id])
 
+  // アプリ起動時に GCal を1回取得（キャッシュがなければ）
+  useEffect(() => {
+    const token = session?.provider_token
+    if (!token) return
+    const targetDate = devDate ?? new Date()
+    const todayStr   = targetDate.toISOString().slice(0, 10)
+    if (rawCalDate === todayStr) return
+    fetchTodayEvents(token, targetDate)
+      .then(events => setRawCalEvents(events, todayStr))
+      .catch(err => console.error('GCal 初回取得エラー:', err))
+  }, [session?.provider_token])
+
+  // 残り空き時間（1分ごとに更新）
+  const [freeMins, setFreeMins] = useState(0)
+  useEffect(() => {
+    function update() { setFreeMins(calcFreeMinutes(todayEvents)) }
+    update()
+    const timer = setInterval(update, 60000)
+    return () => clearInterval(timer)
+  }, [todayEvents])
+
   async function handleSignOut() {
     await supabase.auth.signOut()
+  }
+
+  // 今日の予定に追加（GCal POST → todayEvents 更新）
+  async function handleAddToToday({ title, start, end }) {
+    const token = session?.provider_token
+    if (!token) { alert('Google アクセストークンがありません'); return }
+
+    try {
+      const newEv = await createCalendarEvent(token, {
+        summary: title,
+        start: { dateTime: start.toISOString(), timeZone: 'Asia/Tokyo' },
+        end:   { dateTime: end.toISOString(),   timeZone: 'Asia/Tokyo' },
+      })
+      // rawCalEvents と todayEvents に追加
+      const todayStr = (devDate ?? new Date()).toISOString().slice(0, 10)
+      setRawCalEvents([...rawCalEvents, newEv], todayStr)
+      // TodayView 側のマージは次回ロード時に反映されるため、簡易的に todayEvents へ直接追加
+      const merged = {
+        id: newEv.calendarEventId, ...newEv,
+        status: 'pending', detailId: null, taskId: null,
+        autoLinked: false, actualStart: null, actualEnd: null,
+        pauseLog: [], overrideElapsedMs: null, task: null,
+      }
+      setTodayEvents([...todayEvents, merged].sort((a, b) =>
+        new Date(a.plannedStart) - new Date(b.plannedStart)
+      ))
+    } catch (err) {
+      console.error('GCal 追加エラー:', err)
+      alert('Google カレンダーへの追加に失敗しました')
+    }
+    setAddToTodayTask(null)
   }
 
   const displayDate    = devDate ?? new Date()
@@ -40,11 +100,22 @@ export default function AppLayout() {
     String(displayDate.getMonth() + 1).padStart(2, '0'),
     String(displayDate.getDate()).padStart(2, '0'),
   ].join('-')
+  const targetDateStr = dateInputValue
 
   function handleDevDateChange(e) {
     const [y, m, d] = e.target.value.split('-').map(Number)
     setDevDate(new Date(y, m - 1, d))
   }
+
+  // 残り空き時間の表示文字列
+  const freeLabel = useMemo(() => {
+    if (freeMins <= 0) return '空き時間なし'
+    const h = Math.floor(freeMins / 60)
+    const m = freeMins % 60
+    if (h === 0) return `空き ${m}分`
+    if (m === 0) return `空き ${h}時間`
+    return `空き ${h}時間${m}分`
+  }, [freeMins])
 
   return (
     <div className={styles.shell}>
@@ -68,6 +139,11 @@ export default function AppLayout() {
           </div>
         </div>
         <div className={styles.headerRight}>
+          {/* 残り空き時間 */}
+          <span className={`${styles.freeTime} ${freeMins <= 0 ? styles.freeTimeNone : ''}`}>
+            {freeLabel}
+          </span>
+
           <button
             className={`${styles.btnBacklog} ${backlogToken ? styles.btnBacklogConnected : ''}`}
             onClick={() => setShowBacklog(true)}
@@ -96,11 +172,23 @@ export default function AppLayout() {
 
       <main className={styles.main}>
         {activeTab === 'today'     && <TodayView />}
-        {activeTab === 'tasks'     && <TaskManagerView />}
+        {activeTab === 'tasks'     && (
+          <TaskManagerView onAddToToday={task => { setAddToTodayTask(task); setActiveTab('today') }} />
+        )}
         {activeTab === 'analytics' && <AnalyticsView />}
       </main>
 
       {showBacklog && <BacklogModal onClose={() => setShowBacklog(false)} />}
+
+      {addToTodayTask && (
+        <AddToTodayModal
+          task={addToTodayTask}
+          existingEvents={todayEvents}
+          targetDateStr={targetDateStr}
+          onSave={handleAddToToday}
+          onClose={() => setAddToTodayTask(null)}
+        />
+      )}
     </div>
   )
 }

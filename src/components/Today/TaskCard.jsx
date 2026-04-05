@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { getDisplayElapsed, formatDuration } from '@/hooks/useTimer'
 import styles from './TaskCard.module.css'
@@ -8,10 +9,54 @@ function fmtTime(d) {
   return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
 }
 
-export default function TaskCard({ event, isActive, isPaused, onStart, onEnd, onUndo, onOpenLink }) {
+function toTimeInputValue(d) {
+  if (!d) return ''
+  const dt = new Date(d)
+  return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
+}
+
+function applyTimeToDate(base, timeStr) {
+  const [h, m] = timeStr.split(':').map(Number)
+  const d = new Date(base)
+  d.setHours(h, m, 0, 0)
+  return d
+}
+
+function PermIcon({ type }) {
+  if (type === 'solo') return (
+    <svg className={styles.permIcon} viewBox="0 0 16 16" fill="currentColor" title="自分のみ">
+      <circle cx="8" cy="5" r="3"/>
+      <path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6H2z"/>
+    </svg>
+  )
+  if (type === 'multi') return (
+    <svg className={styles.permIcon} viewBox="0 0 20 16" fill="currentColor" title="複数参加者">
+      <circle cx="7" cy="5" r="3"/>
+      <path d="M1 14c0-3.314 2.686-6 6-6s6 2.686 6 6H1z"/>
+      <circle cx="14" cy="5" r="2.5"/>
+      <path d="M11 14c.09-.98.49-1.87 1.12-2.57A5.98 5.98 0 0119 14h-8z"/>
+    </svg>
+  )
+  if (type === 'readonly') return (
+    <svg className={styles.permIcon} viewBox="0 0 16 16" fill="currentColor" title="編集不可">
+      <rect x="3" y="7" width="10" height="8" rx="1.5"/>
+      <path d="M5 7V5a3 3 0 016 0v2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    </svg>
+  )
+  return null
+}
+
+export default function TaskCard({
+  event, isActive, isPaused, onStart, onEnd, onUndo, onOpenLink,
+  onHide, isHidden, onTimeChange, onOpenDetail,
+}) {
   const clients  = useStore(s => s.clients)
   const client   = clients.find(c => c.id === event.task?.client_id)
   const clColor  = client?.color || 'var(--color-border)'
+
+  const [editingTime, setEditingTime] = useState(false)
+  const [editStart,   setEditStart]   = useState('')
+  const [editEnd,     setEditEnd]     = useState('')
 
   const statusLabel = isActive
     ? (isPaused ? '一時停止中' : '進行中')
@@ -21,7 +66,6 @@ export default function TaskCard({ event, isActive, isPaused, onStart, onEnd, on
     ? (isPaused ? styles.badgePause : styles.badgeRun)
     : event.status === 'done' ? styles.badgeDone : styles.badgePending
 
-  // 実績表示
   let actualInfo = null
   if (event.status === 'done' && event.actualStart) {
     const elapsed = event.overrideElapsedMs != null
@@ -36,31 +80,61 @@ export default function TaskCard({ event, isActive, isPaused, onStart, onEnd, on
       </span>
     )
   } else if (isActive && event.actualStart) {
-    const disp = getDisplayElapsed(event, isPaused, null) // pausedAt は store から
-    actualInfo = (
-      <span className={styles.actual}>
-        正味 {formatDuration(disp)}
-      </span>
-    )
+    const disp = getDisplayElapsed(event, isPaused, null)
+    actualInfo = <span className={styles.actual}>正味 {formatDuration(disp)}</span>
   }
 
+  function openTimeEdit() {
+    setEditStart(toTimeInputValue(event.plannedStart))
+    setEditEnd(toTimeInputValue(event.plannedEnd))
+    setEditingTime(true)
+  }
+
+  function commitTimeEdit() {
+    if (!editStart || !editEnd) { setEditingTime(false); return }
+    const newStart = applyTimeToDate(event.plannedStart, editStart)
+    const newEnd   = applyTimeToDate(event.plannedStart, editEnd)
+    if (newEnd <= newStart) { alert('終了時間は開始時間より後にしてください'); return }
+    onTimeChange?.(event.id, newStart, newEnd)
+    setEditingTime(false)
+  }
+
+  const permType = event.permissionType
+
   return (
-    <div className={`${styles.card} ${isActive ? styles.active : ''} ${event.status === 'done' ? styles.done : ''}`}>
+    <div className={`${styles.card} ${isActive ? styles.active : ''} ${event.status === 'done' ? styles.done : ''} ${isHidden ? styles.hidden : ''}`}>
       <div className={styles.accent} style={{ background: clColor }} />
       <div className={styles.body}>
         {/* 行1: 時間・タイトル・バッジ */}
         <div className={styles.row1}>
-          <span className={styles.time}>
-            {fmtTime(event.plannedStart)}–{fmtTime(event.plannedEnd)}
-          </span>
-          <span className={styles.title}>{event.calendarEventTitle}</span>
+          {editingTime ? (
+            <div className={styles.timeEdit}>
+              <input type="time" value={editStart} onChange={e => setEditStart(e.target.value)} className={styles.timeInput} />
+              <span>–</span>
+              <input type="time" value={editEnd}   onChange={e => setEditEnd(e.target.value)}   className={styles.timeInput} />
+              <button className={styles.btnTimeOk}     onClick={commitTimeEdit}>OK</button>
+              <button className={styles.btnTimeCancel} onClick={() => setEditingTime(false)}>×</button>
+            </div>
+          ) : (
+            <button
+              className={styles.time}
+              onClick={onTimeChange ? openTimeEdit : undefined}
+              title={onTimeChange ? '時間を編集' : undefined}
+            >
+              {fmtTime(event.plannedStart)}–{fmtTime(event.plannedEnd)}
+            </button>
+          )}
+          {permType && <PermIcon type={permType} />}
+          {/* タイトルクリック → 詳細ポップアップ */}
+          <button className={styles.titleBtn} onClick={() => onOpenDetail?.(event)}>
+            {event.calendarEventTitle}
+          </button>
           <span className={`${styles.badge} ${badgeCls}`}>{statusLabel}</span>
         </div>
 
         {/* 行2: タスクID・クライアント・実績・アクション */}
         <div className={styles.row2}>
           <div className={styles.meta}>
-            {/* タスクID チップ */}
             {event.taskId ? (
               <button className={styles.chipId} onClick={onOpenLink}>
                 {event.taskId}
@@ -71,7 +145,6 @@ export default function TaskCard({ event, isActive, isPaused, onStart, onEnd, on
                 未紐付け ＋
               </button>
             )}
-            {/* クライアント */}
             {client && (
               <span className={styles.clientChip} style={{ background: `${clColor}18`, color: clColor }}>
                 {client.display_name || client.name}
@@ -80,8 +153,12 @@ export default function TaskCard({ event, isActive, isPaused, onStart, onEnd, on
             {actualInfo}
           </div>
 
-          {/* アクションボタン */}
           <div className={styles.actions}>
+            {onHide && (
+              <button className={styles.btnHide} onClick={() => onHide(event.id)} title={isHidden ? '表示する' : '非表示にする'}>
+                {isHidden ? '表示' : '隠す'}
+              </button>
+            )}
             {!isActive && event.status !== 'done' && (
               <button className={styles.btnStart} onClick={onStart}>開始</button>
             )}

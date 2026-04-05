@@ -34,6 +34,7 @@ export async function fetchTodayEvents(accessToken, date = new Date()) {
     orderBy:      'startTime',
     maxResults:   '50',
     timeZone:     'Asia/Tokyo',
+    fields:       'items(id,summary,start,end,htmlLink,organizer,attendees,guestsCanModify)',
   })
 
   const res = await fetch(
@@ -48,6 +49,28 @@ export async function fetchTodayEvents(accessToken, date = new Date()) {
 
   const data = await res.json()
   return (data.items || []).map(normalizeEvent)
+}
+
+/** 新しいイベントを作成 */
+export async function createCalendarEvent(accessToken, eventData) {
+  const res = await fetch(
+    `${CALENDAR_API}/calendars/primary/events`,
+    {
+      method:  'POST',
+      headers: {
+        ...authHeader(accessToken),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(eventData),
+    }
+  )
+
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(`Google Calendar API error: ${err.error?.message}`)
+  }
+
+  return normalizeEvent(await res.json())
 }
 
 /** イベントを更新（開始・終了時刻の変更） */
@@ -76,6 +99,16 @@ export async function updateCalendarEvent(accessToken, eventId, patch) {
 function normalizeEvent(ev) {
   const startRaw = ev.start?.dateTime || ev.start?.date
   const endRaw   = ev.end?.dateTime   || ev.end?.date
+
+  const isOrganizer    = ev.organizer?.self === true
+  const canEdit        = isOrganizer || ev.guestsCanModify === true
+  const otherAttendees = (ev.attendees || [])
+    .filter(a => !a.self)
+    .map(a => ({ email: a.email, displayName: a.displayName || a.email }))
+  const permissionType = !canEdit ? 'readonly'
+    : otherAttendees.length > 0   ? 'multi'
+    : 'solo'
+
   return {
     calendarEventId:    ev.id,
     calendarEventTitle: ev.summary || '（タイトルなし）',
@@ -83,5 +116,8 @@ function normalizeEvent(ev) {
     plannedEnd:         endRaw   ? new Date(endRaw)   : null,
     isAllDay:           Boolean(ev.start?.date),
     htmlLink:           ev.htmlLink,
+    permissionType,
+    otherAttendees,
+    canEdit,
   }
 }

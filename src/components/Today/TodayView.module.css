@@ -1,12 +1,83 @@
 /* TodayView.module.css */
 .loading { text-align: center; padding: 3rem; color: var(--color-text-secondary); }
+
 .listHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .listLabel { font-size: 0.6875rem; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.06em; text-transform: uppercase; }
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .listCount { font-size: 0.6875rem; color: var(--color-text-tertiary); }
+
+.btnReport {
+  font-size: 0.6875rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid var(--color-border-medium);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnReport:hover { background: var(--color-bg-secondary); }
+
+.btnRefresh {
+  font-size: 0.6875rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid var(--color-border-medium);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnRefresh:hover { background: var(--color-bg-secondary); }
+.btnRefresh:disabled { opacity: 0.5; cursor: default; }
+
+.btnToggleHidden {
+  font-size: 0.6875rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid var(--color-border-medium);
+  background: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnToggleHidden:hover { background: var(--color-bg-secondary); }
+.btnToggleHiddenActive { background: var(--color-bg-secondary); color: var(--color-text-primary); }
+
+.viewToggle {
+  display: flex;
+  border: 0.5px solid var(--color-border-medium);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.viewBtn {
+  font-size: 0.6875rem;
+  padding: 4px 12px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.viewBtn:hover { background: var(--color-bg-secondary); }
+.viewBtnActive {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
 .list { display: flex; flex-direction: column; gap: 6px; }
 .empty { text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 0.875rem; }

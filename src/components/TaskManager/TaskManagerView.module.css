@@ -15,6 +15,61 @@
   color: var(--color-text-primary);
   font-family: inherit;
 }
+
+.searchInput {
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  min-width: 160px;
+}
+.searchInput::placeholder { color: var(--color-text-tertiary); }
+
+/* クライアント検索ドロップダウン用ラッパー */
+.clientSelect {
+  min-width: 180px;
+  max-width: 240px;
+  font-size: 0.75rem;
+}
+/* SearchableSelect の内部 input を小さくオーバーライド */
+.clientSelect input {
+  font-size: 0.75rem !important;
+  padding: 5px 28px 5px 8px !important;
+}
+.clientSelect > div > span { font-size: 0.5rem; }
+
+/* トグルボタングループ */
+.toggleGroup {
+  display: flex;
+  border: 0.5px solid var(--color-border-medium);
+  border-radius: 7px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.toggleBtn {
+  font-size: 0.6875rem;
+  padding: 5px 9px;
+  border: none;
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.toggleBtn:hover { background: var(--color-bg-secondary); }
+
+/* ステータストグル アクティブ */
+.toggleBtn0.toggleBtnActive { background: var(--color-bg-secondary); color: var(--color-text-primary); font-weight: 600; }
+.toggleBtn1.toggleBtnActive { background: var(--color-amber-bg); color: var(--color-amber-text); font-weight: 600; }
+.toggleBtn2.toggleBtnActive { background: var(--color-green-bg);  color: var(--color-green-text); font-weight: 600; }
+.toggleBtn3.toggleBtnActive { background: #EDE9FE; color: #6D28D9; font-weight: 600; }
+
+/* ニュートラルトグル（定期・Backlog） */
+.toggleBtnActiveNeutral { background: var(--color-bg-secondary); color: var(--color-text-primary); font-weight: 600; }
+
 .btnAdd {
   font-size: 0.75rem;
   padding: 5px 12px;
@@ -33,7 +88,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.75rem;
-  min-width: 700px;
+  min-width: 680px;
 }
 .table th {
   text-align: left;
@@ -51,10 +106,39 @@
 .rowOverdue:hover { background: var(--color-red-bg-hover); }
 
 .tdId    { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--color-text-tertiary); }
-.tdTitle { font-weight: 600; }
+.tdTitle {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
 .tdSub   { font-size: 0.6875rem; color: var(--color-text-secondary); }
 .tdDate  { font-size: 0.6875rem; color: var(--color-text-secondary); font-family: var(--font-mono); white-space: nowrap; }
 .tdOverdue { color: #C53030; font-weight: 600; }
+
+/* 定期インラインバッジ（タスク名の先頭） */
+.recInline {
+  font-size: 0.5625rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--color-teal-bg);
+  color: var(--color-teal-text);
+  font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Backlogリンク（タスク名セル内） */
+.backlogLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+.backlogLink:hover { color: #4DAE00; text-decoration: underline; }
 
 .clientChip { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
 
@@ -62,10 +146,15 @@
 .statusPending { background: var(--color-bg-secondary); color: var(--color-text-secondary); }
 .statusRunning { background: var(--color-amber-bg); color: var(--color-amber-text); }
 .statusDone    { background: var(--color-green-bg);  color: var(--color-green-text); }
+.statusOnHold  { background: #EDE9FE; color: #6D28D9; }
 
-.recBadge { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; background: var(--color-teal-bg); color: var(--color-teal-text); }
-
-.tdActions { display: flex; gap: 4px; }
+.tdActions { display: flex; gap: 4px; align-items: center; }
+.btnAddToday {
+  font-size: 0.5625rem; padding: 2px 6px; border-radius: 4px;
+  border: 0.5px solid var(--color-amber-border); background: var(--color-amber-bg);
+  color: var(--color-amber-text); cursor: pointer; font-family: inherit; white-space: nowrap;
+}
+.btnAddToday:hover { background: var(--color-amber-bg-hover); }
 .btnEdit { font-size: 0.6875rem; background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 2px 5px; font-family: inherit; }
 .btnEdit:hover { color: var(--color-text-primary); }
 .btnDel  { font-size: 0.6875rem; background: none; border: none; cursor: pointer; color: #A32D2D; padding: 2px 5px; font-family: inherit; }

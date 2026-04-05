@@ -23,10 +23,15 @@ export const useStore = create((set, get) => ({
   isPaused:      false,
   pausedAt:      null,
 
+  // GCal キャッシュ（アプリ起動時に1回取得）
+  rawCalEvents: [],
+  rawCalDate:   null,
+
   devDate: (import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development') ? new Date() : null,
 
   addAppTask: (task) => set(s => ({ appTasks: [task, ...s.appTasks] })),
 
+  setRawCalEvents:  (events, dateStr) => set({ rawCalEvents: events, rawCalDate: dateStr }),
   setTodayEvents:   (evts) => set({ todayEvents: evts }),
   setActiveEventId: (id)   => set({ activeEventId: id }),
   setIsPaused:      (v)    => set({ isPaused: v }),

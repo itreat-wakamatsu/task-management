@@ -63,6 +63,7 @@
 }
 .option:hover { background: var(--color-bg-secondary); }
 .option.selected { background: #EBF3FB; color: #2472B3; }
+.option.focused  { background: var(--color-bg-secondary); }
 
 .optLabel { flex: 1; }
 .optSub {
