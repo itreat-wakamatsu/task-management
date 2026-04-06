@@ -140,7 +140,8 @@
 }
 .backlogLink:hover { color: #4DAE00; text-decoration: underline; }
 
-.clientChip { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+.clientChip { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; white-space: nowrap; border: none; cursor: pointer; font-family: inherit; }
+.clientChip:hover { opacity: 0.8; }
 
 .status { font-size: 0.625rem; padding: 2px 6px; border-radius: 3px; }
 .statusPending { background: var(--color-bg-secondary); color: var(--color-text-secondary); }

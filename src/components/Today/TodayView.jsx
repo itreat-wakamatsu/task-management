@@ -62,7 +62,7 @@ export default function TodayView() {
   useEffect(() => {
     const prev = prevAppTasksLenRef.current
     prevAppTasksLenRef.current = appTasks.length
-    if (prev === 0 && appTasks.length > 0 && rawCalEvents.length > 0 && !loading) {
+    if (prev === 0 && appTasks.length > 0 && rawCalEvents.length > 0) {
       loadToday(false)
     }
   }, [appTasks.length])
@@ -363,27 +363,38 @@ export default function TodayView() {
     }
   }
 
-  // ── 予定通り完了（計画終了時刻を実績終了時刻として記録） ──
+  // ── 予定通り完了（予定所要時間を実績工数として記録） ──
+  // ボタンを押した実時刻は無関係。「20分の予定 → 20分で完了」と記録する。
   const handleOnTime = useCallback(async (eventId) => {
     const ev = todayEvents.find(e => e.id === eventId)
     if (!ev) return
 
-    const endTime = ev.plannedEnd instanceof Date ? ev.plannedEnd : new Date(ev.plannedEnd)
+    const now = new Date()
+    const plannedDurationMs = new Date(ev.plannedEnd) - new Date(ev.plannedStart)
     const pauseLog = isPaused
       ? (ev.pauseLog || []).map((p, i) =>
-          i === ev.pauseLog.length - 1 ? { ...p, e: endTime.toISOString() } : p
+          i === ev.pauseLog.length - 1 ? { ...p, e: now.toISOString() } : p
         )
       : ev.pauseLog
 
     setActiveEventId(null)
     setIsPaused(false)
     setPausedAt(null)
-    updateEvent(eventId, { status: 'done', actualEnd: endTime, pauseLog })
+    updateEvent(eventId, {
+      status: 'done',
+      actualEnd: now,
+      overrideElapsedMs: plannedDurationMs,
+      pauseLog,
+    })
 
     if (ev.detailId) {
       await supabase
         .from('app_record_details')
-        .update({ actual_end: endTime.toISOString(), pause_log: pauseLog, override_elapsed_ms: ev.overrideElapsedMs })
+        .update({
+          actual_end:          now.toISOString(),
+          pause_log:           pauseLog,
+          override_elapsed_ms: plannedDurationMs,
+        })
         .eq('id', ev.detailId)
     }
   }, [todayEvents, isPaused])

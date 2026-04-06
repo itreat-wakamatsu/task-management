@@ -6,6 +6,7 @@ import { getClientColor } from '@/lib/clientColor'
 import TaskEditModal from './TaskEditModal'
 import BacklogBadge  from '@/components/Backlog/BacklogBadge'
 import SearchableSelect from '@/components/shared/SearchableSelect'
+import ClientColorPicker from '@/components/shared/ClientColorPicker'
 import styles from './TaskManagerView.module.css'
 
 // 「今日の予定に追加」機能のためのプロップ（省略可）
@@ -38,6 +39,7 @@ export default function TaskManagerView({ onAddToToday }) {
   const [filterRecurring,  setFilterRecurring]  = useState('false')  // 'all'|'true'|'false'
   const [editTarget,       setEditTarget]       = useState(null)
   const [showNew,          setShowNew]          = useState(false)
+  const [colorPicker,      setColorPicker]      = useState(null)  // { client, top, left }
 
   const today = todayStr()
 
@@ -90,6 +92,13 @@ export default function TaskManagerView({ onAddToToday }) {
     if (!confirm('このタスクを削除しますか？')) return
     await supabase.from('app_tasks').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     setAppTasks(appTasks.filter(t => t.id !== id))
+  }
+
+  function openColorPicker(e, client) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    let left = rect.left
+    if (left + 208 > window.innerWidth - 8) left = window.innerWidth - 208 - 8
+    setColorPicker({ client, top: rect.bottom + 4, left })
   }
 
   return (
@@ -211,9 +220,14 @@ export default function TaskManagerView({ onAddToToday }) {
                   </td>
                   <td>
                     {cl && (() => { const cc = getClientColor(cl); return (
-                      <span className={styles.clientChip} style={{ background: `${cc}18`, color: cc }}>
+                      <button
+                        className={styles.clientChip}
+                        style={{ background: `${cc}18`, color: cc }}
+                        onClick={e => openColorPicker(e, cl)}
+                        title="色を変更"
+                      >
                         {cl.display_name || cl.name}
-                      </span>
+                      </button>
                     )})()}
                   </td>
                   <td className={styles.tdSub}>{pj?.name || '–'}</td>
@@ -259,6 +273,13 @@ export default function TaskManagerView({ onAddToToday }) {
           task={null}
           onSave={handleCreate}
           onClose={() => setShowNew(false)}
+        />
+      )}
+      {colorPicker && (
+        <ClientColorPicker
+          client={colorPicker.client}
+          onClose={() => setColorPicker(null)}
+          style={{ position: 'fixed', top: colorPicker.top, left: colorPicker.left }}
         />
       )}
     </div>
