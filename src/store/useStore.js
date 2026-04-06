@@ -13,6 +13,7 @@ export const useStore = create((set, get) => ({
   appTasks:   [],
 
   setClients:    (clients)    => set({ clients }),
+  updateClient:  (id, patch)  => set(s => ({ clients: s.clients.map(c => c.id === id ? { ...c, ...patch } : c) })),
   setProjects:   (projects)   => set({ projects }),
   setCategories: (categories) => set({ categories }),
   setAppTasks:   (appTasks)   => set({ appTasks }),

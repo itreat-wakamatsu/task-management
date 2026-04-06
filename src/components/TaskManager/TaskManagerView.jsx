@@ -34,7 +34,7 @@ export default function TaskManagerView({ onAddToToday }) {
   const [filterClient,     setFilterClient]     = useState('')
   const [selectedStatuses, setSelectedStatuses] = useState([0, 1])  // デフォルト: 未着手+進行中（保留中・完了は非表示）
   const [filterBacklog,    setFilterBacklog]    = useState('all')
-  const [filterRecurring,  setFilterRecurring]  = useState('all')  // 'all'|'true'|'false'
+  const [filterRecurring,  setFilterRecurring]  = useState('false')  // 'all'|'true'|'false'
   const [editTarget,       setEditTarget]       = useState(null)
   const [showNew,          setShowNew]          = useState(false)
 

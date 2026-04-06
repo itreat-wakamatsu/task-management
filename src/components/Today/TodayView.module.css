@@ -1,6 +1,39 @@
 /* TodayView.module.css */
 .loading { text-align: center; padding: 3rem; color: var(--color-text-secondary); }
 
+.authError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+.authErrorMsg {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+.authErrorSub {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+.authErrorBtn {
+  margin-top: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  font-weight: 500;
+  background: var(--color-text-primary);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  cursor: pointer;
+}
+.authErrorBtn:hover { opacity: 0.82; }
+
 .listHeader {
   display: flex;
   justify-content: space-between;

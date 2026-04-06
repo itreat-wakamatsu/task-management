@@ -1,12 +1,70 @@
 /**
  * Google Calendar API (gapi) ラッパー
  * OAuth トークンは Supabase Auth の provider_token を使用する
+ * 401 エラー時は /api/refresh-token 経由で自動リフレッシュ
  */
+import { supabase } from './supabase'
 
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3'
 
-function authHeader(token) {
-  return { Authorization: `Bearer ${token}` }
+// リフレッシュ済みトークンのキャッシュ（モジュールレベル）
+let _refreshedToken = null
+let _refreshedExpiry = 0
+
+/** Supabase JWT を使って /api/refresh-token からアクセストークンを取得 */
+async function refreshGoogleToken() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('NOT_AUTHENTICATED')
+
+  const res = await fetch('/api/refresh-token', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error || 'TOKEN_REFRESH_FAILED')
+  }
+
+  const { access_token, expires_in } = await res.json()
+  _refreshedToken = access_token
+  _refreshedExpiry = Date.now() + (expires_in - 300) * 1000  // 5分バッファ
+  return access_token
+}
+
+/** 有効なトークンを返す（リフレッシュ済み > セッションのprovider_token） */
+function getBestToken(fallbackToken) {
+  if (_refreshedToken && Date.now() < _refreshedExpiry) return _refreshedToken
+  return fallbackToken
+}
+
+/**
+ * Google API を fetch し、401 なら自動リフレッシュしてリトライ
+ */
+async function gFetch(url, options, fallbackToken) {
+  const token = getBestToken(fallbackToken)
+  const makeReq = (t) => fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${t}`,
+      ...(options?.headers || {}),
+    },
+  })
+
+  let res = await makeReq(token)
+
+  if (res.status === 401) {
+    // トークン期限切れ → リフレッシュしてリトライ
+    let newToken
+    try {
+      newToken = await refreshGoogleToken()
+    } catch (e) {
+      throw new Error('GOOGLE_AUTH_EXPIRED')
+    }
+    res = await makeReq(newToken)
+  }
+
+  return res
 }
 
 /** 日付を JST の ISO 文字列に変換（YYYY-MM-DDT00:00:00+09:00） */
@@ -37,9 +95,10 @@ export async function fetchTodayEvents(accessToken, date = new Date()) {
     fields:       'items(id,summary,start,end,htmlLink,organizer,attendees,guestsCanModify)',
   })
 
-  const res = await fetch(
+  const res = await gFetch(
     `${CALENDAR_API}/calendars/primary/events?${params}`,
-    { headers: authHeader(accessToken) }
+    {},
+    accessToken
   )
 
   if (!res.ok) {
@@ -53,16 +112,14 @@ export async function fetchTodayEvents(accessToken, date = new Date()) {
 
 /** 新しいイベントを作成 */
 export async function createCalendarEvent(accessToken, eventData) {
-  const res = await fetch(
+  const res = await gFetch(
     `${CALENDAR_API}/calendars/primary/events`,
     {
       method:  'POST',
-      headers: {
-        ...authHeader(accessToken),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(eventData),
-    }
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(eventData),
+    },
+    accessToken
   )
 
   if (!res.ok) {
@@ -75,16 +132,14 @@ export async function createCalendarEvent(accessToken, eventData) {
 
 /** イベントを更新（開始・終了時刻の変更） */
 export async function updateCalendarEvent(accessToken, eventId, patch) {
-  const res = await fetch(
+  const res = await gFetch(
     `${CALENDAR_API}/calendars/primary/events/${eventId}`,
     {
       method:  'PATCH',
-      headers: {
-        ...authHeader(accessToken),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(patch),
-    }
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(patch),
+    },
+    accessToken
   )
 
   if (!res.ok) {

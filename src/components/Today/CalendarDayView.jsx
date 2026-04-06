@@ -1,5 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import { useStore } from '@/store/useStore'
+import { getClientColor, hexToRgba } from '@/lib/clientColor'
+import ClientColorPicker from '@/components/shared/ClientColorPicker'
 import styles from './CalendarDayView.module.css'
 
 const HOUR_HEIGHT = 64
@@ -84,11 +86,13 @@ export default function CalendarDayView({
   onTimeChange,
   onHide,
   onOpenDetail,
+  onCreateAt,    // (start: Date, end: Date) => void
 }) {
   const clients      = useStore(s => s.clients)
   const containerRef = useRef(null)
   const dragRef      = useRef(null)
   const [nowY, setNowY] = useState(null)
+  const [colorPickerClient, setColorPickerClient] = useState(null)
 
   const totalHeight = TOTAL_HOURS * HOUR_HEIGHT
 
@@ -197,11 +201,35 @@ export default function CalendarDayView({
     window.addEventListener('mouseup',   onMouseUp)
   }
 
+  const gridRef = useRef(null)
+
+  function handleGridClick(e) {
+    if (!onCreateAt) return
+    // イベントブロック・ボタン・リサイズハンドルをクリックした場合は無視
+    if (e.target.closest('[id^="cal-ev-"]')) return
+    if (e.target.closest('button')) return
+    if (e.target.closest('[data-resize]')) return
+    // ドラッグ後のクリックは無視
+    if (dragRef.current) return
+
+    const rect = gridRef.current.getBoundingClientRect()
+    const y = e.clientY - rect.top
+    const totalMins = (y / HOUR_HEIGHT) * 60
+    const snappedMins = Math.round(totalMins / SNAP_MIN) * SNAP_MIN
+    const absMins = START_HOUR * 60 + snappedMins
+
+    const start = new Date()
+    start.setHours(Math.floor(absMins / 60), absMins % 60, 0, 0)
+    const end = new Date(start.getTime() + 30 * 60000)
+
+    onCreateAt(start, end)
+  }
+
   const hours = Array.from({ length: TOTAL_HOURS }, (_, i) => START_HOUR + i)
 
   return (
     <div className={styles.wrap} ref={containerRef}>
-      <div className={styles.grid} style={{ height: totalHeight }}>
+      <div className={styles.grid} style={{ height: totalHeight }} ref={gridRef} onClick={handleGridClick}>
         {/* 時間ラベル + 横線 */}
         {hours.map(h => (
           <div key={h} className={styles.hourRow} style={{ top: (h - START_HOUR) * HOUR_HEIGHT }}>
@@ -231,25 +259,38 @@ export default function CalendarDayView({
           const colLeft = ev._col * colW
 
           const client   = clients.find(c => c.id === ev.task?.client_id)
-          const clColor  = client?.color || null
+          const clColor  = getClientColor(client)
+          const clBg     = clColor ? hexToRgba(clColor, isDone ? 0.08 : 0.14) : null
 
-          // ステータスで背景色クラスを決定
-          const statusCls = isDone ? styles.eventDone
+          // クライアント色がなければステータスで背景クラスを決定
+          const statusCls = clColor ? ''
+            : isDone              ? styles.eventDone
             : isActive            ? styles.eventActive
             : perm === 'readonly' ? styles.eventReadonly
             : styles.eventDefault
+
+          // ステータスバッジラベル
+          const statusBadgeLabel = isDone ? '完了'
+            : isActive && ev.status === 'paused' ? '中断'
+            : isActive            ? '進行中'
+            : perm === 'readonly' ? null
+            : null
+
+          // コンパクト表示（短い予定：~30分未満）
+          const isCompact = height < 42
 
           return (
             <div
               key={ev.id}
               id={`cal-ev-${ev.id}`}
-              className={`${styles.event} ${statusCls} ${isHiddenEv ? styles.eventHidden : ''}`}
+              className={`${styles.event} ${statusCls} ${isHiddenEv ? styles.eventHidden : ''} ${clColor ? styles.eventColored : ''} ${isCompact ? styles.eventCompact : ''}`}
               style={{
                 top,
                 height,
-                left:  `calc(${colLeft}% + 56px)`,
-                width: `calc(${colW}% - 60px)`,
+                left:        `calc(${colLeft}% + 56px)`,
+                width:       `calc(${colW}% - 60px)`,
                 borderLeftColor: clColor || undefined,
+                ...(clBg ? { background: clBg } : {}),
               }}
               onMouseDown={ev.canEdit !== false ? (e) => {
                 if (e.target.closest('[data-resize]')) return
@@ -263,20 +304,50 @@ export default function CalendarDayView({
               }}
             >
               <div className={styles.eventInner}>
+                {/* コンパクト時：横並び / 通常時：縦積み */}
                 <div className={styles.eventHeader}>
                   <span data-time className={styles.eventTime}>
                     {fmtTime(ev.plannedStart)}–{fmtTime(ev.plannedEnd)}
                   </span>
                   {perm && <PermIcon type={perm} />}
+                  {isCompact && (
+                    <span className={styles.eventTitleInline}>{ev.calendarEventTitle}</span>
+                  )}
+                  {isCompact && statusBadgeLabel && (
+                    <span className={`${styles.statusBadge} ${isDone ? styles.badgeDone : isActive ? styles.badgeRun : ''}`}>
+                      {statusBadgeLabel}
+                    </span>
+                  )}
                 </div>
-                <div className={styles.eventTitle}>{ev.calendarEventTitle}</div>
-                {client && (
-                  <div
-                    className={styles.eventClient}
-                    style={{ color: clColor || undefined }}
-                  >
-                    {client.display_name || client.name}
-                  </div>
+                {!isCompact && (
+                  <>
+                    <div className={styles.eventTitle}>{ev.calendarEventTitle}</div>
+                    {client && (
+                      <div className={styles.clientRow}>
+                        <button
+                          className={styles.eventClient}
+                          style={{ color: clColor || undefined }}
+                          data-action="true"
+                          onMouseDown={e => e.stopPropagation()}
+                          onClick={e => { e.stopPropagation(); setColorPickerClient(client) }}
+                          title="色を変更"
+                        >
+                          {client.display_name || client.name}
+                        </button>
+                        {colorPickerClient?.id === client.id && (
+                          <ClientColorPicker
+                            client={client}
+                            onClose={() => setColorPickerClient(null)}
+                          />
+                        )}
+                      </div>
+                    )}
+                    {statusBadgeLabel && (
+                      <span className={`${styles.statusBadge} ${isDone ? styles.badgeDone : isActive ? styles.badgeRun : ''}`}>
+                        {statusBadgeLabel}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 

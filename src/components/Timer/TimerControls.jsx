@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '@/store/useStore'
+import { supabase } from '@/lib/supabase'
 import { getDisplayElapsed, formatDuration } from '@/hooks/useTimer'
 import styles from './TimerControls.module.css'
 
@@ -12,7 +13,7 @@ export default function TimerControls({ event, onEnd }) {
   const planned   = Math.round((new Date(event.plannedEnd) - new Date(event.plannedStart)) / 60000)
   const displayed = Math.round(getDisplayElapsed(event, isPaused, pausedAt) / 60000)
 
-  function handlePause() {
+  async function handlePause() {
     const now = new Date().toISOString()
     if (!isPaused) {
       // 一時停止
@@ -20,6 +21,12 @@ export default function TimerControls({ event, onEnd }) {
       setPausedAt(now)
       const log = [...(event.pauseLog || []), { s: now, e: null }]
       updateEvent(event.id, { pauseLog: log, status: 'paused' })
+      // DBにも保存してリロード後に復元できるようにする
+      if (event.detailId) {
+        await supabase.from('app_record_details')
+          .update({ pause_log: log })
+          .eq('id', event.detailId)
+      }
     } else {
       // 再開
       const log = (event.pauseLog || []).map((p, i) =>
@@ -28,6 +35,12 @@ export default function TimerControls({ event, onEnd }) {
       setIsPaused(false)
       setPausedAt(null)
       updateEvent(event.id, { pauseLog: log, status: 'running' })
+      // DBも更新
+      if (event.detailId) {
+        await supabase.from('app_record_details')
+          .update({ pause_log: log })
+          .eq('id', event.detailId)
+      }
     }
   }
 

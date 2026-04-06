@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { getDisplayElapsed, formatDuration } from '@/hooks/useTimer'
+import { getClientColor, hexToRgba } from '@/lib/clientColor'
+import ClientColorPicker from '@/components/shared/ClientColorPicker'
 import styles from './TaskCard.module.css'
 
 function fmtTime(d) {
@@ -52,11 +54,13 @@ export default function TaskCard({
 }) {
   const clients  = useStore(s => s.clients)
   const client   = clients.find(c => c.id === event.task?.client_id)
-  const clColor  = client?.color || 'var(--color-border)'
+  const clColor  = getClientColor(client) || 'var(--color-border)'
+  const clBg     = client ? hexToRgba(getClientColor(client), 0.1) : null
 
-  const [editingTime, setEditingTime] = useState(false)
-  const [editStart,   setEditStart]   = useState('')
-  const [editEnd,     setEditEnd]     = useState('')
+  const [editingTime,      setEditingTime]      = useState(false)
+  const [editStart,        setEditStart]        = useState('')
+  const [editEnd,          setEditEnd]          = useState('')
+  const [showColorPicker,  setShowColorPicker]  = useState(false)
 
   const statusLabel = isActive
     ? (isPaused ? '一時停止中' : '進行中')
@@ -102,7 +106,10 @@ export default function TaskCard({
   const permType = event.permissionType
 
   return (
-    <div className={`${styles.card} ${isActive ? styles.active : ''} ${event.status === 'done' ? styles.done : ''} ${isHidden ? styles.hidden : ''}`}>
+    <div
+      className={`${styles.card} ${isActive ? styles.active : ''} ${event.status === 'done' ? styles.done : ''} ${isHidden ? styles.hidden : ''}`}
+      style={clBg ? { background: clBg } : undefined}
+    >
       <div className={styles.accent} style={{ background: clColor }} />
       <div className={styles.body}>
         {/* 行1: 時間・タイトル・バッジ */}
@@ -146,9 +153,22 @@ export default function TaskCard({
               </button>
             )}
             {client && (
-              <span className={styles.clientChip} style={{ background: `${clColor}18`, color: clColor }}>
-                {client.display_name || client.name}
-              </span>
+              <div className={styles.clientChipWrap}>
+                <button
+                  className={styles.clientChip}
+                  style={{ background: `${clColor}18`, color: clColor }}
+                  onClick={() => setShowColorPicker(v => !v)}
+                  title="色を変更"
+                >
+                  {client.display_name || client.name}
+                </button>
+                {showColorPicker && (
+                  <ClientColorPicker
+                    client={client}
+                    onClose={() => setShowColorPicker(false)}
+                  />
+                )}
+              </div>
             )}
             {actualInfo}
           </div>

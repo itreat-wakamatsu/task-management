@@ -174,12 +174,19 @@
   border-radius: 2px;
 }
 
+.clientChipWrap {
+  position: relative;
+}
 .clientChip {
   font-size: 0.625rem;
   padding: 1px 5px;
   border-radius: 3px;
   white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
+.clientChip:hover { filter: brightness(0.92); }
 
 .actual { font-size: 0.625rem; color: var(--color-text-tertiary); font-family: var(--font-mono); }
 .over   { color: #A32D2D; }
