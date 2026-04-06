@@ -7,8 +7,9 @@
   transition: border-color 0.15s, opacity 0.15s;
 }
 .card:hover { border-color: var(--color-border-medium); }
-.active { border: 1.5px solid #EF9F27; }
-.done   { opacity: 0.6; }
+.active { border-width: 1.5px; border-style: solid; }
+.done   { opacity: 1; }
+.done .body { opacity: 0.55; }
 
 .accent { width: 3px; flex-shrink: 0; }
 .body   { flex: 1; padding: 9px 12px; min-width: 0; }

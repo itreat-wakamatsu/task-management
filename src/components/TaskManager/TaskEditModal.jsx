@@ -40,8 +40,21 @@ export default function TaskEditModal({ task, initialValues = {}, onSave, onClos
 
   const clientOptions  = sortByRecent(clients.map(c => ({ value: String(c.id), label: c.display_name || c.name })))
   const projectOptions = filteredProjects.map(p => ({ value: String(p.id), label: p.name }))
-  const cat1Options    = cat1List.map(c => ({ value: String(c.id), label: c.name }))
-  const cat2Options    = cat2List.map(c => ({ value: String(c.id), label: c.name }))
+
+  const cat1Fallback = form.category_id && !cat1List.find(c => String(c.id) === form.category_id)
+    ? categories.find(c => String(c.id) === form.category_id)
+    : null
+  const cat2Fallback = form.subcategory_id && !cat2List.find(c => String(c.id) === form.subcategory_id)
+    ? categories.find(c => String(c.id) === form.subcategory_id)
+    : null
+  const cat1Options = [
+    ...cat1List.map(c => ({ value: String(c.id), label: c.name })),
+    ...(cat1Fallback ? [{ value: String(cat1Fallback.id), label: cat1Fallback.name }] : []),
+  ]
+  const cat2Options = [
+    ...cat2List.map(c => ({ value: String(c.id), label: c.name })),
+    ...(cat2Fallback ? [{ value: String(cat2Fallback.id), label: cat2Fallback.name }] : []),
+  ]
 
   // isBacklog = フォームにbacklog_issue_keyがある状態
   const hasBacklog = !!form.backlog_issue_key

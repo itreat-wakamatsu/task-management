@@ -51,6 +51,32 @@ export async function fetchTodayEvents(accessToken, date = new Date()) {
   return (data.items || []).map(normalizeEvent)
 }
 
+/** 指定期間のイベントを取得 */
+export async function fetchEventsRange(accessToken, dateFrom, dateTo) {
+  const timeMin = toJSTBoundary(dateFrom, false)
+  const timeMax = toJSTBoundary(dateTo, true)
+  const params = new URLSearchParams({
+    calendarId:   'primary',
+    timeMin,
+    timeMax,
+    singleEvents: 'true',
+    orderBy:      'startTime',
+    maxResults:   '200',
+    timeZone:     'Asia/Tokyo',
+    fields:       'items(id,summary,start,end,htmlLink,organizer,attendees,guestsCanModify)',
+  })
+  const res = await fetch(
+    `${CALENDAR_API}/calendars/primary/events?${params}`,
+    { headers: authHeader(accessToken) }
+  )
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(`Google Calendar API error: ${err.error?.message}`)
+  }
+  const data = await res.json()
+  return (data.items || []).map(normalizeEvent)
+}
+
 /** 新しいイベントを作成 */
 export async function createCalendarEvent(accessToken, eventData) {
   const res = await fetch(

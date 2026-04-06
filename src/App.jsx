@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useStore } from '@/store/useStore'
+import { setColorUserId } from '@/lib/clientColor'
 import LoginPage       from '@/components/Auth/LoginPage'
 import AppLayout       from '@/components/Layout/AppLayout'
 import BacklogCallback from '@/components/Backlog/BacklogCallback'
@@ -13,11 +14,13 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
+      if (data.session?.user?.id) setColorUserId(data.session.user.id)
       setSessionLoaded(true)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess)
+      if (sess?.user?.id) setColorUserId(sess.user.id)
     })
     return () => subscription.unsubscribe()
   }, [setSession])

@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
 import { useStore } from '@/store/useStore'
-import { getClientColor } from '@/lib/clientColor'
+import { getClientColor, saveClientColor } from '@/lib/clientColor'
 import styles from './ClientColorPicker.module.css'
 
 const SWATCHES = [
@@ -18,8 +17,8 @@ const SWATCHES = [
  */
 export default function ClientColorPicker({ client, onClose, style }) {
   const updateClient = useStore(s => s.updateClient)
-  const [hex, setHex]       = useState(getClientColor(client) || '#6366f1')
-  const [saving, setSaving] = useState(false)
+  const session      = useStore(s => s.session)
+  const [hex, setHex] = useState(getClientColor(client) || '#6366f1')
   const ref = useRef(null)
 
   // 外クリック（mousedown）で閉じる
@@ -32,12 +31,10 @@ export default function ClientColorPicker({ client, onClose, style }) {
     return () => document.removeEventListener('mousedown', handler, true)
   }, [onClose])
 
-  async function handleSave() {
+  function handleSave() {
     if (!hex.match(/^#[0-9a-fA-F]{6}$/)) return
-    setSaving(true)
-    await supabase.from('clients').update({ color: hex }).eq('id', client.id)
+    if (session?.user?.id) saveClientColor(session.user.id, client.id, hex)
     updateClient(client.id, { color: hex })
-    setSaving(false)
     onClose()
   }
 
@@ -73,8 +70,8 @@ export default function ClientColorPicker({ client, onClose, style }) {
       </div>
       <div className={styles.footer}>
         <button className={styles.btnCancel} onClick={onClose}>キャンセル</button>
-        <button className={styles.btnSave} onClick={handleSave} disabled={saving}>
-          {saving ? '保存中…' : '保存'}
+        <button className={styles.btnSave} onClick={handleSave}>
+          保存
         </button>
       </div>
     </div>

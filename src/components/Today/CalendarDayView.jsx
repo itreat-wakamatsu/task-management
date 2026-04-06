@@ -274,13 +274,24 @@ export default function CalendarDayView({
 
             const client   = clients.find(c => c.id === ev.task?.client_id)
             const clColor  = getClientColor(client)
-            const clBg     = clColor ? hexToRgba(clColor, isDone ? 0.08 : 0.14) : null
+            const isPaused = ev.status === 'paused'
 
-            const statusCls = clColor ? ''
-              : isDone              ? styles.eventDone
-              : isActive            ? styles.eventActive
-              : perm === 'readonly' ? styles.eventReadonly
-              : styles.eventDefault
+            // Background and status class logic
+            let evBg
+            let statusCls
+            if (isDone) {
+              evBg = 'var(--color-bg-secondary)'
+              statusCls = styles.eventDoneStyle
+            } else if (isActive && !isPaused) {
+              evBg = clColor ? hexToRgba(clColor, 0.25) : null
+              statusCls = clColor ? '' : styles.eventActive
+            } else {
+              const clBgOther = clColor ? hexToRgba(clColor, 0.14) : null
+              evBg = clBgOther || null
+              statusCls = clColor ? ''
+                : perm === 'readonly' ? styles.eventReadonly
+                : styles.eventDefault
+            }
 
             const statusBadgeLabel = isDone ? '完了'
               : isActive && ev.status === 'paused' ? '中断'
@@ -303,7 +314,7 @@ export default function CalendarDayView({
                   left:  `calc(${colLeft}% + 56px)`,
                   width: `calc(${colW}% - 60px)`,
                   borderLeftColor: clColor || undefined,
-                  ...(clBg ? { background: clBg } : {}),
+                  ...(evBg ? { background: evBg } : {}),
                 }}
                 onMouseDown={ev.canEdit !== false ? (e) => {
                   if (e.target.closest('[data-resize]')) return
