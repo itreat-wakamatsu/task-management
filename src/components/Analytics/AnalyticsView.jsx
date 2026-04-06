@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
+import { getClientColor } from '@/lib/clientColor'
 import FeedbackCard from '@/components/shared/FeedbackCard'
 import SearchableSelect from '@/components/shared/SearchableSelect'
 import styles from './AnalyticsView.module.css'
@@ -297,7 +298,7 @@ function TaskTab({ records, netM, planM, appTasks, clients, projects }) {
               actual={actual}
               sessions={sessions}
               chips={[
-                cl && { label: cl.display_name || cl.name, color: cl.color },
+                cl && { label: cl.display_name || cl.name, color: getClientColor(cl) },
                 pj && { label: pj.name, color: '#888' },
                 task.is_recurring && { label: '定期', color: '#085041' },
               ].filter(Boolean)}
@@ -360,7 +361,7 @@ function ProjectTab({ records, netM, planM, appTasks, clients, projects }) {
               actual={actual}
               sessions={sessions}
               chips={[
-                cl && { label: cl.display_name || cl.name, color: cl.color },
+                cl && { label: cl.display_name || cl.name, color: getClientColor(cl) },
               ].filter(Boolean)}
             />
           )

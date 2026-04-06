@@ -12,23 +12,24 @@ const SWATCHES = [
 ]
 
 /**
- * @param {object} client  - クライアントオブジェクト
- * @param {Function} onClose - 閉じる
- * @param {object} anchorRef - ポップオーバーの基準要素
+ * @param {object}   client   - クライアントオブジェクト
+ * @param {Function} onClose  - 閉じるコールバック
+ * @param {object}   style    - position: fixed 用のスタイル上書き（top/left など）
  */
-export default function ClientColorPicker({ client, onClose }) {
+export default function ClientColorPicker({ client, onClose, style }) {
   const updateClient = useStore(s => s.updateClient)
-  const [hex, setHex]     = useState(getClientColor(client) || '#6366f1')
+  const [hex, setHex]       = useState(getClientColor(client) || '#6366f1')
   const [saving, setSaving] = useState(false)
   const ref = useRef(null)
 
-  // 外クリックで閉じる
+  // 外クリック（mousedown）で閉じる
   useEffect(() => {
     function handler(e) {
       if (ref.current && !ref.current.contains(e.target)) onClose()
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    // capture:true で先に判定し、イベントブロックの mousedown より前に評価
+    document.addEventListener('mousedown', handler, true)
+    return () => document.removeEventListener('mousedown', handler, true)
   }, [onClose])
 
   async function handleSave() {
@@ -41,7 +42,14 @@ export default function ClientColorPicker({ client, onClose }) {
   }
 
   return (
-    <div className={styles.picker} ref={ref}>
+    <div
+      className={styles.picker}
+      ref={ref}
+      style={style}
+      // ピッカー内のクリック・マウスダウンが親要素に伝播しないようにする
+      onClick={e => e.stopPropagation()}
+      onMouseDown={e => e.stopPropagation()}
+    >
       <div className={styles.title}>{client.display_name || client.name}</div>
       <div className={styles.swatches}>
         {SWATCHES.map(c => (

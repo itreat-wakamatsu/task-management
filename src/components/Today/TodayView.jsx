@@ -363,6 +363,31 @@ export default function TodayView() {
     }
   }
 
+  // ── 予定通り完了（計画終了時刻を実績終了時刻として記録） ──
+  const handleOnTime = useCallback(async (eventId) => {
+    const ev = todayEvents.find(e => e.id === eventId)
+    if (!ev) return
+
+    const endTime = ev.plannedEnd instanceof Date ? ev.plannedEnd : new Date(ev.plannedEnd)
+    const pauseLog = isPaused
+      ? (ev.pauseLog || []).map((p, i) =>
+          i === ev.pauseLog.length - 1 ? { ...p, e: endTime.toISOString() } : p
+        )
+      : ev.pauseLog
+
+    setActiveEventId(null)
+    setIsPaused(false)
+    setPausedAt(null)
+    updateEvent(eventId, { status: 'done', actualEnd: endTime, pauseLog })
+
+    if (ev.detailId) {
+      await supabase
+        .from('app_record_details')
+        .update({ actual_end: endTime.toISOString(), pause_log: pauseLog, override_elapsed_ms: ev.overrideElapsedMs })
+        .eq('id', ev.detailId)
+    }
+  }, [todayEvents, isPaused])
+
   // ── カレンダービューから新規タスク作成 ──
   async function handleCreateFromCalendar(taskData) {
     const token = session?.provider_token
@@ -546,6 +571,7 @@ export default function TodayView() {
                 onStart={() => handleStart(ev.id)}
                 onEnd={() => handleEnd(ev.id)}
                 onUndo={() => handleUndo(ev.id)}
+                onOnTime={() => handleOnTime(ev.id)}
                 onResume={() => setResumeTarget(ev)}
                 onOpenLink={() => setLinkTarget(ev)}
                 onHide={toggleHide}

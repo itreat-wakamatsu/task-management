@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { sortByRecent } from '@/lib/recentClients'
+import { getClientColor } from '@/lib/clientColor'
 import TaskEditModal from './TaskEditModal'
 import BacklogBadge  from '@/components/Backlog/BacklogBadge'
 import SearchableSelect from '@/components/shared/SearchableSelect'
@@ -209,11 +210,11 @@ export default function TaskManagerView({ onAddToToday }) {
                     </div>
                   </td>
                   <td>
-                    {cl && (
-                      <span className={styles.clientChip} style={{ background: `${cl.color}18`, color: cl.color }}>
+                    {cl && (() => { const cc = getClientColor(cl); return (
+                      <span className={styles.clientChip} style={{ background: `${cc}18`, color: cc }}>
                         {cl.display_name || cl.name}
                       </span>
-                    )}
+                    )})()}
                   </td>
                   <td className={styles.tdSub}>{pj?.name || '–'}</td>
                   <td className={styles.tdSub}>{c1?.name || '–'}</td>

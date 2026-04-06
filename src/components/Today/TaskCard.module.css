@@ -230,3 +230,16 @@
   font-family: inherit;
 }
 .btnUndo:hover { background: var(--color-bg-secondary); }
+
+.btnOnTime {
+  font-size: 0.6875rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+}
+.btnOnTime:hover { background: #d1fae5; }

@@ -49,7 +49,7 @@ function PermIcon({ type }) {
 }
 
 export default function TaskCard({
-  event, isActive, isPaused, onStart, onEnd, onUndo, onResume, onOpenLink,
+  event, isActive, isPaused, onStart, onEnd, onUndo, onResume, onOnTime, onOpenLink,
   onHide, isHidden, onTimeChange, onOpenDetail,
 }) {
   const clients  = useStore(s => s.clients)
@@ -181,6 +181,9 @@ export default function TaskCard({
             )}
             {!isActive && event.status !== 'done' && (
               <button className={styles.btnStart} onClick={onStart}>開始</button>
+            )}
+            {isActive && !isPaused && onOnTime && (
+              <button className={styles.btnOnTime} onClick={onOnTime} title="計画終了時刻で完了">予定通り</button>
             )}
             {event.status === 'done' && (
               <>
