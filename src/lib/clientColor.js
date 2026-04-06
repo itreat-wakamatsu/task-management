@@ -1,33 +1,39 @@
 /**
  * クライアントカラーユーティリティ
- * DB の clients.color が未設定（デフォルト '#378ADD'）の場合、ID から決定論的に色を割り当てる
+ * ユーザーごとに localStorage に保存した色を優先し、なければ決定論的パレットを使用
  */
 
 const PALETTE = [
-  '#6366f1', // indigo
-  '#f59e0b', // amber
-  '#10b981', // emerald
-  '#ef4444', // red
-  '#8b5cf6', // violet
-  '#14b8a6', // teal
-  '#f97316', // orange
-  '#06b6d4', // cyan
-  '#84cc16', // lime
-  '#ec4899', // pink
-  '#3b82f6', // blue
-  '#a855f7', // purple
+  '#6366f1', '#f59e0b', '#10b981', '#ef4444',
+  '#8b5cf6', '#14b8a6', '#f97316', '#06b6d4',
+  '#84cc16', '#ec4899', '#3b82f6', '#a855f7',
 ]
 
 const DEFAULT_DB_COLOR = '#378ADD'
 
+// ログイン中のユーザーID（App.jsx から setColorUserId で設定）
+let _userId = null
+export function setColorUserId(userId) { _userId = userId }
+
 /**
  * クライアントの表示色を返す
- * DB に独自色がある場合はそれを優先、なければパレットから割り当て
+ * 優先順: localStorage(ユーザー別) > DBの独自色 > パレット
  */
 export function getClientColor(client) {
   if (!client) return null
+  if (_userId) {
+    const stored = localStorage.getItem(`cc_${_userId}_${client.id}`)
+    if (stored) return stored
+  }
   if (client.color && client.color !== DEFAULT_DB_COLOR) return client.color
   return PALETTE[client.id % PALETTE.length]
+}
+
+/**
+ * クライアントの色を localStorage に保存（ユーザー別）
+ */
+export function saveClientColor(userId, clientId, hex) {
+  localStorage.setItem(`cc_${userId}_${clientId}`, hex)
 }
 
 /**

@@ -92,13 +92,20 @@
   box-shadow: 0 0 0 2px rgba(239, 159, 39, 0.25);
 }
 .eventDone {
-  background: var(--color-green-bg);
-  border-top-color: rgba(72, 187, 120, 0.3);
-  border-right-color: rgba(72, 187, 120, 0.3);
-  border-bottom-color: rgba(72, 187, 120, 0.3);
-  border-left-color: #48BB78;
-  opacity: 0.75;
+  background: var(--color-bg-secondary);
+  border-top-color: var(--color-border);
+  border-right-color: var(--color-border);
+  border-bottom-color: var(--color-border);
+  border-left-color: var(--color-border-medium);
 }
+.eventDoneStyle {
+  background: var(--color-bg-secondary);
+  border-top-color: var(--color-border);
+  border-right-color: var(--color-border);
+  border-bottom-color: var(--color-border);
+  border-left-color: var(--color-border-medium);
+}
+.eventDoneStyle .eventInner { opacity: 0.6; }
 .eventReadonly {
   cursor: default;
   background: var(--color-bg-secondary);

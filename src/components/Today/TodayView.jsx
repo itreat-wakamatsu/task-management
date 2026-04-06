@@ -8,6 +8,7 @@ import TimerHero        from '@/components/Timer/TimerHero'
 import TimerControls    from '@/components/Timer/TimerControls'
 import TaskCard         from './TaskCard'
 import CalendarDayView  from './CalendarDayView'
+import WeeklyView       from './WeeklyView'
 import EventDetailPopup from './EventDetailPopup'
 import LinkModal        from '@/components/Modals/LinkModal'
 import TaskEditModal    from '@/components/TaskManager/TaskEditModal'
@@ -53,19 +54,18 @@ export default function TodayView() {
   const [resumeTarget,  setResumeTarget]  = useState(null)  // 再開ダイアログ対象イベント
   const [createSlot,    setCreateSlot]    = useState(null)  // カレンダービューから新規作成 { start, end }
 
+  const mergedOnceRef = useRef(false)
   useEffect(() => {
+    mergedOnceRef.current = false
     loadToday()
   }, [devDate?.toDateString()])
 
-  // appTasksが後から読み込まれた場合（初回ロード時の競合）に再マージ
-  const prevAppTasksLenRef = useRef(0)
   useEffect(() => {
-    const prev = prevAppTasksLenRef.current
-    prevAppTasksLenRef.current = appTasks.length
-    if (prev === 0 && appTasks.length > 0 && rawCalEvents.length > 0) {
+    if (!mergedOnceRef.current && appTasks.length > 0 && rawCalEvents.length > 0) {
+      mergedOnceRef.current = true
       loadToday(false)
     }
-  }, [appTasks.length])
+  }, [appTasks.length, rawCalEvents.length])
 
   async function fetchCalEvents(forceRefresh = false) {
     const token = session?.provider_token
@@ -559,6 +559,10 @@ export default function TodayView() {
               className={`${styles.viewBtn} ${viewMode === 'calendar' ? styles.viewBtnActive : ''}`}
               onClick={() => setViewMode('calendar')}
             >カレンダー</button>
+            <button
+              className={`${styles.viewBtn} ${viewMode === 'weekly' ? styles.viewBtnActive : ''}`}
+              onClick={() => setViewMode('weekly')}
+            >週間</button>
           </div>
         </div>
       </div>
@@ -593,6 +597,11 @@ export default function TodayView() {
             ))
           }
         </div>
+      )}
+
+      {/* 週間ビュー */}
+      {viewMode === 'weekly' && (
+        <WeeklyView onOpenDetail={setDetailTarget} />
       )}
 
       {/* カレンダービュー */}

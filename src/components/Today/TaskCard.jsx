@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useStore } from '@/store/useStore'
 import { getDisplayElapsed, formatDuration } from '@/hooks/useTimer'
 import { getClientColor, hexToRgba } from '@/lib/clientColor'
@@ -54,13 +54,14 @@ export default function TaskCard({
 }) {
   const clients  = useStore(s => s.clients)
   const client   = clients.find(c => c.id === event.task?.client_id)
-  const clColor  = getClientColor(client) || 'var(--color-border)'
+  const clColor  = getClientColor(client) || null
   const clBg     = client ? hexToRgba(getClientColor(client), 0.1) : null
 
-  const [editingTime,      setEditingTime]      = useState(false)
-  const [editStart,        setEditStart]        = useState('')
-  const [editEnd,          setEditEnd]          = useState('')
-  const [showColorPicker,  setShowColorPicker]  = useState(false)
+  const [editingTime,    setEditingTime]    = useState(false)
+  const [editStart,      setEditStart]      = useState('')
+  const [editEnd,        setEditEnd]        = useState('')
+  const [colorPickerPos, setColorPickerPos] = useState(null)
+  const colorBtnRef = useRef(null)
 
   const statusLabel = isActive
     ? (isPaused ? '一時停止中' : '進行中')
@@ -103,12 +104,38 @@ export default function TaskCard({
     setEditingTime(false)
   }
 
+  function openClientColorPicker() {
+    if (!colorBtnRef.current) return
+    const rect = colorBtnRef.current.getBoundingClientRect()
+    const pickerW = 208
+    let left = rect.left
+    if (left + pickerW > window.innerWidth - 8) left = window.innerWidth - pickerW - 8
+    setColorPickerPos({ top: rect.bottom + 4, left })
+  }
+
   const permType = event.permissionType
+
+  // Card background logic
+  const isDone = event.status === 'done'
+
+  let cardBg
+  if (isDone) {
+    cardBg = 'var(--color-bg-secondary)'
+  } else if (isActive && !isPaused) {
+    cardBg = clColor ? hexToRgba(clColor, 0.22) : 'var(--color-amber-bg)'
+  } else {
+    cardBg = clBg || undefined
+  }
+
+  const cardBorderColor = (isActive && !isDone) ? (clColor || '#EF9F27') : undefined
 
   return (
     <div
-      className={`${styles.card} ${isActive ? styles.active : ''} ${event.status === 'done' ? styles.done : ''} ${isHidden ? styles.hidden : ''}`}
-      style={clBg ? { background: clBg } : undefined}
+      className={`${styles.card} ${isActive ? styles.active : ''} ${isDone ? styles.done : ''} ${isHidden ? styles.hidden : ''}`}
+      style={{
+        ...(cardBg ? { background: cardBg } : {}),
+        ...(cardBorderColor ? { borderColor: cardBorderColor, borderWidth: '1.5px' } : {}),
+      }}
     >
       <div className={styles.accent} style={{ background: clColor }} />
       <div className={styles.body}>
@@ -155,17 +182,19 @@ export default function TaskCard({
             {client && (
               <div className={styles.clientChipWrap}>
                 <button
+                  ref={colorBtnRef}
                   className={styles.clientChip}
-                  style={{ background: `${clColor}18`, color: clColor }}
-                  onClick={() => setShowColorPicker(v => !v)}
+                  style={{ background: clColor ? `${clColor}18` : undefined, color: clColor || undefined }}
+                  onClick={openClientColorPicker}
                   title="色を変更"
                 >
                   {client.display_name || client.name}
                 </button>
-                {showColorPicker && (
+                {colorPickerPos && (
                   <ClientColorPicker
                     client={client}
-                    onClose={() => setShowColorPicker(false)}
+                    onClose={() => setColorPickerPos(null)}
+                    style={{ position: 'fixed', top: colorPickerPos.top, left: colorPickerPos.left }}
                   />
                 )}
               </div>
