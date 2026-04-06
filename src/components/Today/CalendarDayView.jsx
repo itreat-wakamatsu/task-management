@@ -326,6 +326,18 @@ export default function CalendarDayView({
                     {isCompact && (
                       <span className={styles.eventTitleInline}>{ev.calendarEventTitle}</span>
                     )}
+                    {isCompact && client && (
+                      <button
+                        className={styles.eventClientInline}
+                        style={{ color: clColor || undefined }}
+                        data-action="true"
+                        onMouseDown={e => e.stopPropagation()}
+                        onClick={e => openColorPicker(e, ev, client)}
+                        title="色を変更"
+                      >
+                        {client.display_name || client.name}
+                      </button>
+                    )}
                     {isCompact && statusBadgeLabel && (
                       <span className={`${styles.statusBadge} ${isDone ? styles.badgeDone : isActive ? styles.badgeRun : ''}`}>
                         {statusBadgeLabel}

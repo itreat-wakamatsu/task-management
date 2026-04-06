@@ -145,6 +145,23 @@
   opacity: 0.85;
 }
 
+.eventClientInline {
+  font-size: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 56px;
+}
+.eventClientInline:hover { opacity: 1; text-decoration: underline; }
+
 /* アクションボタン */
 .eventActions {
   position: absolute;
