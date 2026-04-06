@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useStore } from '@/store/useStore'
 import { fetchTodayEvents, updateCalendarEvent } from '@/lib/googleCalendar'
 import { autoLink } from '@/lib/autoLink'
@@ -31,13 +31,15 @@ export default function TodayView() {
   const {
     session, todayEvents, setTodayEvents, activeEventId, setActiveEventId,
     isPaused, setIsPaused, setPausedAt, pausedAt, appTasks, updateEvent,
-    devDate, rawCalEvents, rawCalDate, setRawCalEvents,
+    devDate, rawCalEvents, rawCalDate, setRawCalEvents, addAppTask,
   } = useStore()
 
   const targetDate = devDate ?? new Date()
-  const todayStr   = targetDate.toISOString().slice(0, 10)
+  // UTC変換を避けてローカル日付文字列を生成
+  const todayStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`
 
   const [loading,      setLoading]      = useState(true)
+  const [authError,    setAuthError]    = useState(false)
   const [linkTarget,   setLinkTarget]   = useState(null)
   const [todayRecord,  setTodayRecord]  = useState(null)
   const [viewMode,     setViewMode]     = useState('list')
@@ -48,10 +50,22 @@ export default function TodayView() {
   const [editTask,      setEditTask]      = useState(null)
   const [editEventId,   setEditEventId]   = useState(null)
   const [showReport,    setShowReport]    = useState(false)
+  const [resumeTarget,  setResumeTarget]  = useState(null)  // 再開ダイアログ対象イベント
+  const [createSlot,    setCreateSlot]    = useState(null)  // カレンダービューから新規作成 { start, end }
 
   useEffect(() => {
     loadToday()
   }, [devDate?.toDateString()])
+
+  // appTasksが後から読み込まれた場合（初回ロード時の競合）に再マージ
+  const prevAppTasksLenRef = useRef(0)
+  useEffect(() => {
+    const prev = prevAppTasksLenRef.current
+    prevAppTasksLenRef.current = appTasks.length
+    if (prev === 0 && appTasks.length > 0 && rawCalEvents.length > 0 && !loading) {
+      loadToday(false)
+    }
+  }, [appTasks.length])
 
   async function fetchCalEvents(forceRefresh = false) {
     const token = session?.provider_token
@@ -126,10 +140,23 @@ export default function TodayView() {
 
       setTodayEvents(merged)
 
+      // 実行中タスクを復元（中断状態も含む）
       const running = merged.find(e => e.status === 'running')
-      if (running) setActiveEventId(running.id)
+      if (running) {
+        setActiveEventId(running.id)
+        // pauseLogの最後エントリがe:nullなら中断状態として復元
+        const lastPause = running.pauseLog?.at(-1)
+        if (lastPause && !lastPause.e) {
+          setIsPaused(true)
+          setPausedAt(lastPause.s)
+          updateEvent(running.id, { status: 'paused' })
+        }
+      }
     } catch (err) {
       console.error('今日のデータ読み込みエラー:', err)
+      if (err.message === 'GOOGLE_AUTH_EXPIRED') {
+        setAuthError(true)
+      }
     } finally {
       setLoading(false)
     }
@@ -259,6 +286,70 @@ export default function TodayView() {
     }
   }, [todayEvents, isPaused])
 
+  // ── 再開 ──
+  // mode: 'continue' → 既存経過時間の続きから / 'fresh' → 0から新規
+  const handleResume = useCallback(async (eventId, mode) => {
+    if (activeEventId && activeEventId !== eventId) {
+      await handleEnd(activeEventId)
+    }
+    const ev = todayEvents.find(e => e.id === eventId)
+    if (!ev || !todayRecord) return
+
+    const now = new Date()
+
+    let newActualStart
+    if (mode === 'continue') {
+      // 既存の正味経過時間を計算して actualStart を逆算
+      let alreadyMs = 0
+      if (ev.overrideElapsedMs != null) {
+        alreadyMs = ev.overrideElapsedMs
+      } else if (ev.actualStart && ev.actualEnd) {
+        const pausedMs = (ev.pauseLog || []).reduce((acc, p) => {
+          if (p.s && p.e) return acc + (new Date(p.e) - new Date(p.s))
+          return acc
+        }, 0)
+        alreadyMs = Math.max(0, ev.actualEnd - ev.actualStart - pausedMs)
+      }
+      newActualStart = new Date(now.getTime() - alreadyMs)
+    } else {
+      // fresh: 0から新規
+      newActualStart = now
+    }
+
+    setActiveEventId(eventId)
+    setIsPaused(false)
+    setPausedAt(null)
+    updateEvent(eventId, {
+      status: 'running', actualStart: newActualStart, actualEnd: null,
+      pauseLog: [], overrideElapsedMs: null,
+    })
+
+    if (ev.detailId) {
+      await supabase.from('app_record_details')
+        .update({
+          actual_start: newActualStart.toISOString(), actual_end: null,
+          pause_log: [], override_elapsed_ms: null,
+        })
+        .eq('id', ev.detailId)
+    } else {
+      const { data } = await supabase.from('app_record_details')
+        .insert({
+          record_id:            todayRecord.id,
+          task_id:              ev.taskId,
+          calendar_event_id:    ev.calendarEventId,
+          calendar_event_title: ev.calendarEventTitle,
+          planned_start:        ev.plannedStart?.toISOString(),
+          planned_end:          ev.plannedEnd?.toISOString(),
+          actual_start:         newActualStart.toISOString(),
+          pause_log:            [],
+        })
+        .select().single()
+      if (data) updateEvent(eventId, { detailId: data.id })
+    }
+
+    setResumeTarget(null)
+  }, [activeEventId, todayEvents, todayRecord, isPaused])
+
   // ── 取消 ──
   async function handleUndo(eventId) {
     const ev = todayEvents.find(e => e.id === eventId)
@@ -269,6 +360,90 @@ export default function TodayView() {
         .from('app_record_details')
         .update({ actual_start: null, actual_end: null, pause_log: [] })
         .eq('id', ev.detailId)
+    }
+  }
+
+  // ── 予定通り完了（計画終了時刻を実績終了時刻として記録） ──
+  const handleOnTime = useCallback(async (eventId) => {
+    const ev = todayEvents.find(e => e.id === eventId)
+    if (!ev) return
+
+    const endTime = ev.plannedEnd instanceof Date ? ev.plannedEnd : new Date(ev.plannedEnd)
+    const pauseLog = isPaused
+      ? (ev.pauseLog || []).map((p, i) =>
+          i === ev.pauseLog.length - 1 ? { ...p, e: endTime.toISOString() } : p
+        )
+      : ev.pauseLog
+
+    setActiveEventId(null)
+    setIsPaused(false)
+    setPausedAt(null)
+    updateEvent(eventId, { status: 'done', actualEnd: endTime, pauseLog })
+
+    if (ev.detailId) {
+      await supabase
+        .from('app_record_details')
+        .update({ actual_end: endTime.toISOString(), pause_log: pauseLog, override_elapsed_ms: ev.overrideElapsedMs })
+        .eq('id', ev.detailId)
+    }
+  }, [todayEvents, isPaused])
+
+  // ── カレンダービューから新規タスク作成 ──
+  async function handleCreateFromCalendar(taskData) {
+    const token = session?.provider_token
+    const slot  = createSlot
+    setCreateSlot(null)
+
+    try {
+      // 1. app_tasks に作成
+      const { data: newTask } = await supabase
+        .from('app_tasks')
+        .insert({ ...taskData, user_id: session.user.id })
+        .select()
+        .single()
+      if (newTask) addAppTask(newTask)
+
+      // 2. Google Calendar にイベント作成
+      if (token && slot) {
+        const newEv = await createCalendarEvent(token, {
+          summary: taskData.title,
+          start:   { dateTime: slot.start.toISOString(), timeZone: 'Asia/Tokyo' },
+          end:     { dateTime: slot.end.toISOString(),   timeZone: 'Asia/Tokyo' },
+        })
+
+        // 3. rawCalEventsに追加してTodayViewを再同期
+        const todayStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth()+1).padStart(2,'0')}-${String(targetDate.getDate()).padStart(2,'0')}`
+        const updatedRaw = [...rawCalEvents, newEv]
+        setRawCalEvents(updatedRaw, rawCalDate || todayStr)
+
+        // 4. todayEventsにマージ
+        const mergedEv = {
+          id:                  newEv.calendarEventId,
+          calendarEventId:     newEv.calendarEventId,
+          calendarEventTitle:  newEv.calendarEventTitle,
+          plannedStart:        newEv.plannedStart,
+          plannedEnd:          newEv.plannedEnd,
+          isAllDay:            false,
+          permissionType:      newEv.permissionType,
+          otherAttendees:      newEv.otherAttendees,
+          canEdit:             newEv.canEdit,
+          detailId:            null,
+          taskId:              newTask?.id || null,
+          autoLinked:          false,
+          actualStart:         null,
+          actualEnd:           null,
+          pauseLog:            [],
+          overrideElapsedMs:   null,
+          status:              'pending',
+          task:                newTask || null,
+        }
+        setTodayEvents([...todayEvents, mergedEv].sort(
+          (a, b) => new Date(a.plannedStart) - new Date(b.plannedStart)
+        ))
+      }
+    } catch (err) {
+      console.error('カレンダー新規作成エラー:', err)
+      alert('作成に失敗しました')
     }
   }
 
@@ -304,6 +479,25 @@ export default function TodayView() {
 
   if (loading) {
     return <div className={styles.loading}>カレンダーを読み込んでいます...</div>
+  }
+
+  if (authError) {
+    return (
+      <div className={styles.authError}>
+        <p className={styles.authErrorMsg}>
+          Google カレンダーへのアクセストークンの有効期限が切れています。
+        </p>
+        <p className={styles.authErrorSub}>
+          一度ログアウトして再ログインすると解決します。
+        </p>
+        <button
+          className={styles.authErrorBtn}
+          onClick={async () => { await supabase.auth.signOut() }}
+        >
+          ログアウトして再ログイン
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -377,6 +571,8 @@ export default function TodayView() {
                 onStart={() => handleStart(ev.id)}
                 onEnd={() => handleEnd(ev.id)}
                 onUndo={() => handleUndo(ev.id)}
+                onOnTime={() => handleOnTime(ev.id)}
+                onResume={() => setResumeTarget(ev)}
                 onOpenLink={() => setLinkTarget(ev)}
                 onHide={toggleHide}
                 isHidden={hiddenIds.has(ev.id)}
@@ -400,7 +596,44 @@ export default function TodayView() {
           onTimeChange={handleTimeChange}
           onHide={toggleHide}
           onOpenDetail={setDetailTarget}
+          onCreateAt={(start, end) => setCreateSlot({ start, end })}
         />
+      )}
+
+      {/* カレンダービューからの新規タスク作成 */}
+      {createSlot && (
+        <TaskEditModal
+          task={null}
+          onSave={handleCreateFromCalendar}
+          onClose={() => setCreateSlot(null)}
+        />
+      )}
+
+      {/* 再開ダイアログ */}
+      {resumeTarget && (
+        <div className={styles.resumeOverlay} onClick={() => setResumeTarget(null)}>
+          <div className={styles.resumeDialog} onClick={e => e.stopPropagation()}>
+            <div className={styles.resumeTitle}>「{resumeTarget.calendarEventTitle}」を再開</div>
+            <p className={styles.resumeDesc}>どこから計測を開始しますか？</p>
+            <div className={styles.resumeActions}>
+              <button
+                className={styles.resumeBtnContinue}
+                onClick={() => handleResume(resumeTarget.id, 'continue')}
+              >
+                <span className={styles.resumeBtnLabel}>使用済みの工数から継続</span>
+                <span className={styles.resumeBtnHint}>既存の経過時間に加算して計測</span>
+              </button>
+              <button
+                className={styles.resumeBtnFresh}
+                onClick={() => handleResume(resumeTarget.id, 'fresh')}
+              >
+                <span className={styles.resumeBtnLabel}>次の工数から開始</span>
+                <span className={styles.resumeBtnHint}>0からリセットして新規計測</span>
+              </button>
+            </div>
+            <button className={styles.resumeCancel} onClick={() => setResumeTarget(null)}>キャンセル</button>
+          </div>
+        </div>
       )}
 
       {linkTarget && (
