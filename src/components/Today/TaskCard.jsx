@@ -47,7 +47,7 @@ function PermIcon({ type }) {
 }
 
 export default function TaskCard({
-  event, isActive, isPaused, onStart, onEnd, onUndo, onOpenLink,
+  event, isActive, isPaused, onStart, onEnd, onUndo, onResume, onOpenLink,
   onHide, isHidden, onTimeChange, onOpenDetail,
 }) {
   const clients  = useStore(s => s.clients)
@@ -163,7 +163,10 @@ export default function TaskCard({
               <button className={styles.btnStart} onClick={onStart}>開始</button>
             )}
             {event.status === 'done' && (
-              <button className={styles.btnUndo} onClick={onUndo}>取消</button>
+              <>
+                <button className={styles.btnResume} onClick={onResume}>再開</button>
+                <button className={styles.btnUndo}   onClick={onUndo}>取消</button>
+              </>
             )}
           </div>
         </div>

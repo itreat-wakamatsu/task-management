@@ -81,3 +81,99 @@
 
 .list { display: flex; flex-direction: column; gap: 6px; }
 .empty { text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 0.875rem; }
+
+/* ── 再開ダイアログ ── */
+.resumeOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.resumeDialog {
+  background: var(--color-bg-primary);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 380px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resumeTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.45;
+}
+
+.resumeDesc {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.resumeActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resumeBtnContinue,
+.resumeBtnFresh {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.resumeBtnContinue {
+  border: 1.5px solid #6366f1;
+  background: #eef2ff;
+}
+.resumeBtnContinue:hover { background: #e0e7ff; }
+
+.resumeBtnFresh {
+  border: 1.5px solid var(--color-border-medium);
+  background: var(--color-bg-secondary);
+}
+.resumeBtnFresh:hover { background: var(--color-bg-tertiary, #ebebeb); }
+
+.resumeBtnLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.resumeBtnContinue .resumeBtnLabel { color: #4338ca; }
+
+.resumeBtnHint {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+}
+.resumeBtnContinue .resumeBtnHint { color: #6366f1; }
+
+.resumeCancel {
+  align-self: center;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 12px;
+  font-family: inherit;
+  border-radius: 6px;
+}
+.resumeCancel:hover { background: var(--color-bg-secondary); }

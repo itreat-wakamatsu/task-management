@@ -49,6 +49,7 @@ export default function TodayView() {
   const [editTask,      setEditTask]      = useState(null)
   const [editEventId,   setEditEventId]   = useState(null)
   const [showReport,    setShowReport]    = useState(false)
+  const [resumeTarget,  setResumeTarget]  = useState(null)  // 再開ダイアログ対象イベント
 
   useEffect(() => {
     loadToday()
@@ -260,6 +261,70 @@ export default function TodayView() {
     }
   }, [todayEvents, isPaused])
 
+  // ── 再開 ──
+  // mode: 'continue' → 既存経過時間の続きから / 'fresh' → 0から新規
+  const handleResume = useCallback(async (eventId, mode) => {
+    if (activeEventId && activeEventId !== eventId) {
+      await handleEnd(activeEventId)
+    }
+    const ev = todayEvents.find(e => e.id === eventId)
+    if (!ev || !todayRecord) return
+
+    const now = new Date()
+
+    let newActualStart
+    if (mode === 'continue') {
+      // 既存の正味経過時間を計算して actualStart を逆算
+      let alreadyMs = 0
+      if (ev.overrideElapsedMs != null) {
+        alreadyMs = ev.overrideElapsedMs
+      } else if (ev.actualStart && ev.actualEnd) {
+        const pausedMs = (ev.pauseLog || []).reduce((acc, p) => {
+          if (p.s && p.e) return acc + (new Date(p.e) - new Date(p.s))
+          return acc
+        }, 0)
+        alreadyMs = Math.max(0, ev.actualEnd - ev.actualStart - pausedMs)
+      }
+      newActualStart = new Date(now.getTime() - alreadyMs)
+    } else {
+      // fresh: 0から新規
+      newActualStart = now
+    }
+
+    setActiveEventId(eventId)
+    setIsPaused(false)
+    setPausedAt(null)
+    updateEvent(eventId, {
+      status: 'running', actualStart: newActualStart, actualEnd: null,
+      pauseLog: [], overrideElapsedMs: null,
+    })
+
+    if (ev.detailId) {
+      await supabase.from('app_record_details')
+        .update({
+          actual_start: newActualStart.toISOString(), actual_end: null,
+          pause_log: [], override_elapsed_ms: null,
+        })
+        .eq('id', ev.detailId)
+    } else {
+      const { data } = await supabase.from('app_record_details')
+        .insert({
+          record_id:            todayRecord.id,
+          task_id:              ev.taskId,
+          calendar_event_id:    ev.calendarEventId,
+          calendar_event_title: ev.calendarEventTitle,
+          planned_start:        ev.plannedStart?.toISOString(),
+          planned_end:          ev.plannedEnd?.toISOString(),
+          actual_start:         newActualStart.toISOString(),
+          pause_log:            [],
+        })
+        .select().single()
+      if (data) updateEvent(eventId, { detailId: data.id })
+    }
+
+    setResumeTarget(null)
+  }, [activeEventId, todayEvents, todayRecord, isPaused])
+
   // ── 取消 ──
   async function handleUndo(eventId) {
     const ev = todayEvents.find(e => e.id === eventId)
@@ -378,6 +443,7 @@ export default function TodayView() {
                 onStart={() => handleStart(ev.id)}
                 onEnd={() => handleEnd(ev.id)}
                 onUndo={() => handleUndo(ev.id)}
+                onResume={() => setResumeTarget(ev)}
                 onOpenLink={() => setLinkTarget(ev)}
                 onHide={toggleHide}
                 isHidden={hiddenIds.has(ev.id)}
@@ -402,6 +468,33 @@ export default function TodayView() {
           onHide={toggleHide}
           onOpenDetail={setDetailTarget}
         />
+      )}
+
+      {/* 再開ダイアログ */}
+      {resumeTarget && (
+        <div className={styles.resumeOverlay} onClick={() => setResumeTarget(null)}>
+          <div className={styles.resumeDialog} onClick={e => e.stopPropagation()}>
+            <div className={styles.resumeTitle}>「{resumeTarget.calendarEventTitle}」を再開</div>
+            <p className={styles.resumeDesc}>どこから計測を開始しますか？</p>
+            <div className={styles.resumeActions}>
+              <button
+                className={styles.resumeBtnContinue}
+                onClick={() => handleResume(resumeTarget.id, 'continue')}
+              >
+                <span className={styles.resumeBtnLabel}>使用済みの工数から継続</span>
+                <span className={styles.resumeBtnHint}>既存の経過時間に加算して計測</span>
+              </button>
+              <button
+                className={styles.resumeBtnFresh}
+                onClick={() => handleResume(resumeTarget.id, 'fresh')}
+              >
+                <span className={styles.resumeBtnLabel}>次の工数から開始</span>
+                <span className={styles.resumeBtnHint}>0からリセットして新規計測</span>
+              </button>
+            </div>
+            <button className={styles.resumeCancel} onClick={() => setResumeTarget(null)}>キャンセル</button>
+          </div>
+        </div>
       )}
 
       {linkTarget && (

@@ -199,6 +199,19 @@
 }
 .btnStart:hover { background: var(--color-amber-bg-hover); }
 
+.btnResume {
+  font-size: 0.6875rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+}
+.btnResume:hover { background: #e0e7ff; }
+
 .btnUndo {
   font-size: 0.6875rem;
   padding: 4px 10px;
