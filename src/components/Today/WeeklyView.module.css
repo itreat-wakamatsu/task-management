@@ -171,11 +171,19 @@
 .eventDone .evTitle { opacity: 0.5; }
 .eventDone .evTime  { opacity: 0.5; }
 
+.evHeader {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-text-tertiary);
+  margin-bottom: 1px;
+}
 .evTime {
   font-size: 0.5rem;
   font-family: var(--font-mono);
-  color: var(--color-text-tertiary);
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 .evTitle {
   font-size: 0.5625rem;
@@ -193,6 +201,18 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.eventEditable:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.14); }
+
+.resizeHandle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: s-resize;
+  border-radius: 0 0 4px 4px;
 }
 
 .loadingOverlay {

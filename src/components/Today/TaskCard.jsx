@@ -107,10 +107,14 @@ export default function TaskCard({
   function openClientColorPicker() {
     if (!colorBtnRef.current) return
     const rect = colorBtnRef.current.getBoundingClientRect()
-    const pickerW = 208
+    const PICKER_W = 208
+    const PICKER_H = 300
     let left = rect.left
-    if (left + pickerW > window.innerWidth - 8) left = window.innerWidth - pickerW - 8
-    setColorPickerPos({ top: rect.bottom + 4, left })
+    if (left + PICKER_W > window.innerWidth - 8) left = window.innerWidth - PICKER_W - 8
+    const top = rect.bottom + 4 + PICKER_H > window.innerHeight - 8
+      ? rect.top - PICKER_H - 4
+      : rect.bottom + 4
+    setColorPickerPos({ top, left })
   }
 
   const permType = event.permissionType
