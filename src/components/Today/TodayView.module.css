@@ -276,3 +276,195 @@
   color: var(--color-text-tertiary);
   white-space: nowrap;
 }
+
+/* ── タイマー終了ダイアログ ── */
+.endDialogOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1100;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
+}
+
+.endDialog {
+  background: var(--color-bg-primary);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+}
+
+.endDialogTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.05em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.endDialogTask {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: center;
+  line-height: 1.4;
+  padding: 0 0.5rem;
+}
+
+.endDialogDesc {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.endDialogBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.endBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  border: 1.5px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+}
+.endBtn:active { transform: scale(0.985); }
+
+.endBtnIcon {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.endBtnLabel {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.endBtnHint {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+/* 完了 */
+.endBtnDone {
+  background: #F0FDF4;
+  border-color: #16A34A;
+}
+.endBtnDone:hover { background: #DCFCE7; }
+.endBtnDone .endBtnLabel { color: #15803D; }
+
+/* 保留中 */
+.endBtnHold {
+  background: #F5F3FF;
+  border-color: #7C3AED;
+}
+.endBtnHold:hover { background: #EDE9FE; }
+.endBtnHold .endBtnLabel { color: #6D28D9; }
+
+/* 進行中のまま */
+.endBtnInProgress {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-medium);
+}
+.endBtnInProgress:hover { background: var(--color-bg-tertiary, #ebebeb); }
+
+.endDialogCancel {
+  align-self: center;
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 20px;
+  font-family: inherit;
+  border-radius: 8px;
+  margin-top: 2px;
+}
+.endDialogCancel:hover { background: var(--color-bg-secondary); }
+
+/* ── タスク開始確認ダイアログ ── */
+.startConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+
+.startConfirmDialog {
+  background: var(--color-bg-primary);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 360px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 1rem;
+}
+
+.startConfirmDesc {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  text-align: center;
+}
+.startConfirmDesc strong { color: var(--color-text-primary); }
+
+.startConfirmActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.startConfirmCancel {
+  font-size: 0.875rem;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-medium);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.startConfirmCancel:hover { background: var(--color-bg-secondary); }
+
+.startConfirmOk {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: none;
+  background: #1E3A5F;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+.startConfirmOk:hover { background: #153050; }

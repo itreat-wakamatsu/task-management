@@ -26,6 +26,8 @@ export const useStore = create((set, get) => ({
   setProjects:   (projects)   => set({ projects }),
   setCategories: (categories) => set({ categories }),
   setAppTasks:   (appTasks)   => set({ appTasks }),
+  updateAppTask: (taskId, patch) =>
+    set(s => ({ appTasks: s.appTasks.map(t => t.id === taskId ? { ...t, ...patch } : t) })),
 
   // ── Today ──
   todayEvents:   [],
