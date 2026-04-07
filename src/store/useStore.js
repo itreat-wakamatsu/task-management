@@ -4,7 +4,16 @@ import { supabase } from '@/lib/supabase'
 export const useStore = create((set, get) => ({
   // ── Auth ──
   session: null,
-  setSession: (session) => set({ session }),
+  // provider_token はSupabaseのJWTリフレッシュ時にnullになるため別途保持
+  providerToken: null,
+  setSession: (session) => set(s => {
+    if (!session) return { session: null, providerToken: null }
+    const preserved = session.provider_token || s.providerToken
+    return {
+      session:       { ...session, provider_token: preserved },
+      providerToken: preserved,
+    }
+  }),
 
   // ── Master data ──
   clients:    [],

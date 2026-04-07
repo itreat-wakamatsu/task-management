@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '@/store/useStore'
 import {
   formatCountdown,
@@ -7,9 +7,14 @@ import {
 } from '@/hooks/useTimer'
 import styles from './TimerHero.module.css'
 
+const TIMER_MODE_KEY = 'timerMode'
+
 export default function TimerHero({ event }) {
   const { isPaused, pausedAt, activeEventId } = useStore()
   const [, setTick] = useState(0)
+  const [timerMode, setTimerMode] = useState(
+    () => localStorage.getItem(TIMER_MODE_KEY) || 'calendar'
+  )
 
   // 毎秒再レンダー
   useEffect(() => {
@@ -30,14 +35,24 @@ export default function TimerHero({ event }) {
   }
 
   const now        = new Date()
-  const remaining  = event.plannedEnd - now
-  const planned    = event.plannedEnd - event.plannedStart
+  const remaining  = event.plannedEnd - now                         // カレンダー残り
+  const planned    = event.plannedEnd - event.plannedStart          // カレンダー工数
   const elapsed    = getDisplayElapsed(event, isPaused, pausedAt)
+  const workLeft   = planned - elapsed                              // 見積もり残り
   const progress   = Math.min(1, Math.max(0, elapsed / planned))
-  const isOvertime = remaining < 0
   const isAdjusted = event.overrideElapsedMs != null
 
+  // モードごとの表示値
+  const displayRemaining = timerMode === 'calendar' ? remaining : workLeft
+  const isOvertime = displayRemaining < 0
+
   const state = isPaused ? 'pause' : isOvertime ? 'over' : 'run'
+
+  function toggleMode() {
+    const next = timerMode === 'calendar' ? 'estimate' : 'calendar'
+    setTimerMode(next)
+    localStorage.setItem(TIMER_MODE_KEY, next)
+  }
 
   return (
     <div className={`${styles.box} ${styles[state]}`}>
@@ -52,12 +67,23 @@ export default function TimerHero({ event }) {
         </div>
       )}
 
-      {/* タスク名 */}
-      <div className={styles.taskName}>{event.calendarEventTitle}</div>
+      {/* タスク名 + モードトグル */}
+      <div className={styles.taskRow}>
+        <div className={styles.taskName}>{event.calendarEventTitle}</div>
+        <button
+          className={`${styles.modeToggle} ${timerMode === 'estimate' ? styles.modeToggleActive : ''}`}
+          onClick={toggleMode}
+          title={timerMode === 'calendar'
+            ? 'クリックで予定工数モードに切替（残り工数ベース）'
+            : 'クリックでカレンダーモードに切替（終了時刻ベース）'}
+        >
+          {timerMode === 'calendar' ? '終了時刻' : '見積工数'}
+        </button>
+      </div>
 
       {/* カウントダウン */}
       <div className={`${styles.countdown} ${styles[`cd_${state}`]}`}>
-        {formatCountdown(remaining, true)}
+        {formatCountdown(displayRemaining, true)}
       </div>
 
       {/* ラベル */}
@@ -65,12 +91,13 @@ export default function TimerHero({ event }) {
         {isPaused
           ? '⏸ 一時停止中'
           : isOvertime
-            ? '⚠ 超過中'
-            : '残り時間'}
+            ? timerMode === 'calendar' ? '⚠ 終了時刻超過' : '⚠ 工数超過'
+            : timerMode === 'calendar' ? '残り時間（終了時刻まで）' : '残り工数（見積もりまで）'
+        }
         　{fmtTime(event.plannedStart)}–{fmtTime(event.plannedEnd)}
       </div>
 
-      {/* プログレスバー */}
+      {/* プログレスバー（経過 / 計画工数） */}
       <div className={styles.progressWrap}>
         <div
           className={`${styles.progressFill} ${styles[`pf_${state}`]}`}

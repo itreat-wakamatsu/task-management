@@ -46,31 +46,45 @@ function fmtTime(d) {
 
 export default function WeeklyView({ onOpenDetail }) {
   const { session, appTasks, todayEvents, clients } = useStore()
+  const providerToken = useStore(s => s.providerToken)
   const devDate = useStore(s => s.devDate)
   const [weekOffset, setWeekOffset] = useState(0)
   const [weekEvents, setWeekEvents]  = useState([])
   const [loading, setLoading]        = useState(false)
+  const [fetchError, setFetchError]  = useState(null)
   const scrollRef = useRef(null)
 
+  const token     = providerToken || session?.provider_token
   const weekDates = getWeekDates(devDate ?? new Date(), weekOffset)
   const today     = devDate ?? new Date()
 
   // 初回レンダリング時に現在時刻が見えるようにスクロール
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && !loading) {
       const nowY = ((new Date().getHours() - START_HOUR - 1) / (END_HOUR - START_HOUR)) * scrollRef.current.scrollHeight
       scrollRef.current.scrollTop = Math.max(0, nowY)
     }
   }, [loading])
 
-  useEffect(() => {
-    if (!session?.provider_token) return
+  function loadWeek() {
+    if (!token) {
+      setFetchError('Googleトークンがありません。再ログインしてください。')
+      return
+    }
     setLoading(true)
-    fetchEventsRange(session.provider_token, weekDates[0], weekDates[4])
+    setFetchError(null)
+    fetchEventsRange(token, weekDates[0], weekDates[4])
       .then(evs => setWeekEvents(evs.filter(ev => !ev.isAllDay)))
-      .catch(console.error)
+      .catch(err => {
+        console.error(err)
+        setFetchError('読み込みに失敗しました。再度お試しください。')
+      })
       .finally(() => setLoading(false))
-  }, [weekOffset, session?.provider_token])
+  }
+
+  useEffect(() => {
+    loadWeek()
+  }, [weekOffset, token])
 
   const totalH = (END_HOUR - START_HOUR) * HOUR_HEIGHT
 
@@ -86,7 +100,16 @@ export default function WeeklyView({ onOpenDetail }) {
         {weekOffset !== 0 && (
           <button className={styles.navBtnToday} onClick={() => setWeekOffset(0)}>今週</button>
         )}
+        <button
+          className={styles.navBtnRefresh}
+          onClick={loadWeek}
+          disabled={loading}
+          title="再読み込み"
+        >↺</button>
       </div>
+      {fetchError && (
+        <div className={styles.fetchError}>{fetchError}</div>
+      )}
 
       {/* カラムヘッダー */}
       <div className={styles.header}>
