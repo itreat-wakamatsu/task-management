@@ -177,7 +177,21 @@ export async function updateCalendarEvent(accessToken, eventId, patch) {
   return normalizeEvent(await res.json())
 }
 
-/** GCal イベントを内部形式に正規化 */
+/** GCal イベントを削除 */
+export async function deleteCalendarEvent(accessToken, eventId) {
+  const res = await gFetch(
+    `${CALENDAR_API}/calendars/primary/events/${eventId}`,
+    { method: 'DELETE' },
+    accessToken
+  )
+  // 204 No Content が正常
+  if (!res.ok && res.status !== 204) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`Google Calendar API error: ${err.error?.message}`)
+  }
+}
+
+
 function normalizeEvent(ev) {
   const startRaw = ev.start?.dateTime || ev.start?.date
   const endRaw   = ev.end?.dateTime   || ev.end?.date

@@ -26,7 +26,7 @@ function fmtTime(d) {
  * @param {Function} onEdit      - (task) => void  ※タスクが紐付いている場合のみ
  * @param {Function} onOpenLink  - () => void  ※タスク紐付けモーダルを開く
  */
-export default function EventDetailPopup({ event, onClose, onEdit, onOpenLink }) {
+export default function EventDetailPopup({ event, onClose, onEdit, onEditEvent, onOpenLink }) {
   const { clients, backlogToken } = useStore()
   const client = clients.find(c => c.id === event.task?.client_id)
   const clColor = getClientColor(client)
@@ -113,6 +113,15 @@ export default function EventDetailPopup({ event, onClose, onEdit, onOpenLink })
               rel="noopener noreferrer"
               className={styles.btnGcal}
             >Google カレンダーで開く</a>
+          )}
+          {onEditEvent && (
+            <button
+              className={styles.btnEditEvent}
+              onClick={() => onEditEvent(event)}
+              title={event.permissionType === 'readonly' ? '読み取り専用のため編集できません' : '予定のタイトル・時刻を変更'}
+            >
+              予定を編集
+            </button>
           )}
           {event.task && onEdit && (
             <button className={styles.btnEdit} onClick={() => onEdit(event.task)}>

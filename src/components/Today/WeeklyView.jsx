@@ -12,7 +12,7 @@ const DAYS = ['月', '火', '水', '木', '金']
 
 function getWeekDates(baseDate, weekOffset = 0) {
   const d = new Date(baseDate)
-  const day = d.getDay() // 0=Sun
+  const day = d.getDay()
   const monday = new Date(d)
   monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1) + weekOffset * 7)
   return Array.from({ length: 5 }, (_, i) => {
@@ -29,9 +29,7 @@ function timeToY(dt) {
   return Math.max(0, (mins / 60) * HOUR_HEIGHT)
 }
 
-function fmtDate(d) {
-  return `${d.getMonth()+1}/${d.getDate()}`
-}
+function fmtDate(d) { return `${d.getMonth()+1}/${d.getDate()}` }
 
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() &&
@@ -69,7 +67,7 @@ function PermIcon({ type }) {
   return null
 }
 
-export default function WeeklyView({ onOpenDetail }) {
+export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt }) {
   const { session, appTasks, todayEvents, clients } = useStore()
   const providerToken = useStore(s => s.providerToken)
   const devDate = useStore(s => s.devDate)
@@ -78,16 +76,17 @@ export default function WeeklyView({ onOpenDetail }) {
   const [loading, setLoading]        = useState(false)
   const [fetchError, setFetchError]  = useState(null)
   const scrollRef = useRef(null)
+  const gridRef   = useRef(null)
   const dragRef   = useRef(null)
   const didDragRef = useRef(false)
-
-  // 最新値をrefで保持（useCallbackの依存配列を安定させるため）
-  const tokenRef = useRef(null)
-  tokenRef.current = providerToken || session?.provider_token
+  const tokenRef   = useRef(null)
+  const loadWeekRef = useRef(null)
 
   const token     = providerToken || session?.provider_token
   const weekDates = getWeekDates(devDate ?? new Date(), weekOffset)
   const today     = devDate ?? new Date()
+
+  tokenRef.current = token
 
   // 初回レンダリング時に現在時刻が見えるようにスクロール
   useEffect(() => {
@@ -96,8 +95,6 @@ export default function WeeklyView({ onOpenDetail }) {
       scrollRef.current.scrollTop = Math.max(0, nowY)
     }
   }, [loading])
-
-  const loadWeekRef = useRef(null)
 
   function loadWeek() {
     if (!tokenRef.current) {
@@ -116,11 +113,14 @@ export default function WeeklyView({ onOpenDetail }) {
   }
   loadWeekRef.current = loadWeek
 
-  useEffect(() => {
-    loadWeek()
-  }, [weekOffset, token]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadWeek() }, [weekOffset, token]) // eslint-disable-line
 
-  // ── ドラッグ ──
+  // refreshKey が変わったらリロード（TodayView から予定を編集・削除したとき）
+  useEffect(() => {
+    if (refreshKey > 0) loadWeek()
+  }, [refreshKey]) // eslint-disable-line
+
+  // ── ドラッグ共通ハンドラ（move / resize 両対応） ──
   const onMouseMove = useCallback((e) => {
     const drag = dragRef.current
     if (!drag) return
@@ -129,21 +129,29 @@ export default function WeeklyView({ onOpenDetail }) {
     const dy    = e.clientY - drag.startY
     const dMins = Math.round((dy / HOUR_HEIGHT) * 60 / SNAP_MIN) * SNAP_MIN
 
-    const dur       = drag.origEnd.getTime() - drag.origStart.getTime()
-    const startMins = (drag.origStart.getTime() - drag.baseDate.getTime()) / 60000
-    const snapped   = Math.round((startMins + dMins) / SNAP_MIN) * SNAP_MIN
-    const newStart  = new Date(drag.baseDate.getTime() + snapped * 60000)
-    const newEnd    = new Date(newStart.getTime() + dur)
-    drag.previewStart = newStart
-    drag.previewEnd   = newEnd
+    if (drag.isResize) {
+      // リサイズ: 終了時刻だけ変える
+      const endMins    = (drag.origEnd.getTime()   - drag.baseDate.getTime()) / 60000
+      const minEndMins = (drag.origStart.getTime() - drag.baseDate.getTime()) / 60000 + SNAP_MIN
+      const newEndMins = Math.max(Math.round((endMins + dMins) / SNAP_MIN) * SNAP_MIN, minEndMins)
+      drag.previewStart = drag.origStart
+      drag.previewEnd   = new Date(drag.baseDate.getTime() + newEndMins * 60000)
+    } else {
+      // 移動: 開始・終了ともに変える
+      const dur       = drag.origEnd.getTime() - drag.origStart.getTime()
+      const startMins = (drag.origStart.getTime() - drag.baseDate.getTime()) / 60000
+      const snapped   = Math.round((startMins + dMins) / SNAP_MIN) * SNAP_MIN
+      drag.previewStart = new Date(drag.baseDate.getTime() + snapped * 60000)
+      drag.previewEnd   = new Date(drag.previewStart.getTime() + dur)
+    }
 
     if (drag.el) {
-      const top    = timeToY(newStart)
-      const height = Math.max(timeToY(newEnd) - top, HOUR_HEIGHT / 4)
+      const top    = timeToY(drag.previewStart)
+      const height = Math.max(timeToY(drag.previewEnd) - top, HOUR_HEIGHT / 4)
       drag.el.style.top    = `${top}px`
       drag.el.style.height = `${height}px`
       const timeEl = drag.el.querySelector('[data-time]')
-      if (timeEl) timeEl.textContent = `${fmtTime(newStart)}–${fmtTime(newEnd)}`
+      if (timeEl) timeEl.textContent = `${fmtTime(drag.previewStart)}–${fmtTime(drag.previewEnd)}`
     }
   }, [])
 
@@ -154,10 +162,23 @@ export default function WeeklyView({ onOpenDetail }) {
     window.removeEventListener('mouseup',   onMouseUp)
 
     if (!drag?.previewStart) return
-    if (
-      drag.previewStart.getTime() === drag.origStart.getTime() &&
-      drag.previewEnd.getTime()   === drag.origEnd.getTime()
-    ) return
+    const startChanged = drag.previewStart.getTime() !== drag.origStart.getTime()
+    const endChanged   = drag.previewEnd.getTime()   !== drag.origEnd.getTime()
+    if (!startChanged && !endChanged) return
+
+    // 複数参加者の確認（ドラッグ完了後に表示）
+    if (drag.isMulti) {
+      if (!window.confirm(`${drag.attendeeNames} さんも参加しています。本当に変更しますか？`)) {
+        // DOM を元に戻す
+        if (drag.el) {
+          drag.el.style.top    = `${timeToY(drag.origStart)}px`
+          drag.el.style.height = `${Math.max(timeToY(drag.origEnd) - timeToY(drag.origStart), HOUR_HEIGHT / 4)}px`
+          const timeEl = drag.el.querySelector('[data-time]')
+          if (timeEl) timeEl.textContent = fmtTime(drag.origStart)
+        }
+        return
+      }
+    }
 
     didDragRef.current = true
 
@@ -168,7 +189,6 @@ export default function WeeklyView({ onOpenDetail }) {
         : ev
     ))
 
-    // Google Calendar API で更新
     if (!tokenRef.current) return
     updateCalendarEvent(tokenRef.current, drag.eventId, {
       start: { dateTime: drag.previewStart.toISOString(), timeZone: 'Asia/Tokyo' },
@@ -179,32 +199,60 @@ export default function WeeklyView({ onOpenDetail }) {
     })
   }, [onMouseMove])
 
-  function startDrag(e, ev, dayIdx) {
+  function startDrag(e, ev, dayIdx, isResize = false) {
     if (!ev.canEdit) return
     e.preventDefault()
-
-    if (ev.permissionType === 'multi' && ev.otherAttendees?.length > 0) {
-      const names = ev.otherAttendees.map(a => a.displayName).join('、')
-      if (!window.confirm(`${names} さんも参加しています。本当に変更しますか？`)) return
-    }
 
     const baseDate = new Date(weekDates[dayIdx])
     baseDate.setHours(0, 0, 0, 0)
     const el = document.getElementById(`week-ev-${ev.calendarEventId}`)
 
     dragRef.current = {
-      eventId:    ev.calendarEventId,
-      startY:     e.clientY,
-      origStart:  new Date(ev.plannedStart),
-      origEnd:    new Date(ev.plannedEnd),
+      eventId:      ev.calendarEventId,
+      startY:       e.clientY,
+      origStart:    new Date(ev.plannedStart),
+      origEnd:      new Date(ev.plannedEnd),
       baseDate,
       previewStart: null,
       previewEnd:   null,
       el,
+      isResize,
+      isMulti:      ev.permissionType === 'multi',
+      attendeeNames: ev.otherAttendees?.map(a => a.displayName).join('、') || '',
     }
 
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup',   onMouseUp)
+  }
+
+  // 空きグリッドをクリック → 新しい予定を作成
+  function handleGridClick(e) {
+    if (!onCreateAt) return
+    if (e.target.closest('[id^="week-ev-"]')) return
+    if (e.target.closest('button')) return
+    if (e.target.closest('[data-action]')) return
+    if (dragRef.current) return
+    if (didDragRef.current) { didDragRef.current = false; return }
+
+    const rect = gridRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+
+    const gutterW = 52
+    const colW    = (rect.width - gutterW) / 5
+    const dayIdx  = Math.floor((x - gutterW) / colW)
+    if (dayIdx < 0 || dayIdx >= 5) return
+
+    const totalMins   = (y / HOUR_HEIGHT) * 60
+    const snappedMins = Math.round(totalMins / SNAP_MIN) * SNAP_MIN
+    const absMins     = START_HOUR * 60 + snappedMins
+
+    const clickedDate = weekDates[dayIdx]
+    const start = new Date(clickedDate)
+    start.setHours(Math.floor(absMins / 60), absMins % 60, 0, 0)
+    const end = new Date(start.getTime() + 30 * 60000)
+
+    onCreateAt(start, end)
   }
 
   const totalH = (END_HOUR - START_HOUR) * HOUR_HEIGHT
@@ -228,9 +276,7 @@ export default function WeeklyView({ onOpenDetail }) {
           title="再読み込み"
         >↺</button>
       </div>
-      {fetchError && (
-        <div className={styles.fetchError}>{fetchError}</div>
-      )}
+      {fetchError && <div className={styles.fetchError}>{fetchError}</div>}
 
       {/* カラムヘッダー */}
       <div className={styles.header}>
@@ -248,15 +294,16 @@ export default function WeeklyView({ onOpenDetail }) {
 
       {/* グリッド */}
       <div className={styles.body} ref={scrollRef}>
-        <div className={styles.grid} style={{ height: totalH }}>
+        <div
+          className={styles.grid}
+          style={{ height: totalH }}
+          ref={gridRef}
+          onClick={handleGridClick}
+        >
           {/* 時間軸 */}
           <div className={styles.timeAxis}>
             {Array.from({ length: END_HOUR - START_HOUR }, (_, i) => (
-              <div
-                key={i}
-                className={styles.hourLabel}
-                style={{ top: i * HOUR_HEIGHT }}
-              >
+              <div key={i} className={styles.hourLabel} style={{ top: i * HOUR_HEIGHT }}>
                 {String(START_HOUR + i).padStart(2,'0')}:00
               </div>
             ))}
@@ -264,16 +311,16 @@ export default function WeeklyView({ onOpenDetail }) {
 
           {/* 横線 */}
           {Array.from({ length: END_HOUR - START_HOUR }, (_, i) => (
-            <div
-              key={i}
-              className={styles.hourLine}
-              style={{ top: i * HOUR_HEIGHT }}
-            />
+            <div key={i} className={styles.hourLine} style={{ top: i * HOUR_HEIGHT }} />
           ))}
 
           {/* 今日ハイライト列 */}
           {weekDates.map((d, i) => isSameDay(d, today) ? (
-            <div key={i} className={styles.todayCol} style={{ left: `calc(52px + ${i} * ((100% - 52px) / 5))`, width: `calc((100% - 52px) / 5)` }} />
+            <div
+              key={i}
+              className={styles.todayCol}
+              style={{ left: `calc(52px + ${i} * ((100% - 52px) / 5))`, width: `calc((100% - 52px) / 5)` }}
+            />
           ) : null)}
 
           {/* 現在時刻ライン */}
@@ -285,8 +332,8 @@ export default function WeeklyView({ onOpenDetail }) {
               <div
                 className={styles.nowLine}
                 style={{
-                  top: nowY,
-                  left: `calc(52px + ${todayIdx} * ((100% - 52px) / 5))`,
+                  top:   nowY,
+                  left:  `calc(52px + ${todayIdx} * ((100% - 52px) / 5))`,
                   width: `calc((100% - 52px) / 5)`,
                 }}
               />
@@ -295,8 +342,9 @@ export default function WeeklyView({ onOpenDetail }) {
 
           {/* 各日のイベント */}
           {weekDates.map((d, dayIdx) => {
-            const dayEvs = weekEvents.filter(ev => ev.plannedStart && isSameDay(new Date(ev.plannedStart), d))
-            // 当日のイベントにはtodayEventsのstatus情報を合成
+            const dayEvs = weekEvents.filter(ev =>
+              ev.plannedStart && isSameDay(new Date(ev.plannedStart), d)
+            )
             const enriched = dayEvs.map(ev => {
               const te = todayEvents.find(t => t.calendarEventId === ev.calendarEventId)
               const task = te?.task ?? appTasks.find(t => autoMatchTitle(ev.calendarEventTitle, t))
@@ -305,9 +353,9 @@ export default function WeeklyView({ onOpenDetail }) {
             })
 
             return enriched.map((ev) => {
-              const top    = timeToY(ev.plannedStart)
-              const bottom = timeToY(ev.plannedEnd)
-              const height = Math.max(bottom - top, HOUR_HEIGHT / 4)
+              const top     = timeToY(ev.plannedStart)
+              const bottom  = timeToY(ev.plannedEnd)
+              const height  = Math.max(bottom - top, HOUR_HEIGHT / 4)
               const clColor = getClientColor(ev.client)
               const clBg    = clColor ? hexToRgba(clColor, 0.15) : null
               const isDone  = ev.status === 'done'
@@ -321,15 +369,15 @@ export default function WeeklyView({ onOpenDetail }) {
                   style={{
                     top,
                     height,
-                    left:    `calc(52px + ${dayIdx} * ((100% - 52px) / 5) + 2px)`,
-                    width:   `calc((100% - 52px) / 5 - 4px)`,
+                    left:            `calc(52px + ${dayIdx} * ((100% - 52px) / 5) + 2px)`,
+                    width:           `calc((100% - 52px) / 5 - 4px)`,
                     borderLeftColor: clColor || undefined,
-                    background: isDone ? 'var(--color-bg-secondary)' : (clBg || undefined),
-                    cursor: ev.canEdit ? 'grab' : 'pointer',
+                    background:      isDone ? 'var(--color-bg-secondary)' : (clBg || undefined),
+                    cursor:          ev.canEdit ? 'grab' : 'pointer',
                   }}
                   onMouseDown={ev.canEdit ? (e) => {
                     if (e.target.closest('[data-action]')) return
-                    startDrag(e, ev, dayIdx)
+                    startDrag(e, ev, dayIdx, false)
                   } : undefined}
                   onClick={(e) => {
                     if (e.target.closest('[data-action]')) return
@@ -338,9 +386,7 @@ export default function WeeklyView({ onOpenDetail }) {
                   }}
                 >
                   <div className={styles.evHeader}>
-                    <span data-time className={styles.evTime}>
-                      {fmtTime(ev.plannedStart)}
-                    </span>
+                    <span data-time className={styles.evTime}>{fmtTime(ev.plannedStart)}</span>
                     {perm && <PermIcon type={perm} />}
                   </div>
                   <div className={styles.evTitle}>{ev.calendarEventTitle}</div>
@@ -350,76 +396,15 @@ export default function WeeklyView({ onOpenDetail }) {
                     </div>
                   )}
 
-                  {/* リサイズハンドル（編集可能なイベントのみ） */}
+                  {/* リサイズハンドル */}
                   {ev.canEdit && (
                     <div
                       className={styles.resizeHandle}
                       data-action="true"
-                      onMouseDown={(e) => {
+                      onMouseDown={e => {
                         e.stopPropagation()
-                        if (!ev.canEdit) return
                         e.preventDefault()
-
-                        const baseDate = new Date(weekDates[dayIdx])
-                        baseDate.setHours(0, 0, 0, 0)
-                        const el = document.getElementById(`week-ev-${ev.calendarEventId}`)
-
-                        dragRef.current = {
-                          eventId:    ev.calendarEventId,
-                          startY:     e.clientY,
-                          origStart:  new Date(ev.plannedStart),
-                          origEnd:    new Date(ev.plannedEnd),
-                          baseDate,
-                          previewStart: null,
-                          previewEnd:   null,
-                          el,
-                          isResize: true,
-                        }
-
-                        const resizeMove = (re) => {
-                          const drag = dragRef.current
-                          if (!drag) return
-                          re.preventDefault()
-                          const dy = re.clientY - drag.startY
-                          const dMins = Math.round((dy / HOUR_HEIGHT) * 60 / SNAP_MIN) * SNAP_MIN
-                          const endMins = (drag.origEnd.getTime() - drag.baseDate.getTime()) / 60000
-                          const minEnd  = (drag.origStart.getTime() - drag.baseDate.getTime()) / 60000 + SNAP_MIN
-                          const newEndMins = Math.max(Math.round((endMins + dMins) / SNAP_MIN) * SNAP_MIN, minEnd)
-                          drag.previewStart = drag.origStart
-                          drag.previewEnd   = new Date(drag.baseDate.getTime() + newEndMins * 60000)
-                          if (drag.el) {
-                            const t = timeToY(drag.previewStart)
-                            const h = Math.max(timeToY(drag.previewEnd) - t, HOUR_HEIGHT / 4)
-                            drag.el.style.top    = `${t}px`
-                            drag.el.style.height = `${h}px`
-                            const timeEl = drag.el.querySelector('[data-time]')
-                            if (timeEl) timeEl.textContent = `${fmtTime(drag.previewStart)}–${fmtTime(drag.previewEnd)}`
-                          }
-                        }
-                        const resizeUp = () => {
-                          const drag = dragRef.current
-                          dragRef.current = null
-                          window.removeEventListener('mousemove', resizeMove)
-                          window.removeEventListener('mouseup', resizeUp)
-                          if (!drag?.previewStart) return
-                          if (drag.previewEnd.getTime() === drag.origEnd.getTime()) return
-                          didDragRef.current = true
-                          setWeekEvents(prev => prev.map(ev2 =>
-                            ev2.calendarEventId === drag.eventId
-                              ? { ...ev2, plannedStart: drag.previewStart, plannedEnd: drag.previewEnd }
-                              : ev2
-                          ))
-                          if (!tokenRef.current) return
-                          updateCalendarEvent(tokenRef.current, drag.eventId, {
-                            start: { dateTime: drag.previewStart.toISOString(), timeZone: 'Asia/Tokyo' },
-                            end:   { dateTime: drag.previewEnd.toISOString(),   timeZone: 'Asia/Tokyo' },
-                          }).catch(err => {
-                            console.error('リサイズ失敗:', err)
-                            loadWeekRef.current?.()
-                          })
-                        }
-                        window.addEventListener('mousemove', resizeMove)
-                        window.addEventListener('mouseup', resizeUp)
+                        startDrag(e, ev, dayIdx, true)
                       }}
                     />
                   )}
@@ -435,7 +420,6 @@ export default function WeeklyView({ onOpenDetail }) {
   )
 }
 
-// シンプルなタイトルマッチ（autoLinkの簡易版）
 function autoMatchTitle(title, task) {
   if (!title || !task) return false
   return title.includes(task.title) || task.title.includes(title)
