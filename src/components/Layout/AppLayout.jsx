@@ -67,7 +67,7 @@ export default function AppLayout() {
   }
 
   // 今日の予定に追加（GCal POST → todayEvents 更新）
-  async function handleAddToToday({ title, start, end }) {
+  async function handleAddToToday({ title, start, end, taskId }) {
     const token = session?.provider_token
     if (!token) { alert('Google アクセストークンがありません'); return }
 
@@ -83,9 +83,10 @@ export default function AppLayout() {
       // TodayView 側のマージは次回ロード時に反映されるため、簡易的に todayEvents へ直接追加
       const merged = {
         id: newEv.calendarEventId, ...newEv,
-        status: 'pending', detailId: null, taskId: null,
-        autoLinked: false, actualStart: null, actualEnd: null,
-        pauseLog: [], overrideElapsedMs: null, task: null,
+        status: 'pending', detailId: null, taskId: taskId ?? null,
+        autoLinked: !!taskId, actualStart: null, actualEnd: null,
+        pauseLog: [], overrideElapsedMs: null,
+        task: taskId ? (addToTodayTask ?? null) : null,
       }
       setTodayEvents([...todayEvents, merged].sort((a, b) =>
         new Date(a.plannedStart) - new Date(b.plannedStart)
