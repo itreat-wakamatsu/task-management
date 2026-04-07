@@ -34,6 +34,7 @@ export default function TodayView() {
     session, todayEvents, setTodayEvents, activeEventId, setActiveEventId,
     isPaused, setIsPaused, setPausedAt, pausedAt, appTasks, updateEvent,
     devDate, rawCalEvents, rawCalDate, setRawCalEvents, addAppTask, updateAppTask,
+    providerToken,
   } = useStore()
 
   const targetDate = devDate ?? new Date()
@@ -80,7 +81,7 @@ export default function TodayView() {
   }, [appTasks.length, rawCalEvents.length])
 
   async function fetchCalEvents(forceRefresh = false) {
-    const token = session?.provider_token
+    const token = providerToken || session?.provider_token
     if (!token) throw new Error('Google アクセストークンがありません')
 
     // キャッシュヒット
@@ -121,11 +122,12 @@ export default function TodayView() {
         .select('*')
         .eq('record_id', record.id)
 
+      const freshAppTasks = useStore.getState().appTasks
       const merged = calEvents
         .filter(ev => !ev.isAllDay)
         .map(ev => {
           const detail = details?.find(d => d.calendar_event_id === ev.calendarEventId)
-          const linked = autoLink(ev.calendarEventTitle, appTasks)
+          const linked = autoLink(ev.calendarEventTitle, freshAppTasks)
           return {
             id:                  ev.calendarEventId,
             calendarEventId:     ev.calendarEventId,
@@ -146,7 +148,7 @@ export default function TodayView() {
             status:              detail?.actual_end   ? 'done'
                                : detail?.actual_start ? 'running'
                                : 'pending',
-            task: appTasks.find(t => t.id === (detail?.task_id ?? linked.taskId)) || null,
+            task: freshAppTasks.find(t => t.id === (detail?.task_id ?? linked.taskId)) || null,
           }
         })
 
@@ -406,23 +408,26 @@ export default function TodayView() {
 
   // ── 予定通り完了（予定所要時間を実績工数として記録） ──
   // ボタンを押した実時刻は無関係。「20分の予定 → 20分で完了」と記録する。
+  // 未開始タスクにも対応（actualStart = now、detailレコードを新規作成）。
   const handleOnTime = useCallback(async (eventId) => {
     const ev = todayEvents.find(e => e.id === eventId)
     if (!ev) return
 
     const now = new Date()
+    const actualStart = ev.actualStart || now
     const plannedDurationMs = new Date(ev.plannedEnd) - new Date(ev.plannedStart)
     const pauseLog = isPaused
       ? (ev.pauseLog || []).map((p, i) =>
           i === ev.pauseLog.length - 1 ? { ...p, e: now.toISOString() } : p
         )
-      : ev.pauseLog
+      : (ev.pauseLog || [])
 
     setActiveEventId(null)
     setIsPaused(false)
     setPausedAt(null)
     updateEvent(eventId, {
       status: 'done',
+      actualStart,
       actualEnd: now,
       overrideElapsedMs: plannedDurationMs,
       pauseLog,
@@ -437,6 +442,23 @@ export default function TodayView() {
           override_elapsed_ms: plannedDurationMs,
         })
         .eq('id', ev.detailId)
+    } else if (todayRecord) {
+      const { data } = await supabase
+        .from('app_record_details')
+        .insert({
+          record_id:            todayRecord.id,
+          task_id:              ev.taskId,
+          calendar_event_id:    ev.calendarEventId,
+          calendar_event_title: ev.calendarEventTitle,
+          planned_start:        ev.plannedStart?.toISOString(),
+          planned_end:          ev.plannedEnd?.toISOString(),
+          actual_start:         actualStart.toISOString(),
+          actual_end:           now.toISOString(),
+          pause_log:            [],
+          override_elapsed_ms:  plannedDurationMs,
+        })
+        .select().single()
+      if (data) updateEvent(eventId, { detailId: data.id })
     }
 
     // app_tasks を完了に
@@ -445,7 +467,7 @@ export default function TodayView() {
       updateAppTask(ev.taskId, { status: 2 })
       updateEvent(eventId, { task: ev.task ? { ...ev.task, status: 2 } : ev.task })
     }
-  }, [todayEvents, isPaused])
+  }, [todayEvents, isPaused, todayRecord])
 
   // ── カレンダービューから新規タスク作成 ──
   async function handleCreateFromCalendar(taskData) {
@@ -587,7 +609,7 @@ export default function TodayView() {
     return `${h}h${m}分`
   }
 
-  const consumedPct = totalPlannedMs > 0
+  const consumedPct = totalPlannedMs > 0 && isFinite(totalActualMs)
     ? Math.min(100, Math.round(totalActualMs / totalPlannedMs * 100))
     : 0
   const remainingCount = todayEvents.filter(e => e.status !== 'done').length
