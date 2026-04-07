@@ -3,8 +3,9 @@ import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { sortByRecent } from '@/lib/recentClients'
 import { getClientColor } from '@/lib/clientColor'
-import TaskEditModal from './TaskEditModal'
-import BacklogBadge  from '@/components/Backlog/BacklogBadge'
+import TaskEditModal  from './TaskEditModal'
+import CsvImportModal from './CsvImportModal'
+import BacklogBadge   from '@/components/Backlog/BacklogBadge'
 import SearchableSelect from '@/components/shared/SearchableSelect'
 import ClientColorPicker from '@/components/shared/ClientColorPicker'
 import styles from './TaskManagerView.module.css'
@@ -39,6 +40,7 @@ export default function TaskManagerView({ onAddToToday }) {
   const [filterRecurring,  setFilterRecurring]  = useState('false')  // 'all'|'true'|'false'
   const [editTarget,       setEditTarget]       = useState(null)
   const [showNew,          setShowNew]          = useState(false)
+  const [showCsvImport,    setShowCsvImport]   = useState(false)
   const [colorPicker,      setColorPicker]      = useState(null)  // { client, top, left }
 
   const today = todayStr()
@@ -167,6 +169,7 @@ export default function TaskManagerView({ onAddToToday }) {
           ))}
         </div>
 
+        <button className={styles.btnCsvImport} onClick={() => setShowCsvImport(true)}>CSV 取込</button>
         <button className={styles.btnAdd} onClick={() => setShowNew(true)}>＋ 新規タスク</button>
       </div>
 
@@ -278,6 +281,15 @@ export default function TaskManagerView({ onAddToToday }) {
           task={null}
           onSave={handleCreate}
           onClose={() => setShowNew(false)}
+        />
+      )}
+      {showCsvImport && (
+        <CsvImportModal
+          onClose={() => setShowCsvImport(false)}
+          onImported={(newTasks) => {
+            setAppTasks([...newTasks, ...appTasks])
+            setShowCsvImport(false)
+          }}
         />
       )}
       {colorPicker && (

@@ -70,6 +70,19 @@
 /* ニュートラルトグル（定期・Backlog） */
 .toggleBtnActiveNeutral { background: var(--color-bg-secondary); color: var(--color-text-primary); font-weight: 600; }
 
+.btnCsvImport {
+  font-size: 0.75rem;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  margin-left: auto;
+  font-family: inherit;
+}
+.btnCsvImport:hover { background: var(--color-bg-secondary); }
+
 .btnAdd {
   font-size: 0.75rem;
   padding: 5px 12px;
@@ -78,7 +91,6 @@
   background: var(--color-amber-bg);
   color: var(--color-amber-text);
   cursor: pointer;
-  margin-left: auto;
   font-family: inherit;
 }
 .btnAdd:hover { background: var(--color-amber-bg-hover); }

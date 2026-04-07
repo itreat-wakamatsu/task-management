@@ -1,0 +1,342 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--color-bg-primary);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.875rem;
+  border-bottom: 0.5px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.close {
+  background: none;
+  border: none;
+  font-size: 1.125rem;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  padding: 2px 6px;
+  line-height: 1;
+  border-radius: 4px;
+}
+.close:hover { background: var(--color-bg-secondary); }
+
+.body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── ドロップゾーン ── */
+.dropZone {
+  border: 2px dashed var(--color-border-medium);
+  border-radius: 10px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.dropZone:hover {
+  border-color: var(--color-amber-border);
+  background: var(--color-amber-bg);
+}
+.dropZoneActive {
+  border-color: var(--color-amber-border);
+  background: var(--color-amber-bg);
+}
+
+.dropIcon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dropText {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.dropLink {
+  color: var(--color-amber-text);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dropHint {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  margin-top: 0.5rem;
+}
+
+/* テンプレートダウンロード */
+.templateRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.btnTemplate {
+  font-size: 0.75rem;
+  font-family: inherit;
+  background: none;
+  color: var(--color-text-secondary);
+  border: 0.5px solid var(--color-border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.btnTemplate:hover { background: var(--color-bg-secondary); }
+
+/* ── プレビューテーブル ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.summary {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  flex: 1;
+}
+
+.summaryCount {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+}
+
+.btnSelectAll, .btnDeselectAll {
+  font-size: 0.6875rem;
+  font-family: inherit;
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 0.5px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+}
+.btnSelectAll:hover, .btnDeselectAll:hover { background: var(--color-bg-secondary); }
+
+.btnReset {
+  font-size: 0.6875rem;
+  font-family: inherit;
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--color-text-tertiary);
+}
+.btnReset:hover { color: var(--color-text-secondary); }
+
+.tableWrap {
+  overflow-x: auto;
+  border: 0.5px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  min-width: 500px;
+}
+
+.table th {
+  text-align: left;
+  padding: 7px 9px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  border-bottom: 0.5px solid var(--color-border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table td {
+  padding: 6px 9px;
+  border-bottom: 0.5px solid var(--color-border);
+  vertical-align: middle;
+}
+.table tr:last-child td { border-bottom: none; }
+
+.table tbody tr:hover { background: var(--color-bg-secondary); }
+
+.thCheck, .tdCheck {
+  width: 32px;
+  text-align: center;
+}
+
+.tdCheck input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.rowUnchecked { opacity: 0.45; }
+
+.tdTitle { font-weight: 600; }
+
+.tdSub {
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+}
+
+.tdDate {
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+/* 重複警告 */
+.dupBadge {
+  font-size: 0.5625rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
+  font-weight: 600;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+/* マッチしたクライアント/案件チップ */
+.matchChip {
+  font-size: 0.625rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.matchOk {
+  background: var(--color-green-bg);
+  color: var(--color-green-text);
+}
+
+.matchNone {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+}
+
+/* ── フッター ── */
+.footer {
+  padding: 0.875rem 1.25rem;
+  border-top: 0.5px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.footerInfo {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-right: auto;
+}
+
+.btnCancel {
+  font-size: 0.8125rem;
+  font-family: inherit;
+  background: none;
+  color: var(--color-text-secondary);
+  border: 0.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.btnCancel:hover { background: var(--color-bg-secondary); }
+
+.btnImport {
+  font-size: 0.8125rem;
+  font-family: inherit;
+  font-weight: 500;
+  background: var(--color-text-primary);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btnImport:hover { opacity: 0.82; }
+.btnImport:disabled { opacity: 0.45; cursor: default; }
+
+/* ── 完了メッセージ ── */
+.success {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.successIcon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.successTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.successDesc {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.btnClose {
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  background: none;
+  color: var(--color-text-secondary);
+  border: 0.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 20px;
+  cursor: pointer;
+}
+.btnClose:hover { background: var(--color-bg-secondary); }
+
+/* エラー */
+.error {
+  font-size: 0.75rem;
+  color: var(--color-danger-text);
+  background: var(--color-error-bg);
+  border: 0.5px solid var(--color-error-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 0.75rem;
+}
