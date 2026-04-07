@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '@/store/useStore'
+import { getClientColor } from '@/lib/clientColor'
 import {
   formatCountdown,
   formatDuration,
@@ -57,15 +58,18 @@ export default function TimerHero({ event }) {
   return (
     <div className={`${styles.box} ${styles[state]}`}>
       {/* クライアント・案件 */}
-      {client && (
-        <div className={styles.clientRow}>
-          <span className={styles.dot} style={{ background: client.color }} />
-          <span style={{ color: client.color }}>{client.display_name || client.name}</span>
-          {project && (
-            <span className={styles.projectName}>／{project.name}</span>
-          )}
-        </div>
-      )}
+      {client && (() => {
+        const clColor = getClientColor(client)
+        return (
+          <div className={styles.clientRow}>
+            <span className={styles.dot} style={{ background: clColor }} />
+            <span style={{ color: clColor }}>{client.display_name || client.name}</span>
+            {project && (
+              <span className={styles.projectName}>／{project.name}</span>
+            )}
+          </div>
+        )
+      })()}
 
       {/* タスク名 + モードトグル */}
       <div className={styles.taskRow}>

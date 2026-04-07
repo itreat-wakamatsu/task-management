@@ -73,7 +73,6 @@ export default function BacklogLinkModal({ onLinked, onClose }) {
           placeholder="課題キーまたはタイトルで絞り込み..."
           value={query}
           onChange={e => setQuery(e.target.value)}
-          autoFocus
         />
 
         {loading && <div className={styles.loading}>読み込み中...</div>}

@@ -1,4 +1,5 @@
 import { useStore } from '@/store/useStore'
+import { getClientColor } from '@/lib/clientColor'
 import BacklogBadge from '@/components/Backlog/BacklogBadge'
 import styles from './EventDetailPopup.module.css'
 
@@ -28,7 +29,7 @@ function fmtTime(d) {
 export default function EventDetailPopup({ event, onClose, onEdit, onOpenLink }) {
   const { clients, backlogToken } = useStore()
   const client = clients.find(c => c.id === event.task?.client_id)
-  const clColor = client?.color || null
+  const clColor = getClientColor(client)
 
   const backlogUrl = (event.task?.backlog_issue_key && backlogToken?.space_key)
     ? `https://${backlogToken.space_key}.backlog.com/view/${event.task.backlog_issue_key}`

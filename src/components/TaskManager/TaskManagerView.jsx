@@ -96,9 +96,14 @@ export default function TaskManagerView({ onAddToToday }) {
 
   function openColorPicker(e, client) {
     const rect = e.currentTarget.getBoundingClientRect()
+    const PICKER_W = 208
+    const PICKER_H = 300
     let left = rect.left
-    if (left + 208 > window.innerWidth - 8) left = window.innerWidth - 208 - 8
-    setColorPicker({ client, top: rect.bottom + 4, left })
+    if (left + PICKER_W > window.innerWidth - 8) left = window.innerWidth - PICKER_W - 8
+    const top = rect.bottom + 4 + PICKER_H > window.innerHeight - 8
+      ? rect.top - PICKER_H - 4
+      : rect.bottom + 4
+    setColorPicker({ client, top, left })
   }
 
   return (

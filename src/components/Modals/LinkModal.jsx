@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '@/store/useStore'
 import { scoreCandidates } from '@/lib/autoLink'
+import { getClientColor } from '@/lib/clientColor'
 import { supabase } from '@/lib/supabase'
 import TaskEditModal from '@/components/TaskManager/TaskEditModal'
 import styles from './LinkModal.module.css'
@@ -97,7 +98,6 @@ export default function LinkModal({ event, onClose, onLinked }) {
               placeholder="IDやタイトルで検索..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              autoFocus
             />
             <label className={styles.recLabel}>
               <input
@@ -131,7 +131,7 @@ export default function LinkModal({ event, onClose, onLinked }) {
                       {task.is_recurring && <span className={styles.recBadge}>定期</span>}
                     </div>
                     {cl && (
-                      <div className={styles.optSub} style={{ color: cl.color }}>
+                      <div className={styles.optSub} style={{ color: getClientColor(cl) }}>
                         {cl.display_name || cl.name}
                       </div>
                     )}

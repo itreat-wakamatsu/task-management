@@ -124,9 +124,10 @@ export async function fetchEventsRange(accessToken, dateFrom, dateTo) {
     timeZone:     'Asia/Tokyo',
     fields:       'items(id,summary,start,end,htmlLink,organizer,attendees,guestsCanModify)',
   })
-  const res = await fetch(
+  const res = await gFetch(
     `${CALENDAR_API}/calendars/primary/events?${params}`,
-    { headers: authHeader(accessToken) }
+    {},
+    accessToken
   )
   if (!res.ok) {
     const err = await res.json()

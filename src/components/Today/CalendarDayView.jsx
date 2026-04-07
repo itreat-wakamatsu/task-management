@@ -231,11 +231,14 @@ export default function CalendarDayView({
   function openColorPicker(e, ev, client) {
     e.stopPropagation()
     const rect = e.currentTarget.getBoundingClientRect()
-    // 画面右端からはみ出さないよう調整
-    const pickerW = 208
+    const PICKER_W = 208
+    const PICKER_H = 300
     let left = rect.left
-    if (left + pickerW > window.innerWidth - 8) left = window.innerWidth - pickerW - 8
-    setColorPicker({ eventId: ev.id, client, top: rect.bottom + 4, left })
+    if (left + PICKER_W > window.innerWidth - 8) left = window.innerWidth - PICKER_W - 8
+    const top = rect.bottom + 4 + PICKER_H > window.innerHeight - 8
+      ? rect.top - PICKER_H - 4
+      : rect.bottom + 4
+    setColorPicker({ eventId: ev.id, client, top, left })
   }
 
   const hours = Array.from({ length: TOTAL_HOURS }, (_, i) => START_HOUR + i)
