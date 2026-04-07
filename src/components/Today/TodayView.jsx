@@ -3,15 +3,17 @@ import { useStore } from '@/store/useStore'
 import { fetchTodayEvents, updateCalendarEvent, createCalendarEvent } from '@/lib/googleCalendar'
 import { autoLink } from '@/lib/autoLink'
 import { supabase } from '@/lib/supabase'
-import DailyReportModal from './DailyReportModal'
-import TimerHero        from '@/components/Timer/TimerHero'
-import TimerControls    from '@/components/Timer/TimerControls'
-import TaskCard         from './TaskCard'
-import CalendarDayView  from './CalendarDayView'
-import WeeklyView       from './WeeklyView'
-import EventDetailPopup from './EventDetailPopup'
-import LinkModal        from '@/components/Modals/LinkModal'
-import TaskEditModal    from '@/components/TaskManager/TaskEditModal'
+import DailyReportModal  from './DailyReportModal'
+import TimerHero         from '@/components/Timer/TimerHero'
+import TimerControls     from '@/components/Timer/TimerControls'
+import TaskCard          from './TaskCard'
+import CalendarDayView   from './CalendarDayView'
+import WeeklyView        from './WeeklyView'
+import EventDetailPopup  from './EventDetailPopup'
+import LinkModal         from '@/components/Modals/LinkModal'
+import TaskEditModal     from '@/components/TaskManager/TaskEditModal'
+import CreateEventModal  from '@/components/Modals/CreateEventModal'
+import EventEditModal    from '@/components/Modals/EventEditModal'
 import { supabase as _supabase } from '@/lib/supabase'
 import styles from './TodayView.module.css'
 
@@ -49,12 +51,14 @@ export default function TodayView() {
   const [hiddenIds,    setHiddenIds]    = useState(() => loadHiddenIds())
   const [showHidden,   setShowHidden]   = useState(false)
   const [refreshing,   setRefreshing]   = useState(false)
-  const [detailTarget,  setDetailTarget]  = useState(null)
-  const [editTask,      setEditTask]      = useState(null)
-  const [editEventId,   setEditEventId]   = useState(null)
-  const [showReport,    setShowReport]    = useState(false)
-  const [resumeTarget,  setResumeTarget]  = useState(null)
-  const [createSlot,    setCreateSlot]    = useState(null)
+  const [detailTarget,    setDetailTarget]    = useState(null)
+  const [editTask,        setEditTask]        = useState(null)
+  const [editEventId,     setEditEventId]     = useState(null)
+  const [editEventTarget, setEditEventTarget] = useState(null)
+  const [showReport,      setShowReport]      = useState(false)
+  const [resumeTarget,    setResumeTarget]    = useState(null)
+  const [createSlot,      setCreateSlot]      = useState(null)
+  const [weeklyRefreshKey, setWeeklyRefreshKey] = useState(0)
   const [summaryMode,      setSummaryMode]      = useState('consumed') // 'consumed' | 'remaining'
   const [, setSummaryTick]                     = useState(0)
   const [endDialogTarget,  setEndDialogTarget]  = useState(null) // タイマー終了ダイアログ対象
@@ -469,35 +473,29 @@ export default function TodayView() {
     }
   }, [todayEvents, isPaused, todayRecord])
 
-  // ── カレンダービューから新規タスク作成 ──
-  async function handleCreateFromCalendar(taskData) {
-    const token = session?.provider_token
-    const slot  = createSlot
+  // ── カレンダー・週間ビューから新規予定作成 ──
+  async function handleCreateFromCalendar({ title, start, end, task }) {
+    const token = providerToken || session?.provider_token
     setCreateSlot(null)
 
     try {
-      // 1. app_tasks に作成
-      const { data: newTask } = await supabase
-        .from('app_tasks')
-        .insert({ ...taskData, user_id: session.user.id })
-        .select()
-        .single()
-      if (newTask) addAppTask(newTask)
+      if (!token) throw new Error('トークンがありません')
 
-      // 2. Google Calendar にイベント作成
-      if (token && slot) {
-        const newEv = await createCalendarEvent(token, {
-          summary: taskData.title,
-          start:   { dateTime: slot.start.toISOString(), timeZone: 'Asia/Tokyo' },
-          end:     { dateTime: slot.end.toISOString(),   timeZone: 'Asia/Tokyo' },
-        })
+      // Google Calendar にイベント作成
+      const newEv = await createCalendarEvent(token, {
+        summary: title,
+        start:   { dateTime: start.toISOString(), timeZone: 'Asia/Tokyo' },
+        end:     { dateTime: end.toISOString(),   timeZone: 'Asia/Tokyo' },
+      })
 
-        // 3. rawCalEventsに追加してTodayViewを再同期
-        const todayStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth()+1).padStart(2,'0')}-${String(targetDate.getDate()).padStart(2,'0')}`
+      // 今日の日付のイベントなら todayEvents に追加
+      const startDay = new Date(start); startDay.setHours(0,0,0,0)
+      const todayDay = new Date(targetDate); todayDay.setHours(0,0,0,0)
+
+      if (startDay.getTime() === todayDay.getTime()) {
         const updatedRaw = [...rawCalEvents, newEv]
         setRawCalEvents(updatedRaw, rawCalDate || todayStr)
 
-        // 4. todayEventsにマージ
         const mergedEv = {
           id:                  newEv.calendarEventId,
           calendarEventId:     newEv.calendarEventId,
@@ -509,19 +507,22 @@ export default function TodayView() {
           otherAttendees:      newEv.otherAttendees,
           canEdit:             newEv.canEdit,
           detailId:            null,
-          taskId:              newTask?.id || null,
+          taskId:              task?.id || null,
           autoLinked:          false,
           actualStart:         null,
           actualEnd:           null,
           pauseLog:            [],
           overrideElapsedMs:   null,
           status:              'pending',
-          task:                newTask || null,
+          task:                task || null,
         }
         setTodayEvents([...todayEvents, mergedEv].sort(
           (a, b) => new Date(a.plannedStart) - new Date(b.plannedStart)
         ))
       }
+
+      // 週間ビューをリフレッシュ
+      setWeeklyRefreshKey(k => k + 1)
     } catch (err) {
       console.error('カレンダー新規作成エラー:', err)
       alert('作成に失敗しました')
@@ -761,7 +762,11 @@ export default function TodayView() {
 
       {/* 週間ビュー */}
       {viewMode === 'weekly' && (
-        <WeeklyView onOpenDetail={setDetailTarget} />
+        <WeeklyView
+          onOpenDetail={setDetailTarget}
+          refreshKey={weeklyRefreshKey}
+          onCreateAt={(start, end) => setCreateSlot({ start, end })}
+        />
       )}
 
       {/* カレンダービュー */}
@@ -783,12 +788,53 @@ export default function TodayView() {
         />
       )}
 
-      {/* カレンダービューからの新規タスク作成 */}
+      {/* 空き枠クリックからの新規予定作成（タスク紐付け優先） */}
       {createSlot && (
-        <TaskEditModal
-          task={null}
+        <CreateEventModal
+          slot={createSlot}
           onSave={handleCreateFromCalendar}
           onClose={() => setCreateSlot(null)}
+        />
+      )}
+
+      {/* 予定編集モーダル */}
+      {editEventTarget && (
+        <EventEditModal
+          event={editEventTarget}
+          onUpdated={({ title, plannedStart, plannedEnd }) => {
+            // todayEvents を更新
+            updateEvent(editEventTarget.id || editEventTarget.calendarEventId, {
+              calendarEventTitle: title,
+              plannedStart,
+              plannedEnd,
+            })
+            // rawCalEvents を更新
+            if (rawCalEvents?.length) {
+              setRawCalEvents(
+                rawCalEvents.map(ev =>
+                  ev.calendarEventId === editEventTarget.calendarEventId
+                    ? { ...ev, calendarEventTitle: title, plannedStart, plannedEnd }
+                    : ev
+                ),
+                rawCalDate
+              )
+            }
+            setWeeklyRefreshKey(k => k + 1)
+            setEditEventTarget(null)
+          }}
+          onDeleted={() => {
+            const evId = editEventTarget.id || editEventTarget.calendarEventId
+            setTodayEvents(todayEvents.filter(ev => ev.id !== evId))
+            if (rawCalEvents?.length) {
+              setRawCalEvents(
+                rawCalEvents.filter(ev => ev.calendarEventId !== editEventTarget.calendarEventId),
+                rawCalDate
+              )
+            }
+            setWeeklyRefreshKey(k => k + 1)
+            setEditEventTarget(null)
+          }}
+          onClose={() => setEditEventTarget(null)}
         />
       )}
 
@@ -908,6 +954,7 @@ export default function TodayView() {
           event={detailTarget}
           onClose={() => setDetailTarget(null)}
           onEdit={task => { const evId = detailTarget?.id; setDetailTarget(null); setEditTask(task); setEditEventId(evId) }}
+          onEditEvent={ev => { setDetailTarget(null); setEditEventTarget(ev) }}
           onOpenLink={() => { setDetailTarget(null); setLinkTarget(detailTarget) }}
         />
       )}

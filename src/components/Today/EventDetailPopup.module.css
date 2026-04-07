@@ -163,6 +163,18 @@
 }
 .btnGcal:hover { background: var(--color-bg-secondary); }
 
+.btnEditEvent {
+  font-size: 0.6875rem;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 0.5px solid var(--color-border-medium);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnEditEvent:hover { background: var(--color-bg-secondary); }
+
 .btnEdit {
   font-size: 0.6875rem;
   padding: 5px 12px;
