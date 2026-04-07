@@ -51,8 +51,17 @@ export default function TodayView() {
   const [editTask,      setEditTask]      = useState(null)
   const [editEventId,   setEditEventId]   = useState(null)
   const [showReport,    setShowReport]    = useState(false)
-  const [resumeTarget,  setResumeTarget]  = useState(null)  // 再開ダイアログ対象イベント
-  const [createSlot,    setCreateSlot]    = useState(null)  // カレンダービューから新規作成 { start, end }
+  const [resumeTarget,  setResumeTarget]  = useState(null)
+  const [createSlot,    setCreateSlot]    = useState(null)
+  const [summaryMode,   setSummaryMode]   = useState('consumed') // 'consumed' | 'remaining'
+  const [, setSummaryTick]                = useState(0)
+
+  // サマリーバーを30秒ごとに更新（進行中タスクの経過時間反映）
+  useEffect(() => {
+    if (!activeEventId) return
+    const id = setInterval(() => setSummaryTick(t => t + 1), 30000)
+    return () => clearInterval(id)
+  }, [activeEventId])
 
   const mergedOnceRef = useRef(false)
   useEffect(() => {
@@ -488,6 +497,62 @@ export default function TodayView() {
   const doneCount   = todayEvents.filter(e => e.status === 'done').length
   const hiddenCount = todayEvents.filter(e => hiddenIds.has(e.id)).length
 
+  // ── サマリー計算 ──
+  const now = Date.now()
+  let totalPlannedMs   = 0
+  let totalActualMs    = 0
+  let remainingPlannedMs = 0
+
+  for (const ev of todayEvents) {
+    const plannedDur = (ev.plannedEnd && ev.plannedStart)
+      ? (new Date(ev.plannedEnd) - new Date(ev.plannedStart))
+      : 0
+    totalPlannedMs += plannedDur
+
+    if (ev.status === 'done') {
+      if (ev.overrideElapsedMs != null) {
+        totalActualMs += ev.overrideElapsedMs
+      } else if (ev.actualStart && ev.actualEnd) {
+        const raw = new Date(ev.actualEnd) - new Date(ev.actualStart)
+        const pausedMs = (ev.pauseLog || []).reduce((s, p) =>
+          p.s && p.e ? s + new Date(p.e) - new Date(p.s) : s, 0)
+        totalActualMs += Math.max(0, raw - pausedMs)
+      }
+    } else if (ev.status === 'running' || ev.status === 'paused') {
+      if (ev.actualStart) {
+        if (ev.overrideElapsedMs != null) {
+          totalActualMs += ev.overrideElapsedMs
+        } else {
+          const raw = now - new Date(ev.actualStart)
+          let pausedMs = (ev.pauseLog || []).reduce((s, p) =>
+            p.s && p.e ? s + new Date(p.e) - new Date(p.s) : s, 0)
+          if (ev.id === activeEventId && isPaused && pausedAt) {
+            pausedMs += now - new Date(pausedAt)
+          }
+          totalActualMs += Math.max(0, raw - pausedMs)
+        }
+      }
+      remainingPlannedMs += plannedDur
+    } else {
+      remainingPlannedMs += plannedDur
+    }
+  }
+
+  function fmtHM(ms) {
+    if (!ms || ms <= 0) return '0分'
+    const totalMin = Math.round(ms / 60000)
+    const h = Math.floor(totalMin / 60)
+    const m = totalMin % 60
+    if (h === 0) return `${m}分`
+    if (m === 0) return `${h}h`
+    return `${h}h${m}分`
+  }
+
+  const consumedPct = totalPlannedMs > 0
+    ? Math.min(100, Math.round(totalActualMs / totalPlannedMs * 100))
+    : 0
+  const remainingCount = todayEvents.filter(e => e.status !== 'done').length
+
   if (loading) {
     return <div className={styles.loading}>カレンダーを読み込んでいます...</div>
   }
@@ -566,6 +631,40 @@ export default function TodayView() {
           </div>
         </div>
       </div>
+
+      {/* 工数サマリーバー */}
+      {todayEvents.length > 0 && (
+        <div
+          className={`${styles.summaryBar} ${summaryMode === 'remaining' ? styles.summaryBarRemaining : ''}`}
+          onClick={() => setSummaryMode(m => m === 'consumed' ? 'remaining' : 'consumed')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && setSummaryMode(m => m === 'consumed' ? 'remaining' : 'consumed')}
+          title="クリックで切替"
+        >
+          {summaryMode === 'consumed' ? (
+            <>
+              <span className={styles.summaryLabel}>実績</span>
+              <span className={styles.summaryVal}>{fmtHM(totalActualMs)}</span>
+              <div className={styles.summaryBar_track}>
+                <div className={styles.summaryBar_fill} style={{ width: `${consumedPct}%` }} />
+              </div>
+              <span className={styles.summaryVal}>{fmtHM(totalPlannedMs)}</span>
+              <span className={styles.summaryLabel}>予定</span>
+              <span className={styles.summaryPct}>{consumedPct}%</span>
+            </>
+          ) : (
+            <>
+              <span className={styles.summaryLabel}>未完了</span>
+              <span className={styles.summaryVal}>{fmtHM(remainingPlannedMs)}</span>
+              <span className={styles.summaryDivider}>残り</span>
+              <span className={styles.summaryVal}>{remainingCount}件</span>
+              <span className={styles.summaryLabel}>が未完了</span>
+              <span className={styles.summaryHint}>← 消費量に切替</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* リストビュー */}
       {viewMode === 'list' && (

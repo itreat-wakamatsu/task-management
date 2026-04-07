@@ -27,6 +27,28 @@
   font-family: inherit;
 }
 .navBtn:hover { background: var(--color-bg-secondary); }
+.navBtnRefresh {
+  font-size: 0.75rem;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  margin-left: auto;
+}
+.navBtnRefresh:hover { background: var(--color-bg-secondary); }
+.navBtnRefresh:disabled { opacity: 0.5; cursor: default; }
+
+.fetchError {
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  color: #A32D2D;
+  background: #FFF5F5;
+  border-bottom: 0.5px solid #FFD0D0;
+}
+
 .navBtnToday {
   font-size: 0.75rem;
   padding: 3px 8px;

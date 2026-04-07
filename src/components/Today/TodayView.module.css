@@ -210,3 +210,69 @@
   border-radius: 6px;
 }
 .resumeCancel:hover { background: var(--color-bg-secondary); }
+
+/* ── 工数サマリーバー ── */
+.summaryBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+  box-sizing: border-box;
+  user-select: none;
+}
+.summaryBar:hover { background: var(--color-bg-tertiary, #f0f0f0); }
+.summaryBarRemaining { border-color: var(--color-border-medium); }
+
+.summaryLabel {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.summaryVal {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.summaryBar_track {
+  flex: 1;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 40px;
+}
+.summaryBar_fill {
+  height: 100%;
+  background: #6366f1;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.summaryPct {
+  font-size: 0.5625rem;
+  color: #6366f1;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.summaryDivider {
+  font-size: 0.5625rem;
+  color: var(--color-text-tertiary);
+  padding: 0 2px;
+}
+.summaryHint {
+  margin-left: auto;
+  font-size: 0.5rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
