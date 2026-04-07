@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useStore } from '@/store/useStore'
-import { fetchTodayEvents, updateCalendarEvent } from '@/lib/googleCalendar'
+import { fetchTodayEvents, updateCalendarEvent, createCalendarEvent } from '@/lib/googleCalendar'
 import { autoLink } from '@/lib/autoLink'
 import { supabase } from '@/lib/supabase'
 import DailyReportModal from './DailyReportModal'
@@ -16,6 +16,7 @@ import { supabase as _supabase } from '@/lib/supabase'
 import styles from './TodayView.module.css'
 
 const HIDDEN_KEY = 'hidden_calendar_events'
+const TASK_STATUS_LABELS = ['未着手', '進行中', '完了', '保留中']
 
 function loadHiddenIds() {
   try {
@@ -32,7 +33,7 @@ export default function TodayView() {
   const {
     session, todayEvents, setTodayEvents, activeEventId, setActiveEventId,
     isPaused, setIsPaused, setPausedAt, pausedAt, appTasks, updateEvent,
-    devDate, rawCalEvents, rawCalDate, setRawCalEvents, addAppTask,
+    devDate, rawCalEvents, rawCalDate, setRawCalEvents, addAppTask, updateAppTask,
   } = useStore()
 
   const targetDate = devDate ?? new Date()
@@ -53,8 +54,10 @@ export default function TodayView() {
   const [showReport,    setShowReport]    = useState(false)
   const [resumeTarget,  setResumeTarget]  = useState(null)
   const [createSlot,    setCreateSlot]    = useState(null)
-  const [summaryMode,   setSummaryMode]   = useState('consumed') // 'consumed' | 'remaining'
-  const [, setSummaryTick]                = useState(0)
+  const [summaryMode,      setSummaryMode]      = useState('consumed') // 'consumed' | 'remaining'
+  const [, setSummaryTick]                     = useState(0)
+  const [endDialogTarget,  setEndDialogTarget]  = useState(null) // タイマー終了ダイアログ対象
+  const [startConfirmTarget, setStartConfirmTarget] = useState(null) // 開始確認ダイアログ対象
 
   // サマリーバーを30秒ごとに更新（進行中タスクの経過時間反映）
   useEffect(() => {
@@ -232,7 +235,8 @@ export default function TodayView() {
     })
   }
 
-  // ── タスク開始 ──
+  // ── タスク開始（内部処理） ──
+  // UIからは handleStartClick 経由で呼ぶ（ステータス確認が必要な場合はダイアログ経由）
   const handleStart = useCallback(async (eventId) => {
     if (activeEventId && activeEventId !== eventId) {
       await handleEnd(activeEventId)
@@ -245,6 +249,13 @@ export default function TodayView() {
     setIsPaused(false)
     setPausedAt(null)
     updateEvent(eventId, { status: 'running', actualStart: now, actualEnd: null, pauseLog: [] })
+
+    // app_tasks のステータスを「進行中」(1) に自動更新
+    if (ev.taskId && ev.task?.status !== 1) {
+      supabase.from('app_tasks').update({ status: 1 }).eq('id', ev.taskId)
+      updateAppTask(ev.taskId, { status: 1 })
+      updateEvent(eventId, { task: ev.task ? { ...ev.task, status: 1 } : ev.task })
+    }
 
     if (ev.detailId) {
       await supabase
@@ -270,8 +281,21 @@ export default function TodayView() {
     }
   }, [activeEventId, todayEvents, todayRecord])
 
+  // ── タスク開始（UIからの呼び出し）── 完了・保留中の場合は確認ダイアログを表示
+  function handleStartClick(eventId) {
+    const ev = todayEvents.find(e => e.id === eventId)
+    if (!ev) return
+    const taskStatus = ev.task?.status
+    if (taskStatus === 2 || taskStatus === 3) {
+      setStartConfirmTarget(ev)
+      return
+    }
+    handleStart(eventId)
+  }
+
   // ── タスク終了 ──
-  const handleEnd = useCallback(async (eventId) => {
+  // newTaskStatus: null=タスクステータス変更なし, 1=進行中, 2=完了, 3=保留中
+  const handleEnd = useCallback(async (eventId, newTaskStatus = null) => {
     const ev = todayEvents.find(e => e.id === eventId)
     if (!ev) return
 
@@ -285,6 +309,7 @@ export default function TodayView() {
     setActiveEventId(null)
     setIsPaused(false)
     setPausedAt(null)
+    setEndDialogTarget(null)
     updateEvent(eventId, { status: 'done', actualEnd: now, pauseLog })
 
     if (ev.detailId) {
@@ -292,6 +317,13 @@ export default function TodayView() {
         .from('app_record_details')
         .update({ actual_end: now.toISOString(), pause_log: pauseLog, override_elapsed_ms: ev.overrideElapsedMs })
         .eq('id', ev.detailId)
+    }
+
+    // app_tasks のステータスを更新
+    if (newTaskStatus !== null && ev.taskId) {
+      supabase.from('app_tasks').update({ status: newTaskStatus }).eq('id', ev.taskId)
+      updateAppTask(ev.taskId, { status: newTaskStatus })
+      updateEvent(eventId, { task: ev.task ? { ...ev.task, status: newTaskStatus } : ev.task })
     }
   }, [todayEvents, isPaused])
 
@@ -405,6 +437,13 @@ export default function TodayView() {
           override_elapsed_ms: plannedDurationMs,
         })
         .eq('id', ev.detailId)
+    }
+
+    // app_tasks を完了に
+    if (ev.taskId) {
+      supabase.from('app_tasks').update({ status: 2 }).eq('id', ev.taskId)
+      updateAppTask(ev.taskId, { status: 2 })
+      updateEvent(eventId, { task: ev.task ? { ...ev.task, status: 2 } : ev.task })
     }
   }, [todayEvents, isPaused])
 
@@ -580,7 +619,7 @@ export default function TodayView() {
     <div>
       <TimerHero event={activeEvent} />
       {activeEvent && (
-        <TimerControls event={activeEvent} onEnd={() => handleEnd(activeEvent.id)} />
+        <TimerControls event={activeEvent} onEnd={() => setEndDialogTarget(activeEvent)} />
       )}
 
       {/* ヘッダー行 */}
@@ -682,7 +721,7 @@ export default function TodayView() {
                 event={ev}
                 isActive={ev.id === activeEventId}
                 isPaused={isPaused}
-                onStart={() => handleStart(ev.id)}
+                onStart={() => handleStartClick(ev.id)}
                 onEnd={() => handleEnd(ev.id)}
                 onUndo={() => handleUndo(ev.id)}
                 onOnTime={() => handleOnTime(ev.id)}
@@ -710,8 +749,11 @@ export default function TodayView() {
           activeEventId={activeEventId}
           hiddenIds={hiddenIds}
           showHidden={showHidden}
-          onStart={handleStart}
-          onEnd={handleEnd}
+          onStart={handleStartClick}
+          onEnd={(id) => {
+            const ev = todayEvents.find(e => e.id === id)
+            if (ev) setEndDialogTarget(ev)
+          }}
           onTimeChange={handleTimeChange}
           onHide={toggleHide}
           onOpenDetail={setDetailTarget}
@@ -751,6 +793,72 @@ export default function TodayView() {
               </button>
             </div>
             <button className={styles.resumeCancel} onClick={() => setResumeTarget(null)}>キャンセル</button>
+          </div>
+        </div>
+      )}
+
+      {/* タイマー終了ダイアログ：タスクの次ステータスを選択 */}
+      {endDialogTarget && (
+        <div className={styles.endDialogOverlay} onClick={() => setEndDialogTarget(null)}>
+          <div className={styles.endDialog} onClick={e => e.stopPropagation()}>
+            <div className={styles.endDialogTitle}>タイマーを終了します</div>
+            <div className={styles.endDialogTask}>{endDialogTarget.calendarEventTitle}</div>
+            <p className={styles.endDialogDesc}>タスクのステータスを選択してください</p>
+            <div className={styles.endDialogBtns}>
+              <button
+                className={`${styles.endBtn} ${styles.endBtnDone}`}
+                onClick={() => handleEnd(endDialogTarget.id, 2)}
+              >
+                <span className={styles.endBtnIcon}>✅</span>
+                <span className={styles.endBtnLabel}>完了</span>
+                <span className={styles.endBtnHint}>作業が終わった</span>
+              </button>
+              <button
+                className={`${styles.endBtn} ${styles.endBtnHold}`}
+                onClick={() => handleEnd(endDialogTarget.id, 3)}
+              >
+                <span className={styles.endBtnIcon}>⏸</span>
+                <span className={styles.endBtnLabel}>保留中</span>
+                <span className={styles.endBtnHint}>対応待ち・いったん中断</span>
+              </button>
+              <button
+                className={`${styles.endBtn} ${styles.endBtnInProgress}`}
+                onClick={() => handleEnd(endDialogTarget.id, 1)}
+              >
+                <span className={styles.endBtnIcon}>▶</span>
+                <span className={styles.endBtnLabel}>進行中のまま</span>
+                <span className={styles.endBtnHint}>今日はここまで・明日続ける</span>
+              </button>
+            </div>
+            <button className={styles.endDialogCancel} onClick={() => setEndDialogTarget(null)}>キャンセル</button>
+          </div>
+        </div>
+      )}
+
+      {/* タスク開始確認ダイアログ：完了・保留中のタスクを開始する場合 */}
+      {startConfirmTarget && (
+        <div className={styles.startConfirmOverlay} onClick={() => setStartConfirmTarget(null)}>
+          <div className={styles.startConfirmDialog} onClick={e => e.stopPropagation()}>
+            <div className={styles.endDialogTitle}>タスクを開始しますか？</div>
+            <p className={styles.startConfirmDesc}>
+              現在のステータスは
+              <strong>「{TASK_STATUS_LABELS[startConfirmTarget.task?.status] ?? '不明'}」</strong>
+              です。<br />開始すると「進行中」に変更されます。
+            </p>
+            <div className={styles.startConfirmActions}>
+              <button
+                className={styles.startConfirmCancel}
+                onClick={() => setStartConfirmTarget(null)}
+              >キャンセル</button>
+              <button
+                className={styles.startConfirmOk}
+                onClick={() => {
+                  const ev = startConfirmTarget
+                  setStartConfirmTarget(null)
+                  handleStart(ev.id)
+                }}
+              >開始する</button>
+            </div>
           </div>
         </div>
       )}
