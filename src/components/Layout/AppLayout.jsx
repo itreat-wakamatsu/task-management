@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { fetchTodayEvents, createCalendarEvent } from '@/lib/googleCalendar'
@@ -8,7 +8,9 @@ import TaskManagerView from '@/components/TaskManager/TaskManagerView'
 import AnalyticsView   from '@/components/Analytics/AnalyticsView'
 import BacklogModal    from '@/components/Backlog/BacklogModal'
 import BacklogBadge    from '@/components/Backlog/BacklogBadge'
-import AddToTodayModal from '@/components/Today/AddToTodayModal'
+import AddToTodayModal   from '@/components/Today/AddToTodayModal'
+import McpSettingsModal  from '@/components/Settings/McpSettingsModal'
+import FeedbackModal     from '@/components/Feedback/FeedbackModal'
 import styles from './AppLayout.module.css'
 
 const TABS = [
@@ -20,9 +22,13 @@ const TABS = [
 const isDev = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development'
 
 export default function AppLayout() {
-  const [activeTab,      setActiveTab]      = useState('today')
-  const [showBacklog,    setShowBacklog]    = useState(false)
-  const [addToTodayTask, setAddToTodayTask] = useState(null)  // AddToTodayModal 用
+  const [activeTab,       setActiveTab]      = useState('today')
+  const [showBacklog,     setShowBacklog]    = useState(false)
+  const [addToTodayTask,  setAddToTodayTask] = useState(null)
+  const [showDatePicker,  setShowDatePicker] = useState(false)
+  const datePickerRef = useRef(null)
+  const [showMcpSettings, setShowMcpSettings] = useState(false)
+  const [showFeedback,    setShowFeedback]   = useState(false)
   const {
     session, loadMasters, loadAppTasks, loadBacklogToken, backlogToken,
     devDate, setDevDate, setRawCalEvents, rawCalDate, rawCalEvents,
@@ -63,7 +69,7 @@ export default function AppLayout() {
   }
 
   // 今日の予定に追加（GCal POST → todayEvents 更新）
-  async function handleAddToToday({ title, start, end }) {
+  async function handleAddToToday({ title, start, end, taskId }) {
     const token = session?.provider_token
     if (!token) { alert('Google アクセストークンがありません'); return }
 
@@ -79,9 +85,10 @@ export default function AppLayout() {
       // TodayView 側のマージは次回ロード時に反映されるため、簡易的に todayEvents へ直接追加
       const merged = {
         id: newEv.calendarEventId, ...newEv,
-        status: 'pending', detailId: null, taskId: null,
-        autoLinked: false, actualStart: null, actualEnd: null,
-        pauseLog: [], overrideElapsedMs: null, task: null,
+        status: 'pending', detailId: null, taskId: taskId ?? null,
+        autoLinked: !!taskId, actualStart: null, actualEnd: null,
+        pauseLog: [], overrideElapsedMs: null,
+        task: taskId ? (addToTodayTask ?? null) : null,
       }
       setTodayEvents([...todayEvents, merged].sort((a, b) =>
         new Date(a.plannedStart) - new Date(b.plannedStart)
@@ -102,9 +109,21 @@ export default function AppLayout() {
   ].join('-')
   const targetDateStr = dateInputValue
 
-  function handleDevDateChange(e) {
+  // 今日かどうか
+  const today = new Date()
+  const isToday = displayDate.getFullYear() === today.getFullYear() &&
+                  displayDate.getMonth()    === today.getMonth()    &&
+                  displayDate.getDate()     === today.getDate()
+
+  function handleDateChange(e) {
     const [y, m, d] = e.target.value.split('-').map(Number)
     setDevDate(new Date(y, m - 1, d))
+    setShowDatePicker(false)
+  }
+
+  function handleGoToToday() {
+    setDevDate(new Date())
+    setShowDatePicker(false)
   }
 
   // 残り空き時間の表示文字列
@@ -122,17 +141,32 @@ export default function AppLayout() {
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.dateRow}>
-            <span className={styles.dateStr}>{dateStr}</span>
-            {isDev && (
-              <input
-                type="date"
-                className={styles.devDateInput}
-                value={dateInputValue}
-                onChange={handleDevDateChange}
-                title="開発用：表示日付を変更"
-              />
+            <button
+              className={`${styles.dateTrigger} ${!isToday ? styles.dateTriggerOff : ''}`}
+              onClick={() => setShowDatePicker(v => !v)}
+              title="日付を変更"
+            >
+              <span className={styles.dateStr}>{dateStr}</span>
+              <span className={styles.dateChevron}>{showDatePicker ? '▴' : '▾'}</span>
+            </button>
+            {!isToday && (
+              <button className={styles.todayResetBtn} onClick={handleGoToToday}>
+                今日
+              </button>
             )}
           </div>
+          {showDatePicker && (
+            <div className={styles.datePickerRow}>
+              <input
+                ref={datePickerRef}
+                type="date"
+                className={styles.datePicker}
+                value={dateInputValue}
+                onChange={handleDateChange}
+                autoFocus
+              />
+            </div>
+          )}
           <div className={styles.appNameRow}>
             <span className={styles.appName}>タスクタイマー</span>
             {isDev && <span className={styles.devBadge}>DEV</span>}
@@ -151,6 +185,20 @@ export default function AppLayout() {
           >
             <BacklogBadge size={13} />
             Backlog
+          </button>
+          <button
+            className={styles.btnMcp}
+            onClick={() => setShowMcpSettings(true)}
+            title="MCP 連携設定"
+          >
+            MCP
+          </button>
+          <button
+            className={styles.btnFeedback}
+            onClick={() => setShowFeedback(true)}
+            title="フィードバックを送る"
+          >
+            Feedback
           </button>
           <button className={styles.signOut} onClick={handleSignOut} title="ログアウト">
             {session?.user?.email?.split('@')[0]}　⏏
@@ -178,7 +226,9 @@ export default function AppLayout() {
         {activeTab === 'analytics' && <AnalyticsView />}
       </main>
 
-      {showBacklog && <BacklogModal onClose={() => setShowBacklog(false)} />}
+      {showBacklog     && <BacklogModal      onClose={() => setShowBacklog(false)} />}
+      {showMcpSettings && <McpSettingsModal onClose={() => setShowMcpSettings(false)} />}
+      {showFeedback    && <FeedbackModal    onClose={() => setShowFeedback(false)} activeTab={activeTab} />}
 
       {addToTodayTask && (
         <AddToTodayModal

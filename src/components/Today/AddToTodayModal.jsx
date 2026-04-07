@@ -140,7 +140,7 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
     const [y, m, d] = targetDateStr.split('-').map(Number)
     const start = new Date(y, m - 1, d, Math.floor(newStart / 60), newStart % 60)
     const end   = new Date(y, m - 1, d, Math.floor(newEnd   / 60), newEnd   % 60)
-    await onSave({ title: task?.title ?? '新しい予定', start, end })
+    await onSave({ title: task?.title ?? '新しい予定', start, end, taskId: task?.id ?? null })
     setSaving(false)
   }
 

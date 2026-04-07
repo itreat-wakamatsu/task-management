@@ -35,19 +35,59 @@
   font-size: 0.6875rem;
   color: var(--color-text-tertiary);
   font-family: var(--font-mono);
+  transition: color 0.15s;
 }
 
-.devDateInput {
-  font-size: 0.625rem;
-  font-family: var(--font-mono);
+/* クリッカブルな日付ボタン */
+.dateTrigger {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.dateTrigger:hover .dateStr { color: var(--color-text-secondary); }
+
+/* 今日以外の日付を表示中 */
+.dateTriggerOff .dateStr { color: #d97706; }
+
+.dateChevron {
+  font-size: 0.5rem;
   color: var(--color-text-tertiary);
-  background: transparent;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.datePicker {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary, #f5f5f5);
   border: 0.5px solid var(--color-border);
   border-radius: 4px;
-  padding: 1px 4px;
+  padding: 2px 6px;
   cursor: pointer;
 }
-.devDateInput:focus { outline: none; border-color: #f59e0b; }
+.datePicker:focus { outline: none; border-color: #f59e0b; }
+
+/* 「今日」リセットボタン */
+.todayResetBtn {
+  font-size: 0.5625rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: #d97706;
+  background: #fef3c7;
+  border: 0.5px solid #f59e0b;
+  border-radius: 3px;
+  padding: 1px 6px;
+  cursor: pointer;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+.todayResetBtn:hover { background: #fde68a; }
 
 .appNameRow {
   display: flex;
@@ -92,6 +132,34 @@
 }
 .btnBacklogConnected:hover { background: #D6F3B8; }
 
+.btnMcp {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: 0.5px solid var(--color-border);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.btnMcp:hover { background: var(--color-bg-secondary); }
+
+.btnFeedback {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: 0.5px solid var(--color-border);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.btnFeedback:hover { background: var(--color-bg-secondary); }
+
 .signOut {
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
@@ -130,4 +198,81 @@
 
 .main {
   min-height: 400px;
+}
+
+/* ─── モバイル対応 ─── */
+.freeTime {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.freeTimeNone {
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 0 0.75rem 2rem;
+  }
+
+  /* ヘッダーを縦積みに変更（今日ボタン出現時も崩れない） */
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding-bottom: 0.5rem;
+  }
+
+  .headerLeft {
+    min-width: 0;
+  }
+
+  /* ボタン類は横並びで右寄せ */
+  .headerRight {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .freeTime {
+    font-size: 0.6875rem;
+    margin-right: auto; /* 左端に配置し、ボタン群を右端に押し出す */
+  }
+
+  .btnBacklog {
+    font-size: 0.6875rem;
+    padding: 3px 7px;
+    flex-shrink: 0;
+  }
+
+  .btnFeedback {
+    font-size: 0.625rem;
+    padding: 3px 6px;
+    flex-shrink: 0;
+  }
+
+  .signOut {
+    font-size: 0.6875rem;
+    padding: 3px 6px;
+    flex-shrink: 0;
+  }
+
+  .appName {
+    font-size: 0.9375rem;
+  }
+
+  .tabs {
+    gap: 0;
+  }
+
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
 }

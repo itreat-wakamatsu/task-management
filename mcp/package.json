@@ -1,0 +1,17 @@
+{
+  "name": "task-management-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Task management MCP server — Supabase + Google Calendar integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev":   "node --watch server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "@supabase/supabase-js":     "^2.39.0",
+    "dotenv":                    "^16.4.0",
+    "zod":                       "^3.22.0"
+  }
+}

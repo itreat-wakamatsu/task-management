@@ -1,0 +1,207 @@
+.wrap {
+  border: 0.5px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 0.5px solid var(--color-border);
+  flex-shrink: 0;
+}
+.navBtn {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.navBtn:hover { background: var(--color-bg-secondary); }
+.navBtnRefresh {
+  font-size: 0.75rem;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  margin-left: auto;
+}
+.navBtnRefresh:hover { background: var(--color-bg-secondary); }
+.navBtnRefresh:disabled { opacity: 0.5; cursor: default; }
+
+.fetchError {
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  color: #A32D2D;
+  background: #FFF5F5;
+  border-bottom: 0.5px solid #FFD0D0;
+}
+
+.navBtnToday {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 0.5px solid var(--color-amber-border);
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
+  cursor: pointer;
+  font-family: inherit;
+  margin-left: 4px;
+}
+.navLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+  color: var(--color-text-primary);
+}
+
+.header {
+  display: flex;
+  border-bottom: 0.5px solid var(--color-border);
+  flex-shrink: 0;
+}
+.timeGutter {
+  width: 52px;
+  flex-shrink: 0;
+}
+.dayHeader {
+  flex: 1;
+  padding: 5px 4px;
+  text-align: center;
+  border-left: 0.5px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dayHeaderToday {
+  background: var(--color-amber-bg);
+}
+.dayName {
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+}
+.dayNum {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.dayHeaderToday .dayNum {
+  color: var(--color-amber-text);
+}
+
+.body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.grid {
+  position: relative;
+  width: 100%;
+}
+
+.timeAxis {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 52px;
+  z-index: 2;
+}
+.hourLabel {
+  position: absolute;
+  font-size: 0.5625rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  right: 4px;
+  transform: translateY(-6px);
+}
+.hourLine {
+  position: absolute;
+  left: 52px;
+  right: 0;
+  height: 0;
+  border-top: 0.5px solid var(--color-border);
+  pointer-events: none;
+}
+
+.todayCol {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(239, 159, 39, 0.04);
+  pointer-events: none;
+}
+
+.nowLine {
+  position: absolute;
+  height: 2px;
+  background: #C53030;
+  pointer-events: none;
+  z-index: 5;
+  border-radius: 1px;
+}
+
+.event {
+  position: absolute;
+  border-radius: 4px;
+  border-left: 3px solid var(--color-border-medium);
+  border-top: 0.5px solid var(--color-border);
+  border-right: 0.5px solid var(--color-border);
+  border-bottom: 0.5px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  overflow: hidden;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: box-shadow 0.1s;
+  z-index: 3;
+}
+.event:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+.eventDone .evTitle { opacity: 0.5; }
+.eventDone .evTime  { opacity: 0.5; }
+
+.evTime {
+  font-size: 0.5rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+.evTitle {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+}
+.evClient {
+  font-size: 0.5rem;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}

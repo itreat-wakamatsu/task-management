@@ -2,9 +2,23 @@ import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useStore } from '@/store/useStore'
+import { setColorUserId } from '@/lib/clientColor'
 import LoginPage       from '@/components/Auth/LoginPage'
 import AppLayout       from '@/components/Layout/AppLayout'
 import BacklogCallback from '@/components/Backlog/BacklogCallback'
+
+/** Google refresh_token を Supabase に保存（MCP からの自動更新に使用） */
+async function saveGoogleRefreshToken(session) {
+  try {
+    await supabase.from('user_google_tokens').upsert(
+      { user_id: session.user.id, refresh_token: session.provider_refresh_token },
+      { onConflict: 'user_id' }
+    )
+  } catch (e) {
+    // テーブルが未作成の場合は静かに無視（アプリ動作には影響しない）
+    console.warn('[saveGoogleRefreshToken]', e)
+  }
+}
 
 export default function App() {
   const { session, setSession } = useStore()
@@ -13,11 +27,21 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
+      if (data.session?.user?.id) setColorUserId(data.session.user.id)
       setSessionLoaded(true)
+      // 起動時に refresh_token を保存（既存セッションの場合）
+      if (data.session?.provider_refresh_token) {
+        saveGoogleRefreshToken(data.session)
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess)
+      if (sess?.user?.id) setColorUserId(sess.user.id)
+      // ログイン時に refresh_token を保存
+      if (sess?.provider_refresh_token) {
+        saveGoogleRefreshToken(sess)
+      }
     })
     return () => subscription.unsubscribe()
   }, [setSession])

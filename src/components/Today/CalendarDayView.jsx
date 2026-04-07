@@ -1,5 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import { useStore } from '@/store/useStore'
+import { getClientColor, hexToRgba } from '@/lib/clientColor'
+import ClientColorPicker from '@/components/shared/ClientColorPicker'
 import styles from './CalendarDayView.module.css'
 
 const HOUR_HEIGHT = 64
@@ -84,11 +86,17 @@ export default function CalendarDayView({
   onTimeChange,
   onHide,
   onOpenDetail,
+  onCreateAt,    // (start: Date, end: Date) => void
 }) {
   const clients      = useStore(s => s.clients)
   const containerRef = useRef(null)
+  const gridRef      = useRef(null)
   const dragRef      = useRef(null)
+  const didDragRef   = useRef(false)   // ドラッグが実際に行われたか
   const [nowY, setNowY] = useState(null)
+
+  // カラーピッカー: イベントIDと位置で管理（複数の同一クライアント対策）
+  const [colorPicker, setColorPicker] = useState(null)  // { eventId, client, top, left }
 
   const totalHeight = TOTAL_HOURS * HOUR_HEIGHT
 
@@ -172,6 +180,8 @@ export default function CalendarDayView({
       drag.previewEnd.getTime()   === drag.origEnd.getTime()
     ) return
 
+    // 実際に移動が発生 → clickで詳細を開かないようにフラグを立てる
+    didDragRef.current = true
     onTimeChange?.(drag.eventId, drag.previewStart, drag.previewEnd)
   }, [onMouseMove, onTimeChange])
 
@@ -190,136 +200,235 @@ export default function CalendarDayView({
       origEnd:   new Date(ev.plannedEnd),
       baseDate,
       previewStart: null, previewEnd: null,
-      el, moved: false,
+      el,
     }
 
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup',   onMouseUp)
   }
 
+  // グリッドの空白クリックで新規作成
+  function handleGridClick(e) {
+    if (!onCreateAt) return
+    if (e.target.closest('[id^="cal-ev-"]')) return
+    if (e.target.closest('button')) return
+    if (e.target.closest('[data-resize]')) return
+    if (dragRef.current) return
+
+    const rect = gridRef.current.getBoundingClientRect()
+    const y = e.clientY - rect.top
+    const totalMins = (y / HOUR_HEIGHT) * 60
+    const snappedMins = Math.round(totalMins / SNAP_MIN) * SNAP_MIN
+    const absMins = START_HOUR * 60 + snappedMins
+
+    const start = new Date()
+    start.setHours(Math.floor(absMins / 60), absMins % 60, 0, 0)
+    const end = new Date(start.getTime() + 30 * 60000)
+    onCreateAt(start, end)
+  }
+
+  // クライアント名クリック → fixed 位置でピッカー表示
+  function openColorPicker(e, ev, client) {
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    // 画面右端からはみ出さないよう調整
+    const pickerW = 208
+    let left = rect.left
+    if (left + pickerW > window.innerWidth - 8) left = window.innerWidth - pickerW - 8
+    setColorPicker({ eventId: ev.id, client, top: rect.bottom + 4, left })
+  }
+
   const hours = Array.from({ length: TOTAL_HOURS }, (_, i) => START_HOUR + i)
 
   return (
-    <div className={styles.wrap} ref={containerRef}>
-      <div className={styles.grid} style={{ height: totalHeight }}>
-        {/* 時間ラベル + 横線 */}
-        {hours.map(h => (
-          <div key={h} className={styles.hourRow} style={{ top: (h - START_HOUR) * HOUR_HEIGHT }}>
-            <span className={styles.hourLabel}>{fmtHour(h)}</span>
-            <div className={styles.hourLine} />
-          </div>
-        ))}
-
-        {/* 現在時刻ライン */}
-        {nowY !== null && (
-          <div className={styles.nowLine} style={{ top: nowY }}>
-            <div className={styles.nowDot} />
-            <div className={styles.nowBar} />
-          </div>
-        )}
-
-        {/* イベントブロック */}
-        {laidOut.map(ev => {
-          const top      = timeToY(ev.plannedStart)
-          const height   = Math.max(timeToY(ev.plannedEnd) - top, HOUR_HEIGHT / 4)
-          const isActive = ev.id === activeEventId
-          const isDone   = ev.status === 'done'
-          const isHiddenEv = hiddenIds?.has(ev.id)
-          const perm     = ev.permissionType
-
-          const colW    = 100 / ev._totalCols
-          const colLeft = ev._col * colW
-
-          const client   = clients.find(c => c.id === ev.task?.client_id)
-          const clColor  = client?.color || null
-
-          // ステータスで背景色クラスを決定
-          const statusCls = isDone ? styles.eventDone
-            : isActive            ? styles.eventActive
-            : perm === 'readonly' ? styles.eventReadonly
-            : styles.eventDefault
-
-          return (
-            <div
-              key={ev.id}
-              id={`cal-ev-${ev.id}`}
-              className={`${styles.event} ${statusCls} ${isHiddenEv ? styles.eventHidden : ''}`}
-              style={{
-                top,
-                height,
-                left:  `calc(${colLeft}% + 56px)`,
-                width: `calc(${colW}% - 60px)`,
-                borderLeftColor: clColor || undefined,
-              }}
-              onMouseDown={ev.canEdit !== false ? (e) => {
-                if (e.target.closest('[data-resize]')) return
-                startDrag(e, ev, 'move')
-              } : undefined}
-              onClick={(e) => {
-                // ドラッグ後のクリックは無視（data-resize や action ボタンも無視）
-                if (e.target.closest('[data-action]')) return
-                if (dragRef.current) return
-                onOpenDetail?.(ev)
-              }}
-            >
-              <div className={styles.eventInner}>
-                <div className={styles.eventHeader}>
-                  <span data-time className={styles.eventTime}>
-                    {fmtTime(ev.plannedStart)}–{fmtTime(ev.plannedEnd)}
-                  </span>
-                  {perm && <PermIcon type={perm} />}
-                </div>
-                <div className={styles.eventTitle}>{ev.calendarEventTitle}</div>
-                {client && (
-                  <div
-                    className={styles.eventClient}
-                    style={{ color: clColor || undefined }}
-                  >
-                    {client.display_name || client.name}
-                  </div>
-                )}
-              </div>
-
-              {/* アクションボタン */}
-              <div className={styles.eventActions}>
-                {isActive ? (
-                  <button
-                    className={styles.btnStop}
-                    data-action="true"
-                    onMouseDown={e => e.stopPropagation()}
-                    onClick={e => { e.stopPropagation(); onEnd?.(ev.id) }}
-                  >■</button>
-                ) : !isDone ? (
-                  <button
-                    className={styles.btnPlay}
-                    data-action="true"
-                    onMouseDown={e => e.stopPropagation()}
-                    onClick={e => { e.stopPropagation(); onStart?.(ev.id) }}
-                  >▶</button>
-                ) : null}
-                {onHide && (
-                  <button
-                    className={styles.btnHideEv}
-                    data-action="true"
-                    onMouseDown={e => e.stopPropagation()}
-                    onClick={e => { e.stopPropagation(); onHide(ev.id) }}
-                    title={isHiddenEv ? '表示する' : '非表示'}
-                  >–</button>
-                )}
-              </div>
-
-              {/* リサイズハンドル */}
-              {ev.canEdit !== false && (
-                <div
-                  className={styles.resizeHandle}
-                  data-resize="true"
-                  onMouseDown={e => { e.stopPropagation(); startDrag(e, ev, 'resize') }}
-                />
-              )}
+    <>
+      <div className={styles.wrap} ref={containerRef}>
+        <div className={styles.grid} style={{ height: totalHeight }} ref={gridRef} onClick={handleGridClick}>
+          {/* 時間ラベル + 横線 */}
+          {hours.map(h => (
+            <div key={h} className={styles.hourRow} style={{ top: (h - START_HOUR) * HOUR_HEIGHT }}>
+              <span className={styles.hourLabel}>{fmtHour(h)}</span>
+              <div className={styles.hourLine} />
             </div>
-          )
-        })}
+          ))}
+
+          {/* 現在時刻ライン */}
+          {nowY !== null && (
+            <div className={styles.nowLine} style={{ top: nowY }}>
+              <div className={styles.nowDot} />
+              <div className={styles.nowBar} />
+            </div>
+          )}
+
+          {/* イベントブロック */}
+          {laidOut.map(ev => {
+            const top      = timeToY(ev.plannedStart)
+            const height   = Math.max(timeToY(ev.plannedEnd) - top, HOUR_HEIGHT / 4)
+            const isActive = ev.id === activeEventId
+            const isDone   = ev.status === 'done'
+            const isHiddenEv = hiddenIds?.has(ev.id)
+            const perm     = ev.permissionType
+
+            const colW    = 100 / ev._totalCols
+            const colLeft = ev._col * colW
+
+            const client   = clients.find(c => c.id === ev.task?.client_id)
+            const clColor  = getClientColor(client)
+            const isPaused = ev.status === 'paused'
+
+            // Background and status class logic
+            let evBg
+            let statusCls
+            if (isDone) {
+              evBg = 'var(--color-bg-secondary)'
+              statusCls = styles.eventDoneStyle
+            } else if (isActive && !isPaused) {
+              evBg = clColor ? hexToRgba(clColor, 0.25) : null
+              statusCls = clColor ? '' : styles.eventActive
+            } else {
+              const clBgOther = clColor ? hexToRgba(clColor, 0.14) : null
+              evBg = clBgOther || null
+              statusCls = clColor ? ''
+                : perm === 'readonly' ? styles.eventReadonly
+                : styles.eventDefault
+            }
+
+            const statusBadgeLabel = isDone ? '完了'
+              : isActive && ev.status === 'paused' ? '中断'
+              : isActive ? '進行中'
+              : null
+
+            const isCompact = height < 42
+
+            // アクションボタンの有無（padding-right 用）
+            const hasActions = isActive || (!isDone) || !!onHide
+
+            return (
+              <div
+                key={ev.id}
+                id={`cal-ev-${ev.id}`}
+                className={`${styles.event} ${statusCls} ${isHiddenEv ? styles.eventHidden : ''} ${clColor ? styles.eventColored : ''} ${isCompact ? styles.eventCompact : ''}`}
+                style={{
+                  top,
+                  height,
+                  left:  `calc(${colLeft}% + 56px)`,
+                  width: `calc(${colW}% - 60px)`,
+                  borderLeftColor: clColor || undefined,
+                  ...(evBg ? { background: evBg } : {}),
+                }}
+                onMouseDown={ev.canEdit !== false ? (e) => {
+                  if (e.target.closest('[data-resize]')) return
+                  startDrag(e, ev, 'move')
+                } : undefined}
+                onClick={(e) => {
+                  if (e.target.closest('[data-action]')) return
+                  // ドラッグが発生したらクリックイベントを無視
+                  if (didDragRef.current) { didDragRef.current = false; return }
+                  onOpenDetail?.(ev)
+                }}
+              >
+                {/* イベント内コンテンツ（アクションボタン分の右余白確保） */}
+                <div className={styles.eventInner} style={hasActions ? { paddingRight: 42 } : undefined}>
+                  <div className={styles.eventHeader}>
+                    <span data-time className={styles.eventTime}>
+                      {fmtTime(ev.plannedStart)}–{fmtTime(ev.plannedEnd)}
+                    </span>
+                    {perm && <PermIcon type={perm} />}
+                    {isCompact && (
+                      <span className={styles.eventTitleInline}>{ev.calendarEventTitle}</span>
+                    )}
+                    {isCompact && client && (
+                      <button
+                        className={styles.eventClientInline}
+                        style={{ color: clColor || undefined }}
+                        data-action="true"
+                        onMouseDown={e => e.stopPropagation()}
+                        onClick={e => openColorPicker(e, ev, client)}
+                        title="色を変更"
+                      >
+                        {client.display_name || client.name}
+                      </button>
+                    )}
+                    {isCompact && statusBadgeLabel && (
+                      <span className={`${styles.statusBadge} ${isDone ? styles.badgeDone : isActive ? styles.badgeRun : ''}`}>
+                        {statusBadgeLabel}
+                      </span>
+                    )}
+                  </div>
+                  {!isCompact && (
+                    <>
+                      <div className={styles.eventTitle}>{ev.calendarEventTitle}</div>
+                      {client && (
+                        <button
+                          className={styles.eventClient}
+                          style={{ color: clColor || undefined }}
+                          data-action="true"
+                          onMouseDown={e => e.stopPropagation()}
+                          onClick={e => openColorPicker(e, ev, client)}
+                          title="色を変更"
+                        >
+                          {client.display_name || client.name}
+                        </button>
+                      )}
+                      {statusBadgeLabel && (
+                        <span className={`${styles.statusBadge} ${isDone ? styles.badgeDone : isActive ? styles.badgeRun : ''}`}>
+                          {statusBadgeLabel}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* アクションボタン */}
+                <div className={styles.eventActions}>
+                  {isActive ? (
+                    <button
+                      className={styles.btnStop}
+                      data-action="true"
+                      onMouseDown={e => e.stopPropagation()}
+                      onClick={e => { e.stopPropagation(); onEnd?.(ev.id) }}
+                    >■</button>
+                  ) : !isDone ? (
+                    <button
+                      className={styles.btnPlay}
+                      data-action="true"
+                      onMouseDown={e => e.stopPropagation()}
+                      onClick={e => { e.stopPropagation(); onStart?.(ev.id) }}
+                    >▶</button>
+                  ) : null}
+                  {onHide && (
+                    <button
+                      className={styles.btnHideEv}
+                      data-action="true"
+                      onMouseDown={e => e.stopPropagation()}
+                      onClick={e => { e.stopPropagation(); onHide(ev.id) }}
+                      title={isHiddenEv ? '表示する' : '非表示'}
+                    >–</button>
+                  )}
+                </div>
+
+                {/* リサイズハンドル */}
+                {ev.canEdit !== false && (
+                  <div
+                    className={styles.resizeHandle}
+                    data-resize="true"
+                    onMouseDown={e => { e.stopPropagation(); startDrag(e, ev, 'resize') }}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
-    </div>
+
+      {/* カラーピッカー: fixed 位置で枠外にはみ出さず表示（クリックバグ・複数イベントバグを同時解決） */}
+      {colorPicker && (
+        <ClientColorPicker
+          client={colorPicker.client}
+          onClose={() => setColorPicker(null)}
+          style={{ position: 'fixed', top: colorPicker.top, left: colorPicker.left }}
+        />
+      )}
+    </>
   )
 }

@@ -4,7 +4,16 @@ import { supabase } from '@/lib/supabase'
 export const useStore = create((set, get) => ({
   // ── Auth ──
   session: null,
-  setSession: (session) => set({ session }),
+  // provider_token はSupabaseのJWTリフレッシュ時にnullになるため別途保持
+  providerToken: null,
+  setSession: (session) => set(s => {
+    if (!session) return { session: null, providerToken: null }
+    const preserved = session.provider_token || s.providerToken
+    return {
+      session:       { ...session, provider_token: preserved },
+      providerToken: preserved,
+    }
+  }),
 
   // ── Master data ──
   clients:    [],
@@ -13,9 +22,12 @@ export const useStore = create((set, get) => ({
   appTasks:   [],
 
   setClients:    (clients)    => set({ clients }),
+  updateClient:  (id, patch)  => set(s => ({ clients: s.clients.map(c => c.id === id ? { ...c, ...patch } : c) })),
   setProjects:   (projects)   => set({ projects }),
   setCategories: (categories) => set({ categories }),
   setAppTasks:   (appTasks)   => set({ appTasks }),
+  updateAppTask: (taskId, patch) =>
+    set(s => ({ appTasks: s.appTasks.map(t => t.id === taskId ? { ...t, ...patch } : t) })),
 
   // ── Today ──
   todayEvents:   [],
@@ -27,7 +39,7 @@ export const useStore = create((set, get) => ({
   rawCalEvents: [],
   rawCalDate:   null,
 
-  devDate: (import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development') ? new Date() : null,
+  devDate: new Date(),
 
   addAppTask: (task) => set(s => ({ appTasks: [task, ...s.appTasks] })),
 

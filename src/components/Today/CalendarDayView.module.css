@@ -75,7 +75,7 @@
 }
 .event:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 
-/* ステータス別スタイル */
+/* ステータス別スタイル（クライアント色がない場合のフォールバック） */
 .eventDefault {
   background: var(--color-amber-bg);
   border-top-color: rgba(239, 159, 39, 0.35);
@@ -92,13 +92,20 @@
   box-shadow: 0 0 0 2px rgba(239, 159, 39, 0.25);
 }
 .eventDone {
-  background: var(--color-green-bg);
-  border-top-color: rgba(72, 187, 120, 0.3);
-  border-right-color: rgba(72, 187, 120, 0.3);
-  border-bottom-color: rgba(72, 187, 120, 0.3);
-  border-left-color: #48BB78;
-  opacity: 0.75;
+  background: var(--color-bg-secondary);
+  border-top-color: var(--color-border);
+  border-right-color: var(--color-border);
+  border-bottom-color: var(--color-border);
+  border-left-color: var(--color-border-medium);
 }
+.eventDoneStyle {
+  background: var(--color-bg-secondary);
+  border-top-color: var(--color-border);
+  border-right-color: var(--color-border);
+  border-bottom-color: var(--color-border);
+  border-left-color: var(--color-border-medium);
+}
+.eventDoneStyle .eventInner { opacity: 0.6; }
 .eventReadonly {
   cursor: default;
   background: var(--color-bg-secondary);
@@ -108,6 +115,44 @@
   border-left-color: var(--color-border-medium);
 }
 .eventHidden { opacity: 0.3; }
+
+/* クライアント色がある場合 */
+.eventColored {
+  border-top-color: rgba(0,0,0,0.08);
+  border-right-color: rgba(0,0,0,0.08);
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+
+/* ステータスバッジ */
+.statusBadge {
+  font-size: 0.5rem;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+}
+.badgeDone { background: var(--color-green-bg); color: var(--color-green-text); }
+.badgeRun  { background: var(--color-amber-bg); color: var(--color-amber-text); }
+
+/* コンパクト表示（30分未満の短い予定） */
+.eventCompact .eventHeader {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  align-items: center;
+  gap: 4px;
+}
+.eventTitleInline {
+  font-size: 0.625rem;
+  font-weight: 600;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
 
 .eventInner {
   flex: 1;
@@ -136,14 +181,43 @@
   -webkit-box-orient: vertical;
   line-height: 1.3;
 }
+.clientRow {
+  position: relative;
+  margin-top: 2px;
+}
 .eventClient {
   font-size: 0.5625rem;
-  margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 0.85;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  display: block;
+  width: 100%;
+  text-align: left;
 }
+.eventClient:hover { opacity: 1; text-decoration: underline; }
+
+.eventClientInline {
+  font-size: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 56px;
+}
+.eventClientInline:hover { opacity: 1; text-decoration: underline; }
 
 /* アクションボタン */
 .eventActions {

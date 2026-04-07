@@ -7,8 +7,9 @@
   transition: border-color 0.15s, opacity 0.15s;
 }
 .card:hover { border-color: var(--color-border-medium); }
-.active { border: 1.5px solid #EF9F27; }
-.done   { opacity: 0.6; }
+.active { border-width: 1.5px; border-style: solid; }
+.done   { opacity: 1; }
+.done .body { opacity: 0.55; }
 
 .accent { width: 3px; flex-shrink: 0; }
 .body   { flex: 1; padding: 9px 12px; min-width: 0; }
@@ -174,12 +175,19 @@
   border-radius: 2px;
 }
 
+.clientChipWrap {
+  position: relative;
+}
 .clientChip {
   font-size: 0.625rem;
   padding: 1px 5px;
   border-radius: 3px;
   white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
+.clientChip:hover { filter: brightness(0.92); }
 
 .actual { font-size: 0.625rem; color: var(--color-text-tertiary); font-family: var(--font-mono); }
 .over   { color: #A32D2D; }
@@ -199,6 +207,19 @@
 }
 .btnStart:hover { background: var(--color-amber-bg-hover); }
 
+.btnResume {
+  font-size: 0.6875rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+}
+.btnResume:hover { background: #e0e7ff; }
+
 .btnUndo {
   font-size: 0.6875rem;
   padding: 4px 10px;
@@ -210,3 +231,16 @@
   font-family: inherit;
 }
 .btnUndo:hover { background: var(--color-bg-secondary); }
+
+.btnOnTime {
+  font-size: 0.6875rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+}
+.btnOnTime:hover { background: #d1fae5; }
