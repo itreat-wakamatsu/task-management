@@ -146,6 +146,20 @@
 }
 .btnMcp:hover { background: var(--color-bg-secondary); }
 
+.btnFeedback {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: 0.5px solid var(--color-border);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.btnFeedback:hover { background: var(--color-bg-secondary); }
+
 .signOut {
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
@@ -232,6 +246,12 @@
   .btnBacklog {
     font-size: 0.6875rem;
     padding: 3px 7px;
+    flex-shrink: 0;
+  }
+
+  .btnFeedback {
+    font-size: 0.625rem;
+    padding: 3px 6px;
     flex-shrink: 0;
   }
 

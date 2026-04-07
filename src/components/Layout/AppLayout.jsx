@@ -10,6 +10,7 @@ import BacklogModal    from '@/components/Backlog/BacklogModal'
 import BacklogBadge    from '@/components/Backlog/BacklogBadge'
 import AddToTodayModal   from '@/components/Today/AddToTodayModal'
 import McpSettingsModal  from '@/components/Settings/McpSettingsModal'
+import FeedbackModal     from '@/components/Feedback/FeedbackModal'
 import styles from './AppLayout.module.css'
 
 const TABS = [
@@ -27,6 +28,7 @@ export default function AppLayout() {
   const [showDatePicker,  setShowDatePicker] = useState(false)
   const datePickerRef = useRef(null)
   const [showMcpSettings, setShowMcpSettings] = useState(false)
+  const [showFeedback,    setShowFeedback]   = useState(false)
   const {
     session, loadMasters, loadAppTasks, loadBacklogToken, backlogToken,
     devDate, setDevDate, setRawCalEvents, rawCalDate, rawCalEvents,
@@ -191,6 +193,13 @@ export default function AppLayout() {
           >
             MCP
           </button>
+          <button
+            className={styles.btnFeedback}
+            onClick={() => setShowFeedback(true)}
+            title="フィードバックを送る"
+          >
+            Feedback
+          </button>
           <button className={styles.signOut} onClick={handleSignOut} title="ログアウト">
             {session?.user?.email?.split('@')[0]}　⏏
           </button>
@@ -219,6 +228,7 @@ export default function AppLayout() {
 
       {showBacklog     && <BacklogModal      onClose={() => setShowBacklog(false)} />}
       {showMcpSettings && <McpSettingsModal onClose={() => setShowMcpSettings(false)} />}
+      {showFeedback    && <FeedbackModal    onClose={() => setShowFeedback(false)} activeTab={activeTab} />}
 
       {addToTodayTask && (
         <AddToTodayModal
