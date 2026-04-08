@@ -52,8 +52,9 @@ export default function TaskCard({
   event, isActive, isPaused, onStart, onEnd, onUndo, onResume, onOnTime, onOpenLink,
   onHide, isHidden, onTimeChange, onOpenDetail,
 }) {
-  const clients  = useStore(s => s.clients)
+  const { clients, projects } = useStore(s => ({ clients: s.clients, projects: s.projects }))
   const client   = clients.find(c => c.id === event.task?.client_id)
+  const project  = projects.find(p => p.id === event.task?.project_id)
   const clColor  = getClientColor(client) || null
   const clBg     = client ? hexToRgba(getClientColor(client), 0.1) : null
 
@@ -203,6 +204,9 @@ export default function TaskCard({
                 )}
               </div>
             )}
+            {project && (
+              <span className={styles.projectChip}>{project.name}</span>
+            )}
             {actualInfo}
           </div>
 
@@ -223,6 +227,117 @@ export default function TaskCard({
                 <button className={styles.btnResume} onClick={onResume}>再開</button>
                 <button className={styles.btnUndo}   onClick={onUndo}>取消</button>
               </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── 重複タスク統合カード ──
+// 同一 taskId を持つ複数イベントを1枚のカードにまとめて表示する。
+const SLOT_STATUS_CLS = { done: styles.slotDone, running: styles.slotRun, paused: styles.slotPause, pending: styles.slotPending }
+
+export function MergedTaskGroup({
+  events, activeEventId, isPaused,
+  onStart, onEnd, onUndo, onOnTime, onResume, onOpenLink, onOpenDetail,
+}) {
+  const { clients, projects } = useStore(s => ({ clients: s.clients, projects: s.projects }))
+
+  const task    = events[0].task
+  const client  = clients.find(c => c.id === task?.client_id)
+  const project = projects.find(p => p.id === task?.project_id)
+  const clColor = getClientColor(client) || null
+
+  // グループ内のアクティブ判定
+  const activeEv = events.find(e => e.id === activeEventId)
+  const isGroupActive = !!activeEv
+  const isGroupPaused = isGroupActive && isPaused
+
+  // アクション対象イベント（進行中 > 未開始の先頭 > 最後の完了）
+  const leadEv = activeEv
+    || events.find(e => e.status === 'pending')
+    || events[events.length - 1]
+
+  const allDone = events.every(e => e.status === 'done')
+
+  // 各スロットのステータス
+  function slotStatus(ev) {
+    if (ev.id === activeEventId) return isPaused ? 'paused' : 'running'
+    return ev.status
+  }
+
+  const cardBg = isGroupActive && !isGroupPaused && clColor
+    ? hexToRgba(clColor, 0.22)
+    : (allDone ? 'var(--color-bg-secondary)' : (client ? hexToRgba(getClientColor(client), 0.1) : undefined))
+
+  return (
+    <div
+      className={`${styles.card} ${isGroupActive ? styles.active : ''} ${allDone ? styles.done : ''}`}
+      style={{
+        ...(cardBg ? { background: cardBg } : {}),
+        ...(isGroupActive ? { borderColor: clColor || '#EF9F27', borderWidth: '1.5px' } : {}),
+      }}
+    >
+      <div className={styles.accent} style={{ background: clColor }} />
+      <div className={styles.body}>
+        {/* 行1: 時間スロット群 + タイトル */}
+        <div className={styles.mergedRow1}>
+          <div className={styles.mergedSlots}>
+            {events.map(ev => (
+              <span
+                key={ev.id}
+                className={`${styles.mergedSlot} ${SLOT_STATUS_CLS[slotStatus(ev)] || styles.slotPending}`}
+              >
+                {fmtTime(ev.plannedStart)}–{fmtTime(ev.plannedEnd)}
+              </span>
+            ))}
+          </div>
+          <button className={styles.titleBtn} onClick={() => onOpenDetail?.(leadEv)}>
+            {task?.title || leadEv.calendarEventTitle}
+          </button>
+        </div>
+
+        {/* 行2: メタ情報 + アクション */}
+        <div className={styles.row2}>
+          <div className={styles.meta}>
+            {task?.id ? (
+              <button className={styles.chipId} onClick={() => onOpenLink?.(leadEv)}>
+                {task.id}
+              </button>
+            ) : (
+              <button className={styles.chipUnlinked} onClick={() => onOpenLink?.(leadEv)}>
+                未紐付け ＋
+              </button>
+            )}
+            {client && (
+              <span
+                className={styles.clientChip}
+                style={{ background: clColor ? `${clColor}18` : undefined, color: clColor || undefined }}
+              >
+                {client.display_name || client.name}
+              </span>
+            )}
+            {project && (
+              <span className={styles.projectChip}>{project.name}</span>
+            )}
+            <span className={styles.actual}>
+              {events.length}回に分けて実施
+            </span>
+          </div>
+
+          <div className={styles.actions}>
+            {!isGroupActive && !allDone && (
+              <>
+                <button className={styles.btnStart} onClick={() => onStart(leadEv.id)}>開始</button>
+                {onOnTime && (
+                  <button className={styles.btnOnTime} onClick={() => onOnTime(leadEv.id)} title="計画終了時刻で完了">予定通り</button>
+                )}
+              </>
+            )}
+            {allDone && (
+              <button className={styles.btnResume} onClick={() => onResume?.(leadEv)}>再開</button>
             )}
           </div>
         </div>

@@ -186,3 +186,65 @@
   font-family: inherit;
 }
 .btnEdit:hover { background: var(--color-amber-bg-hover); }
+
+.taskStatusBadge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.projectChip {
+  display: inline-block;
+  font-size: 0.625rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  width: fit-content;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+  border: 0.5px solid var(--color-border);
+}
+
+.datesRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dateItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dateLabel {
+  font-size: 0.5625rem;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+.dateVal {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+}
+
+.catsRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.catChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.625rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border: 0.5px solid var(--color-border);
+}
+.catLabel {
+  font-size: 0.5rem;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
