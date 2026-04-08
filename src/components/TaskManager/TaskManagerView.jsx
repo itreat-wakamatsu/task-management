@@ -18,6 +18,8 @@ const STATUS_LABELS = ['未着手', '進行中', '完了', '保留中']
 const STATUS_STYLES = ['statusPending', 'statusRunning', 'statusDone', 'statusOnHold']
 const ALL_STATUSES  = [0, 1, 2, 3]
 
+const BULK_INIT = { status: '', client_id: '', project_id: '', category_id: '', subcategory_id: '' }
+
 function todayStr() {
   const t = new Date()
   return [t.getFullYear(), String(t.getMonth()+1).padStart(2,'0'), String(t.getDate()).padStart(2,'0')].join('-')
@@ -63,6 +65,10 @@ export default function TaskManagerView({ onAddToToday }) {
   const [showCsvImport,    setShowCsvImport]   = useState(false)
   const [colorPicker,      setColorPicker]      = useState(null)  // { client, top, left }
 
+  // ── 一括編集 ──
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkForm,    setBulkForm]    = useState(BULK_INIT)
+
   const today = todayStr()
 
   function toggleStatus(s) {
@@ -93,6 +99,65 @@ export default function TaskManagerView({ onAddToToday }) {
       if (!b.due_date) return -1
       return a.due_date.localeCompare(b.due_date)
     })
+
+  // チェックボックス操作
+  const allSelected  = filtered.length > 0 && filtered.every(t => selectedIds.has(t.id))
+  const someSelected = !allSelected && filtered.some(t => selectedIds.has(t.id))
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(t => t.id)))
+    }
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  // bulkForm のカスケード選択肢
+  const bulkFilteredProjects = bulkForm.client_id
+    ? projects.filter(p => String(p.client_id) === bulkForm.client_id)
+    : projects
+  const bulkCat1List = bulkForm.project_id
+    ? categories.filter(c => String(c.project_id) === bulkForm.project_id && !c.parent_id)
+    : []
+  const bulkCat2List = bulkForm.category_id
+    ? categories.filter(c => String(c.parent_id) === bulkForm.category_id)
+    : []
+
+  function setBulkField(field, value) {
+    setBulkForm(prev => {
+      const next = { ...prev, [field]: value }
+      // カスケードリセット
+      if (field === 'client_id')  { next.project_id = ''; next.category_id = ''; next.subcategory_id = '' }
+      if (field === 'project_id') { next.category_id = ''; next.subcategory_id = '' }
+      if (field === 'category_id') { next.subcategory_id = '' }
+      return next
+    })
+  }
+
+  async function handleBulkApply() {
+    const patch = {}
+    if (bulkForm.status        !== '') patch.status        = parseInt(bulkForm.status)
+    if (bulkForm.client_id     !== '') patch.client_id     = parseInt(bulkForm.client_id)
+    if (bulkForm.project_id    !== '') patch.project_id    = parseInt(bulkForm.project_id)
+    if (bulkForm.category_id   !== '') patch.category_id   = parseInt(bulkForm.category_id)
+    if (bulkForm.subcategory_id !== '') patch.subcategory_id = parseInt(bulkForm.subcategory_id)
+
+    if (Object.keys(patch).length === 0) return
+
+    const ids = [...selectedIds]
+    await supabase.from('app_tasks').update(patch).in('id', ids)
+    setAppTasks(appTasks.map(t => ids.includes(t.id) ? { ...t, ...patch } : t))
+    setSelectedIds(new Set())
+    setBulkForm(BULK_INIT)
+  }
 
   async function handleSave(id, patch) {
     await supabase.from('app_tasks').update(patch).eq('id', id)
@@ -202,10 +267,101 @@ export default function TaskManagerView({ onAddToToday }) {
         <button className={styles.btnAdd} onClick={() => setShowNew(true)}>＋ 新規タスク</button>
       </div>
 
+      {/* ── 一括編集バー（1件以上選択時に表示） ── */}
+      {selectedIds.size > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkCount}>{selectedIds.size}件選択中</span>
+          <span className={styles.bulkLabel}>変更内容：</span>
+
+          {/* ステータス */}
+          <select
+            className={styles.bulkSelect}
+            value={bulkForm.status}
+            onChange={e => setBulkField('status', e.target.value)}
+          >
+            <option value="">ステータス：変更しない</option>
+            {STATUS_LABELS.map((lbl, i) => (
+              <option key={i} value={String(i)}>{lbl}</option>
+            ))}
+          </select>
+
+          {/* クライアント */}
+          <select
+            className={styles.bulkSelect}
+            value={bulkForm.client_id}
+            onChange={e => setBulkField('client_id', e.target.value)}
+          >
+            <option value="">クライアント：変更しない</option>
+            {clients.map(c => (
+              <option key={c.id} value={String(c.id)}>{c.display_name || c.name}</option>
+            ))}
+          </select>
+
+          {/* 案件 */}
+          <select
+            className={styles.bulkSelect}
+            value={bulkForm.project_id}
+            onChange={e => setBulkField('project_id', e.target.value)}
+          >
+            <option value="">案件：変更しない</option>
+            {bulkFilteredProjects.map(p => (
+              <option key={p.id} value={String(p.id)}>{p.name}</option>
+            ))}
+          </select>
+
+          {/* 第1区分 */}
+          <select
+            className={styles.bulkSelect}
+            value={bulkForm.category_id}
+            onChange={e => setBulkField('category_id', e.target.value)}
+            disabled={!bulkForm.project_id}
+            title={!bulkForm.project_id ? '案件を選択してください' : ''}
+          >
+            <option value="">第1区分：変更しない</option>
+            {bulkCat1List.map(c => (
+              <option key={c.id} value={String(c.id)}>{c.name}</option>
+            ))}
+          </select>
+
+          {/* 第2区分 */}
+          <select
+            className={styles.bulkSelect}
+            value={bulkForm.subcategory_id}
+            onChange={e => setBulkField('subcategory_id', e.target.value)}
+            disabled={!bulkForm.category_id}
+            title={!bulkForm.category_id ? '第1区分を選択してください' : ''}
+          >
+            <option value="">第2区分：変更しない</option>
+            {bulkCat2List.map(c => (
+              <option key={c.id} value={String(c.id)}>{c.name}</option>
+            ))}
+          </select>
+
+          <button className={styles.bulkApply} onClick={handleBulkApply}>
+            一括更新
+          </button>
+          <button
+            className={styles.bulkCancel}
+            onClick={() => { setSelectedIds(new Set()); setBulkForm(BULK_INIT) }}
+          >
+            選択解除
+          </button>
+        </div>
+      )}
+
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
             <tr>
+              <th className={styles.thCheck}>
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={el => { if (el) el.indeterminate = someSelected }}
+                  onChange={toggleSelectAll}
+                  title="全選択 / 全解除"
+                />
+              </th>
               <th>ID</th>
               <th>タスク名</th>
               <th>クライアント</th>
@@ -225,6 +381,7 @@ export default function TaskManagerView({ onAddToToday }) {
               const c1        = categories.find(c => c.id === task.category_id)
               const c2        = categories.find(c => c.id === task.subcategory_id)
               const isOverdue = task.due_date && task.due_date < today && task.status !== 2
+              const isSelected = selectedIds.has(task.id)
 
               // Backlog URL
               const backlogUrl = (task.backlog_issue_key && backlogToken?.space_key)
@@ -232,7 +389,20 @@ export default function TaskManagerView({ onAddToToday }) {
                 : null
 
               return (
-                <tr key={task.id} className={isOverdue ? styles.rowOverdue : ''}>
+                <tr
+                  key={task.id}
+                  className={[
+                    isOverdue  ? styles.rowOverdue  : '',
+                    isSelected ? styles.rowSelected : '',
+                  ].join(' ')}
+                >
+                  <td className={styles.tdCheck}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(task.id)}
+                    />
+                  </td>
                   <td className={styles.tdId}>{task.id}</td>
                   <td>
                     <div className={styles.tdTitle}>
@@ -292,7 +462,7 @@ export default function TaskManagerView({ onAddToToday }) {
               )
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={10} className={styles.empty}>タスクがありません</td></tr>
+              <tr><td colSpan={11} className={styles.empty}>タスクがありません</td></tr>
             )}
           </tbody>
         </table>
