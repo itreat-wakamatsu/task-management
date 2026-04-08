@@ -22,12 +22,6 @@ function markSynced() {
   sessionStorage.setItem(SYNC_KEY, String(Date.now()))
 }
 
-/** Backlog ステータス ID → ローカルステータス番号 */
-function mapStatus(backlogStatusId) {
-  if (backlogStatusId === 2) return 1   // 処理中 → 進行中
-  return 0                              // 未対応 / 処理済み → 未着手
-}
-
 /**
  * Backlog アクセストークンの有効期限を確認し、必要なら更新して返す。
  * BacklogModal / BacklogLinkModal と共通で使えるように切り出し。
@@ -65,7 +59,9 @@ export async function ensureFreshToken(backlogToken, session, setBacklogToken) {
  *   - title       (summary)
  *   - start_date  (startDate)
  *   - due_date    (dueDate)
- *   - status      ※ローカルで「完了」のタスクは上書きしない
+ *
+ * ※ ステータス・クライアント・案件・区分はアプリ側で手動設定した値を
+ *    尊重するため同期しない。
  *
  * @returns {{ updated: number }} 更新したタスク件数
  */
@@ -106,12 +102,6 @@ export async function syncBacklogTasks({
     const newDue   = issue.dueDate   ? issue.dueDate.slice(0, 10)   : null
     if (newStart !== (task.start_date ?? null)) patch.start_date = newStart
     if (newDue   !== (task.due_date   ?? null)) patch.due_date   = newDue
-
-    // ローカルで完了（status=2）のタスクはステータスを戻さない
-    if (task.status !== 2) {
-      const ns = mapStatus(issue.status?.id)
-      if (ns !== task.status) patch.status = ns
-    }
 
     if (Object.keys(patch).length > 0) {
       updates.push({ id: task.id, ...patch })
