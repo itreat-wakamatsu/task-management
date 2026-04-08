@@ -10,6 +10,9 @@ import BacklogModal    from '@/components/Backlog/BacklogModal'
 import BacklogBadge    from '@/components/Backlog/BacklogBadge'
 import AddToTodayModal   from '@/components/Today/AddToTodayModal'
 import McpSettingsModal  from '@/components/Settings/McpSettingsModal'
+import HelpButton        from '@/components/Tutorial/HelpButton'
+import TutorialOverlay   from '@/components/Tutorial/TutorialOverlay'
+import { TUTORIALS, getCompletedTutorials, isDismissedForever, dismissForever } from '@/components/Tutorial/tutorialData'
 import FeedbackModal     from '@/components/Feedback/FeedbackModal'
 import styles from './AppLayout.module.css'
 
@@ -28,6 +31,20 @@ export default function AppLayout() {
   const [addToTodayTask,  setAddToTodayTask] = useState(null)
   const datePickerRef = useRef(null)
   const [showMcpSettings, setShowMcpSettings] = useState(false)
+  const [activeTutorial,  setActiveTutorial]  = useState(null)
+
+  // 初回アクセス時にチュートリアルを自動表示
+  useEffect(() => {
+    if (isDismissedForever()) return
+    const completed = getCompletedTutorials()
+    if (!completed.includes('daily-workflow')) {
+      // 少し遅延させてUIが描画されてから表示
+      const timer = setTimeout(() => {
+        setActiveTutorial(TUTORIALS.find(t => t.id === 'daily-workflow'))
+      }, 800)
+      return () => clearTimeout(timer)
+    }
+  }, [])
   const [showFeedback,    setShowFeedback]   = useState(false)
   const {
     session, loadMasters, loadAppTasks, loadBacklogToken, backlogToken,
@@ -185,11 +202,12 @@ export default function AppLayout() {
         </div>
         <div className={styles.headerRight}>
           {/* 残り空き時間 */}
-          <span className={`${styles.freeTime} ${freeMins <= 0 ? styles.freeTimeNone : ''}`}>
+          <span data-tutorial="free-time" className={`${styles.freeTime} ${freeMins <= 0 ? styles.freeTimeNone : ''}`}>
             {freeLabel}
           </span>
 
           <button
+            data-tutorial="btn-backlog"
             className={`${styles.btnBacklog} ${backlogToken ? styles.btnBacklogConnected : ''}`}
             onClick={() => setShowBacklog(true)}
             title={backlogToken ? `${backlogToken.space_key}.backlog.com と連携済み` : 'Backlog 連携'}
@@ -204,6 +222,12 @@ export default function AppLayout() {
           >
             MCP
           </button>
+          <HelpButton
+            onStartTutorial={id => {
+              const t = TUTORIALS.find(x => x.id === id)
+              if (t) setActiveTutorial(t)
+            }}
+          />
           <button
             className={styles.btnFeedback}
             onClick={() => setShowFeedback(true)}
@@ -221,6 +245,7 @@ export default function AppLayout() {
         {TABS.map(t => (
           <button
             key={t.id}
+            data-tutorial={`tab-${t.id}`}
             className={`${styles.tab} ${activeTab === t.id ? styles.active : ''}`}
             onClick={() => setActiveTab(t.id)}
           >
@@ -248,6 +273,17 @@ export default function AppLayout() {
           targetDateStr={targetDateStr}
           onSave={handleAddToToday}
           onClose={() => setAddToTodayTask(null)}
+        />
+      )}
+
+      {activeTutorial && (
+        <TutorialOverlay
+          tutorial={activeTutorial}
+          onClose={() => setActiveTutorial(null)}
+          onDismiss={() => {
+            dismissForever()
+            setActiveTutorial(null)
+          }}
         />
       )}
     </div>

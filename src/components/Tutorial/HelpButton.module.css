@@ -1,0 +1,129 @@
+/* ── ラッパー（相対配置） ── */
+.wrapper {
+  position: relative;
+}
+
+/* ── ？ボタン ── */
+.helpBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-tertiary);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  line-height: 1;
+}
+.helpBtn:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-strong);
+}
+
+/* ── ドロップダウンメニュー ── */
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: var(--color-bg-primary);
+  border: 0.5px solid var(--color-border-medium);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  z-index: 500;
+  animation: menuFadeIn 0.15s ease;
+}
+
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.menuHeader {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  padding: 10px 14px 6px;
+  letter-spacing: 0.02em;
+}
+
+/* ── メニュー項目 ── */
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+.menuItem:hover {
+  background: var(--color-bg-secondary);
+}
+
+.menuIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.menuText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.menuLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.menuDesc {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  line-height: 1.4;
+}
+
+.menuCheck {
+  font-size: 0.75rem;
+  color: var(--color-success-text);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.menuFooter {
+  font-size: 0.625rem;
+  color: var(--color-text-tertiary);
+  padding: 6px 14px 10px;
+  border-top: 0.5px solid var(--color-border);
+}
+
+/* ── モバイル ── */
+@media (max-width: 640px) {
+  .helpBtn {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  .menu {
+    width: 260px;
+    right: -4px;
+  }
+}

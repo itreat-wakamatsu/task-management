@@ -1,0 +1,326 @@
+/* ── オーバーレイ全体 ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+}
+
+/* 半透明背景 */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+
+/* ── スポットライト（ハイライト穴あき） ── */
+.spotlight {
+  position: fixed;
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  z-index: 9001;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* インタラクティブ時: スポットライト内をクリック可能に */
+.spotlightClickable {
+  pointer-events: auto;
+  cursor: pointer;
+  /* パルスアニメーション */
+  animation: spotlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes spotlightPulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50%      { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 0 6px rgba(59, 130, 246, 0.2); }
+}
+
+/* ── ポップオーバー ── */
+.popover {
+  position: fixed;
+  z-index: 9002;
+  background: var(--color-bg-primary);
+  border-radius: 14px;
+  border: 0.5px solid var(--color-border-medium);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  max-width: calc(100vw - 2rem);
+  pointer-events: auto;
+}
+
+.popoverCenter {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: fadeSlideIn 0.3s ease;
+}
+
+.popoverPositioned {
+  animation: fadeSlideInAbs 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+}
+
+@keyframes fadeSlideInAbs {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── ヘッダー ── */
+.popoverHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 0;
+}
+
+.tutorialTitle {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.02em;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.closeBtn:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+/* ── プログレスバー ── */
+.progressTrack {
+  height: 3px;
+  background: var(--color-bg-tertiary);
+  margin: 10px 16px 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── コンテンツ ── */
+.content {
+  padding: 16px 16px 12px;
+}
+
+.stepIcon {
+  display: inline-block;
+  font-size: 1.75rem;
+  margin-bottom: 8px;
+}
+
+.stepTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.stepBody {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+/* ── アクション促進バー（インタラクティブステップ） ── */
+.actionHint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+}
+
+.actionPulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  flex-shrink: 0;
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(1.4); }
+}
+
+/* ── フッター ── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 14px;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.stepCount {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 操作待ちラベル */
+.waitingLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+.btnPrimary {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btnPrimary:hover {
+  background: #2563eb;
+}
+
+.btnSecondary {
+  font-size: 0.8125rem;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-medium);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnSecondary:hover {
+  background: var(--color-bg-secondary);
+}
+
+/* ── 後にする / 今後表示しない ── */
+.dismissRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px 14px;
+  gap: 0;
+}
+
+.btnDismiss {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.btnDismiss:hover {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+}
+
+.dismissDot {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+}
+
+/* ── スキップリンク（インタラクティブステップ） ── */
+.skipRow {
+  display: flex;
+  justify-content: center;
+  padding: 0 16px 12px;
+}
+
+.btnSkip {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.btnSkip:hover {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+}
+
+/* ── ダークモード補正 ── */
+@media (prefers-color-scheme: dark) {
+  .actionHint {
+    color: #93c5fd;
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.3), rgba(30, 64, 175, 0.2));
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .actionPulse {
+    background: #60a5fa;
+  }
+}
+
+/* ── モバイル対応 ── */
+@media (max-width: 640px) {
+  .popover {
+    width: calc(100vw - 1.5rem);
+  }
+
+  .popoverCenter {
+    top: auto;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+}
