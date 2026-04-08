@@ -8,9 +8,11 @@ export const ALL_COLS = [
   { key: 'status',       label: 'ステータス',   defaultOn: true,  importable: true  },
   { key: 'start_date',   label: '開始日',       defaultOn: true,  importable: true  },
   { key: 'due_date',     label: '期日',         defaultOn: true,  importable: true  },
-  { key: 'is_recurring', label: '定期/非定期',  defaultOn: false, importable: true  },
-  { key: 'id',           label: 'ID',           defaultOn: false, importable: false },
-  { key: 'backlog_key',  label: 'Backlogキー',  defaultOn: false, importable: false },
+  { key: 'planned_hours', label: '予定工数',     defaultOn: false, importable: true  },
+  { key: 'actual_hours',  label: '実工数',       defaultOn: false, importable: true  },
+  { key: 'is_recurring',  label: '定期/非定期',  defaultOn: false, importable: true  },
+  { key: 'id',            label: 'ID',           defaultOn: false, importable: false },
+  { key: 'backlog_key',   label: 'Backlogキー',  defaultOn: false, importable: false },
 ]
 
 // 旧バージョンのテンプレートとの後方互換ラベル

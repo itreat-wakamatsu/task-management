@@ -16,9 +16,11 @@ const EXAMPLE_VALUES = {
   category:     '設計',
   subcategory:  '',
   status:       '未着手',
-  start_date:   '2026-04-07',
-  due_date:     '2026-04-30',
-  is_recurring: '非定期',
+  start_date:    '2026-04-07',
+  due_date:      '2026-04-30',
+  planned_hours: '8',
+  actual_hours:  '',
+  is_recurring:  '非定期',
 }
 
 /* ── CSV パーサー（ダブルクオート・カンマ対応） ── */
@@ -201,6 +203,9 @@ export default function CsvImportModal({ onClose, onImported }) {
         : []
       const matchedSubcategory = findByName(subCategories, row.subcategory)
 
+      const parsedPlannedHours = row.planned_hours ? parseFloat(row.planned_hours) : null
+      const parsedActualHours  = row.actual_hours  ? parseFloat(row.actual_hours)  : null
+
       parsed.push({
         _idx:              i,
         title:             row.title,
@@ -212,6 +217,8 @@ export default function CsvImportModal({ onClose, onImported }) {
         statusRaw:         row.status || '',
         start_date:        normalizeDate(row.start_date),
         due_date:          normalizeDate(row.due_date),
+        planned_hours:     (!isNaN(parsedPlannedHours) && parsedPlannedHours !== null) ? parsedPlannedHours : null,
+        actual_hours:      (!isNaN(parsedActualHours)  && parsedActualHours  !== null) ? parsedActualHours  : null,
         is_recurring:      ['true', '1', 'はい', 'yes', 'TRUE', '定期'].includes(row.is_recurring),
         matchedClient,
         matchedProject,
@@ -294,8 +301,10 @@ export default function CsvImportModal({ onClose, onImported }) {
       category_id:    row.matchedCategory?.id   || null,
       subcategory_id: row.matchedSubcategory?.id || null,
       status:         row.status,
-      start_date:     row.start_date  || null,
-      due_date:       row.due_date    || null,
+      start_date:     row.start_date    || null,
+      due_date:       row.due_date      || null,
+      planned_hours:  row.planned_hours ?? null,
+      actual_hours:   row.actual_hours  ?? null,
       is_recurring:   row.is_recurring,
     }))
 
