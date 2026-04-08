@@ -7,6 +7,7 @@ import { syncBacklogTasks, shouldAutoSync } from '@/lib/backlogSync'
 import TaskEditModal  from './TaskEditModal'
 import CsvImportModal from './CsvImportModal'
 import CsvExportModal from './CsvExportModal'
+import GanttView      from './GanttView'
 import BacklogBadge   from '@/components/Backlog/BacklogBadge'
 import SearchableSelect from '@/components/shared/SearchableSelect'
 import ClientColorPicker from '@/components/shared/ClientColorPicker'
@@ -66,6 +67,7 @@ export default function TaskManagerView({ onAddToToday }) {
   const [showCsvImport,    setShowCsvImport]   = useState(false)
   const [showCsvExport,    setShowCsvExport]   = useState(false)
   const [colorPicker,      setColorPicker]      = useState(null)  // { client, top, left }
+  const [view,             setView]             = useState('list') // 'list' | 'gantt'
 
   // ── 一括編集 ──
   const [selectedIds, setSelectedIds] = useState(new Set())
@@ -265,12 +267,39 @@ export default function TaskManagerView({ onAddToToday }) {
           </span>
         )}
 
+        <div className={styles.viewToggleGroup}>
+          <button
+            className={`${styles.toggleBtn} ${view === 'list' ? styles.toggleBtnActiveNeutral : ''}`}
+            onClick={() => setView('list')}
+          >
+            リスト
+          </button>
+          <button
+            className={`${styles.toggleBtn} ${view === 'gantt' ? styles.toggleBtnActiveNeutral : ''}`}
+            onClick={() => setView('gantt')}
+          >
+            ガント
+          </button>
+        </div>
+
         <div className={styles.csvBtnGroup}>
           <button className={styles.btnCsvExport} onClick={() => setShowCsvExport(true)}>CSV 出力</button>
           <button className={styles.btnCsvImport} onClick={() => setShowCsvImport(true)}>CSV 取込</button>
         </div>
         <button className={styles.btnAdd} onClick={() => setShowNew(true)}>＋ 新規タスク</button>
       </div>
+
+      {/* ── ガントチャートビュー ── */}
+      {view === 'gantt' && (
+        <GanttView
+          tasks={filtered}
+          clients={clients}
+          onEditTask={task => setEditTarget(task)}
+        />
+      )}
+
+      {/* ── リストビュー ── */}
+      {view === 'list' && <>
 
       {/* ── 一括編集バー（1件以上選択時に表示） ── */}
       {selectedIds.size > 0 && (
@@ -479,6 +508,8 @@ export default function TaskManagerView({ onAddToToday }) {
           </tbody>
         </table>
       </div>
+
+      </>}
 
       {editTarget && (
         <TaskEditModal
