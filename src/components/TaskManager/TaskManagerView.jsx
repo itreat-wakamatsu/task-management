@@ -6,6 +6,7 @@ import { getClientColor } from '@/lib/clientColor'
 import { syncBacklogTasks, shouldAutoSync } from '@/lib/backlogSync'
 import TaskEditModal  from './TaskEditModal'
 import CsvImportModal from './CsvImportModal'
+import CsvExportModal from './CsvExportModal'
 import BacklogBadge   from '@/components/Backlog/BacklogBadge'
 import SearchableSelect from '@/components/shared/SearchableSelect'
 import ClientColorPicker from '@/components/shared/ClientColorPicker'
@@ -63,6 +64,7 @@ export default function TaskManagerView({ onAddToToday }) {
   const [editTarget,       setEditTarget]       = useState(null)
   const [showNew,          setShowNew]          = useState(false)
   const [showCsvImport,    setShowCsvImport]   = useState(false)
+  const [showCsvExport,    setShowCsvExport]   = useState(false)
   const [colorPicker,      setColorPicker]      = useState(null)  // { client, top, left }
 
   // ── 一括編集 ──
@@ -263,7 +265,10 @@ export default function TaskManagerView({ onAddToToday }) {
           </span>
         )}
 
-        <button className={styles.btnCsvImport} onClick={() => setShowCsvImport(true)}>CSV 取込</button>
+        <div className={styles.csvBtnGroup}>
+          <button className={styles.btnCsvExport} onClick={() => setShowCsvExport(true)}>CSV 出力</button>
+          <button className={styles.btnCsvImport} onClick={() => setShowCsvImport(true)}>CSV 取込</button>
+        </div>
         <button className={styles.btnAdd} onClick={() => setShowNew(true)}>＋ 新規タスク</button>
       </div>
 
@@ -354,13 +359,16 @@ export default function TaskManagerView({ onAddToToday }) {
           <thead>
             <tr>
               <th className={styles.thCheck}>
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  ref={el => { if (el) el.indeterminate = someSelected }}
-                  onChange={toggleSelectAll}
-                  title="全選択 / 全解除"
-                />
+                <label className={styles.checkCell} title="全選択 / 全解除">
+                  <input
+                    type="checkbox"
+                    className={styles.checkboxInput}
+                    checked={allSelected}
+                    ref={el => { if (el) el.indeterminate = someSelected }}
+                    onChange={toggleSelectAll}
+                  />
+                  <span className={styles.checkboxCustom} />
+                </label>
               </th>
               <th>ID</th>
               <th>タスク名</th>
@@ -397,11 +405,15 @@ export default function TaskManagerView({ onAddToToday }) {
                   ].join(' ')}
                 >
                   <td className={styles.tdCheck}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleSelect(task.id)}
-                    />
+                    <label className={styles.checkCell}>
+                      <input
+                        type="checkbox"
+                        className={styles.checkboxInput}
+                        checked={isSelected}
+                        onChange={() => toggleSelect(task.id)}
+                      />
+                      <span className={styles.checkboxCustom} />
+                    </label>
                   </td>
                   <td className={styles.tdId}>{task.id}</td>
                   <td>
@@ -489,6 +501,12 @@ export default function TaskManagerView({ onAddToToday }) {
             setAppTasks([...newTasks, ...appTasks])
             setShowCsvImport(false)
           }}
+        />
+      )}
+      {showCsvExport && (
+        <CsvExportModal
+          tasks={selectedIds.size > 0 ? filtered.filter(t => selectedIds.has(t.id)) : filtered}
+          onClose={() => setShowCsvExport(false)}
         />
       )}
       {colorPicker && (

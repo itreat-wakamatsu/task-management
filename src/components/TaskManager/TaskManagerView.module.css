@@ -70,6 +70,24 @@
 /* ニュートラルトグル（定期・Backlog） */
 .toggleBtnActiveNeutral { background: var(--color-bg-secondary); color: var(--color-text-primary); font-weight: 600; }
 
+.csvBtnGroup {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.btnCsvExport {
+  font-size: 0.75rem;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnCsvExport:hover { background: var(--color-bg-secondary); }
+
 .btnCsvImport {
   font-size: 0.75rem;
   padding: 5px 12px;
@@ -78,7 +96,6 @@
   background: var(--color-bg-primary);
   color: var(--color-text-secondary);
   cursor: pointer;
-  margin-left: auto;
   font-family: inherit;
 }
 .btnCsvImport:hover { background: var(--color-bg-secondary); }
@@ -177,16 +194,77 @@
 /* ── チェックボックス列 ── */
 .thCheck,
 .tdCheck {
-  width: 32px;
+  width: 36px;
   text-align: center;
-  padding: 4px 6px;
+  padding: 0;
 }
-.thCheck input[type="checkbox"],
-.tdCheck input[type="checkbox"] {
+
+/* クリック領域を広げるラベル */
+.checkCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 4px 8px;
   cursor: pointer;
-  width: 13px;
-  height: 13px;
-  accent-color: var(--color-amber-text);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 実際の input は非表示 */
+.checkboxInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* カスタムチェックボックス外枠 */
+.checkboxCustom {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--color-border-medium);
+  border-radius: 3px;
+  background: var(--color-bg-primary);
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.12s, background 0.12s;
+  display: block;
+}
+
+/* チェック済み */
+.checkboxInput:checked + .checkboxCustom {
+  background: var(--color-amber-text);
+  border-color: var(--color-amber-text);
+}
+.checkboxInput:checked + .checkboxCustom::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 4px;
+  height: 8px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(42deg);
+}
+
+/* 不確定（indeterminate）状態 */
+.checkboxInput:indeterminate + .checkboxCustom {
+  background: var(--color-amber-bg-hover);
+  border-color: var(--color-amber-text);
+}
+.checkboxInput:indeterminate + .checkboxCustom::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 4px;
+  width: 8px;
+  height: 2px;
+  background: var(--color-amber-text);
+  border-radius: 1px;
 }
 
 /* 選択済み行 */
