@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アイコンプレビュー</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, 'Hiragino Sans', sans-serif;
+      background: #F1F5F9;
+      padding: 24px 16px 48px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748B;
+      margin-bottom: 28px;
+    }
+
+    /* ── カード ── */
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px 20px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .card-num {
+      font-size: 0.6rem;
+      font-weight: 700;
+      background: #F59E0B;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .card-num.rec { background: #EF4444; }
+    .card-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: #0F172A;
+    }
+    .card-desc {
+      font-size: 0.75rem;
+      color: #64748B;
+      margin-left: auto;
+    }
+
+    /* ── サイズグリッド ── */
+    .sizes {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      align-items: end;
+      justify-items: center;
+    }
+
+    .size-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .size-label {
+      font-size: 0.625rem;
+      color: #94A3B8;
+      font-weight: 500;
+    }
+
+    /* 背景バリエーション */
+    .on-dark  { background: #1E293B; border-radius: 12px; padding: 8px; }
+    .on-light { background: #F8FAFC; border-radius: 12px; padding: 8px; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #F1F5F9;
+      margin: 18px 0 14px;
+    }
+
+    .bg-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+    .bg-label {
+      font-size: 0.625rem;
+      color: #94A3B8;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    /* ── ダークモード切替ボタン ── */
+    .toggle-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .toggle-btn {
+      font-size: 0.75rem;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #CBD5E1;
+      background: white;
+      color: #374151;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .toggle-btn.active {
+      background: #0F172A;
+      border-color: #0F172A;
+      color: #F8FAFC;
+    }
+
+    body.dark {
+      background: #0F172A;
+    }
+    body.dark .card {
+      background: #1E293B;
+      box-shadow: none;
+      border: 0.5px solid #334155;
+    }
+    body.dark .card-title { color: #F8FAFC; }
+    body.dark .card-desc  { color: #64748B; }
+    body.dark h1          { color: #F8FAFC; }
+    body.dark .subtitle   { color: #64748B; }
+    body.dark .on-light   { background: #0F172A; }
+  </style>
+</head>
+<body>
+  <h1>アイコン案プレビュー</h1>
+  <p class="subtitle">各サイズ・背景色での見え方を確認してください</p>
+
+  <div class="toggle-wrap">
+    <button class="toggle-btn" id="darkToggle" onclick="toggleDark()">🌙 ダークモード</button>
+  </div>
+
+  <!-- ====== 案① タイムリング ====== -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num rec">推し</span>
+      <span class="card-title">① タイムリング</span>
+      <span class="card-desc">進捗アーク＋チェック</span>
+    </div>
+    <div class="sizes">
+      <!-- 16px -->
+      <div class="size-block">
+        <span class="size-label">16px (favicon)</span>
+        <svg width="16" height="16" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#1E293B" stroke-width="8"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" stroke-dasharray="132 189" transform="rotate(-90 50 50)"/>
+          <polyline points="34,51 44,62 66,37" fill="none" stroke="#F8FAFC" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <!-- 32px -->
+      <div class="size-block">
+        <span class="size-label">32px</span>
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#1E293B" stroke-width="8"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" stroke-dasharray="132 189" transform="rotate(-90 50 50)"/>
+          <polyline points="34,51 44,62 66,37" fill="none" stroke="#F8FAFC" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <!-- 64px -->
+      <div class="size-block">
+        <span class="size-label">64px</span>
+        <svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#1E293B" stroke-width="8"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" stroke-dasharray="132 189" transform="rotate(-90 50 50)"/>
+          <polyline points="34,51 44,62 66,37" fill="none" stroke="#F8FAFC" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <!-- 120px -->
+      <div class="size-block">
+        <span class="size-label">120px (ホーム画面)</span>
+        <svg width="120" height="120" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#1E293B" stroke-width="8"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" stroke-dasharray="132 189" transform="rotate(-90 50 50)"/>
+          <polyline points="34,51 44,62 66,37" fill="none" stroke="#F8FAFC" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="bg-label">背景色バリエーション</div>
+    <div class="bg-row">
+      <div>
+        <div class="bg-label">明るい背景</div>
+        <div class="on-light">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#0F172A"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#1E293B" stroke-width="8"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" stroke-dasharray="132 189" transform="rotate(-90 50 50)"/>
+            <polyline points="34,51 44,62 66,37" fill="none" stroke="#F8FAFC" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="bg-label">暗い背景</div>
+        <div class="on-dark">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#0F172A"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#1E293B" stroke-width="8"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" stroke-dasharray="132 189" transform="rotate(-90 50 50)"/>
+            <polyline points="34,51 44,62 66,37" fill="none" stroke="#F8FAFC" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="bg-label">白抜きver</div>
+        <div class="on-light">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="white"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#E2E8F0" stroke-width="8"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" stroke-dasharray="132 189" transform="rotate(-90 50 50)"/>
+            <polyline points="34,51 44,62 66,37" fill="none" stroke="#0F172A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 案② カレンダーフロー ====== -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">②</span>
+      <span class="card-title">② カレンダーフロー</span>
+      <span class="card-desc">カレンダー＋スケジュール行</span>
+    </div>
+    <div class="sizes">
+      <div class="size-block">
+        <span class="size-label">16px (favicon)</span>
+        <svg width="16" height="16" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <rect x="16" y="24" width="68" height="60" rx="10" fill="#1E293B"/>
+          <rect x="16" y="24" width="68" height="19" rx="10" fill="#F59E0B"/>
+          <rect x="16" y="34" width="68" height="9" fill="#F59E0B"/>
+          <rect x="31" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+          <rect x="64" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+          <rect x="27" y="51" width="46" height="5" rx="2.5" fill="#334155"/>
+          <rect x="27" y="62" width="32" height="5" rx="2.5" fill="#334155"/>
+          <rect x="27" y="73" width="46" height="5" rx="2.5" fill="#1E3A5F"/>
+          <rect x="27" y="73" width="28" height="5" rx="2.5" fill="#F59E0B"/>
+          <circle cx="24" cy="75" r="3.5" fill="#F59E0B"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">32px</span>
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <rect x="16" y="24" width="68" height="60" rx="10" fill="#1E293B"/>
+          <rect x="16" y="24" width="68" height="19" rx="10" fill="#F59E0B"/>
+          <rect x="16" y="34" width="68" height="9" fill="#F59E0B"/>
+          <rect x="31" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+          <rect x="64" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+          <rect x="27" y="51" width="46" height="5" rx="2.5" fill="#334155"/>
+          <rect x="27" y="62" width="32" height="5" rx="2.5" fill="#334155"/>
+          <rect x="27" y="73" width="46" height="5" rx="2.5" fill="#1E3A5F"/>
+          <rect x="27" y="73" width="28" height="5" rx="2.5" fill="#F59E0B"/>
+          <circle cx="24" cy="75" r="3.5" fill="#F59E0B"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">64px</span>
+        <svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <rect x="16" y="24" width="68" height="60" rx="10" fill="#1E293B"/>
+          <rect x="16" y="24" width="68" height="19" rx="10" fill="#F59E0B"/>
+          <rect x="16" y="34" width="68" height="9" fill="#F59E0B"/>
+          <rect x="31" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+          <rect x="64" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+          <rect x="27" y="51" width="46" height="5" rx="2.5" fill="#334155"/>
+          <rect x="27" y="62" width="32" height="5" rx="2.5" fill="#334155"/>
+          <rect x="27" y="73" width="46" height="5" rx="2.5" fill="#1E3A5F"/>
+          <rect x="27" y="73" width="28" height="5" rx="2.5" fill="#F59E0B"/>
+          <circle cx="24" cy="75" r="3.5" fill="#F59E0B"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">120px (ホーム画面)</span>
+        <svg width="120" height="120" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <rect x="16" y="24" width="68" height="60" rx="10" fill="#1E293B"/>
+          <rect x="16" y="24" width="68" height="19" rx="10" fill="#F59E0B"/>
+          <rect x="16" y="34" width="68" height="9" fill="#F59E0B"/>
+          <rect x="31" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+          <rect x="64" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+          <rect x="27" y="51" width="46" height="5" rx="2.5" fill="#334155"/>
+          <rect x="27" y="62" width="32" height="5" rx="2.5" fill="#334155"/>
+          <rect x="27" y="73" width="46" height="5" rx="2.5" fill="#1E3A5F"/>
+          <rect x="27" y="73" width="28" height="5" rx="2.5" fill="#F59E0B"/>
+          <circle cx="24" cy="75" r="3.5" fill="#F59E0B"/>
+        </svg>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="bg-label">背景色バリエーション</div>
+    <div class="bg-row">
+      <div>
+        <div class="bg-label">明るい背景</div>
+        <div class="on-light">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#0F172A"/>
+            <rect x="16" y="24" width="68" height="60" rx="10" fill="#1E293B"/>
+            <rect x="16" y="24" width="68" height="19" rx="10" fill="#F59E0B"/>
+            <rect x="16" y="34" width="68" height="9" fill="#F59E0B"/>
+            <rect x="31" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+            <rect x="64" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+            <rect x="27" y="51" width="46" height="5" rx="2.5" fill="#334155"/>
+            <rect x="27" y="62" width="32" height="5" rx="2.5" fill="#334155"/>
+            <rect x="27" y="73" width="46" height="5" rx="2.5" fill="#1E3A5F"/>
+            <rect x="27" y="73" width="28" height="5" rx="2.5" fill="#F59E0B"/>
+            <circle cx="24" cy="75" r="3.5" fill="#F59E0B"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="bg-label">暗い背景</div>
+        <div class="on-dark">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#0F172A"/>
+            <rect x="16" y="24" width="68" height="60" rx="10" fill="#1E293B"/>
+            <rect x="16" y="24" width="68" height="19" rx="10" fill="#F59E0B"/>
+            <rect x="16" y="34" width="68" height="9" fill="#F59E0B"/>
+            <rect x="31" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+            <rect x="64" y="17" width="5" height="15" rx="2.5" fill="#94A3B8"/>
+            <rect x="27" y="51" width="46" height="5" rx="2.5" fill="#334155"/>
+            <rect x="27" y="62" width="32" height="5" rx="2.5" fill="#334155"/>
+            <rect x="27" y="73" width="46" height="5" rx="2.5" fill="#1E3A5F"/>
+            <rect x="27" y="73" width="28" height="5" rx="2.5" fill="#F59E0B"/>
+            <circle cx="24" cy="75" r="3.5" fill="#F59E0B"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 案③ チェックリスト ====== -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">③</span>
+      <span class="card-title">③ チェックリスト</span>
+      <span class="card-desc">タスク管理直球スタイル</span>
+    </div>
+    <div class="sizes">
+      <div class="size-block">
+        <span class="size-label">16px (favicon)</span>
+        <svg width="16" height="16" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <circle cx="26" cy="30" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+          <polyline points="22,30 26,34 32,25" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="42" y="27" width="38" height="6" rx="3" fill="#1E293B"/>
+          <circle cx="26" cy="52" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+          <polyline points="22,52 26,56 32,47" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="42" y="49" width="28" height="6" rx="3" fill="#1E293B"/>
+          <circle cx="26" cy="74" r="9" fill="#F59E0B" fill-opacity="0.15" stroke="#F59E0B" stroke-width="2.5"/>
+          <circle cx="26" cy="74" r="3.5" fill="#F59E0B"/>
+          <rect x="42" y="71" width="42" height="6" rx="3" fill="#1E2D47"/>
+          <rect x="42" y="71" width="24" height="6" rx="3" fill="#F59E0B"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">32px</span>
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <circle cx="26" cy="30" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+          <polyline points="22,30 26,34 32,25" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="42" y="27" width="38" height="6" rx="3" fill="#1E293B"/>
+          <circle cx="26" cy="52" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+          <polyline points="22,52 26,56 32,47" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="42" y="49" width="28" height="6" rx="3" fill="#1E293B"/>
+          <circle cx="26" cy="74" r="9" fill="#F59E0B" fill-opacity="0.15" stroke="#F59E0B" stroke-width="2.5"/>
+          <circle cx="26" cy="74" r="3.5" fill="#F59E0B"/>
+          <rect x="42" y="71" width="42" height="6" rx="3" fill="#1E2D47"/>
+          <rect x="42" y="71" width="24" height="6" rx="3" fill="#F59E0B"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">64px</span>
+        <svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <circle cx="26" cy="30" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+          <polyline points="22,30 26,34 32,25" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="42" y="27" width="38" height="6" rx="3" fill="#1E293B"/>
+          <circle cx="26" cy="52" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+          <polyline points="22,52 26,56 32,47" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="42" y="49" width="28" height="6" rx="3" fill="#1E293B"/>
+          <circle cx="26" cy="74" r="9" fill="#F59E0B" fill-opacity="0.15" stroke="#F59E0B" stroke-width="2.5"/>
+          <circle cx="26" cy="74" r="3.5" fill="#F59E0B"/>
+          <rect x="42" y="71" width="42" height="6" rx="3" fill="#1E2D47"/>
+          <rect x="42" y="71" width="24" height="6" rx="3" fill="#F59E0B"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">120px (ホーム画面)</span>
+        <svg width="120" height="120" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <circle cx="26" cy="30" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+          <polyline points="22,30 26,34 32,25" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="42" y="27" width="38" height="6" rx="3" fill="#1E293B"/>
+          <circle cx="26" cy="52" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+          <polyline points="22,52 26,56 32,47" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="42" y="49" width="28" height="6" rx="3" fill="#1E293B"/>
+          <circle cx="26" cy="74" r="9" fill="#F59E0B" fill-opacity="0.15" stroke="#F59E0B" stroke-width="2.5"/>
+          <circle cx="26" cy="74" r="3.5" fill="#F59E0B"/>
+          <rect x="42" y="71" width="42" height="6" rx="3" fill="#1E2D47"/>
+          <rect x="42" y="71" width="24" height="6" rx="3" fill="#F59E0B"/>
+        </svg>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="bg-label">背景色バリエーション</div>
+    <div class="bg-row">
+      <div>
+        <div class="bg-label">明るい背景</div>
+        <div class="on-light">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#0F172A"/>
+            <circle cx="26" cy="30" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+            <polyline points="22,30 26,34 32,25" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="42" y="27" width="38" height="6" rx="3" fill="#1E293B"/>
+            <circle cx="26" cy="52" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+            <polyline points="22,52 26,56 32,47" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="42" y="49" width="28" height="6" rx="3" fill="#1E293B"/>
+            <circle cx="26" cy="74" r="9" fill="#F59E0B" fill-opacity="0.15" stroke="#F59E0B" stroke-width="2.5"/>
+            <circle cx="26" cy="74" r="3.5" fill="#F59E0B"/>
+            <rect x="42" y="71" width="42" height="6" rx="3" fill="#1E2D47"/>
+            <rect x="42" y="71" width="24" height="6" rx="3" fill="#F59E0B"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="bg-label">暗い背景</div>
+        <div class="on-dark">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#0F172A"/>
+            <circle cx="26" cy="30" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+            <polyline points="22,30 26,34 32,25" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="42" y="27" width="38" height="6" rx="3" fill="#1E293B"/>
+            <circle cx="26" cy="52" r="9" fill="none" stroke="#334155" stroke-width="2.5"/>
+            <polyline points="22,52 26,56 32,47" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="42" y="49" width="28" height="6" rx="3" fill="#1E293B"/>
+            <circle cx="26" cy="74" r="9" fill="#F59E0B" fill-opacity="0.15" stroke="#F59E0B" stroke-width="2.5"/>
+            <circle cx="26" cy="74" r="3.5" fill="#F59E0B"/>
+            <rect x="42" y="71" width="42" height="6" rx="3" fill="#1E2D47"/>
+            <rect x="42" y="71" width="24" height="6" rx="3" fill="#F59E0B"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 案④ アワーグラス ====== -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">④</span>
+      <span class="card-title">④ アワーグラス</span>
+      <span class="card-desc">砂時計で時間＋達成を表現</span>
+    </div>
+    <div class="sizes">
+      <div class="size-block">
+        <span class="size-label">16px (favicon)</span>
+        <svg width="16" height="16" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <rect x="21" y="15" width="58" height="7" rx="3.5" fill="#334155"/>
+          <rect x="21" y="78" width="58" height="7" rx="3.5" fill="#F59E0B"/>
+          <polygon points="24,22 76,22 50,52" fill="#1E293B" stroke="#334155" stroke-width="1" stroke-linejoin="round"/>
+          <polygon points="24,78 76,78 50,52" fill="#F59E0B"/>
+          <circle cx="50" cy="52" r="3.5" fill="#0F172A"/>
+          <circle cx="50" cy="52" r="1.8" fill="#F59E0B"/>
+          <polygon points="24,22 42,22 50,52 36,22" fill="white" fill-opacity="0.04"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">32px</span>
+        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <rect x="21" y="15" width="58" height="7" rx="3.5" fill="#334155"/>
+          <rect x="21" y="78" width="58" height="7" rx="3.5" fill="#F59E0B"/>
+          <polygon points="24,22 76,22 50,52" fill="#1E293B" stroke="#334155" stroke-width="1" stroke-linejoin="round"/>
+          <polygon points="24,78 76,78 50,52" fill="#F59E0B"/>
+          <circle cx="50" cy="52" r="3.5" fill="#0F172A"/>
+          <circle cx="50" cy="52" r="1.8" fill="#F59E0B"/>
+          <polygon points="24,22 42,22 50,52 36,22" fill="white" fill-opacity="0.04"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">64px</span>
+        <svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <rect x="21" y="15" width="58" height="7" rx="3.5" fill="#334155"/>
+          <rect x="21" y="78" width="58" height="7" rx="3.5" fill="#F59E0B"/>
+          <polygon points="24,22 76,22 50,52" fill="#1E293B" stroke="#334155" stroke-width="1" stroke-linejoin="round"/>
+          <polygon points="24,78 76,78 50,52" fill="#F59E0B"/>
+          <circle cx="50" cy="52" r="3.5" fill="#0F172A"/>
+          <circle cx="50" cy="52" r="1.8" fill="#F59E0B"/>
+          <polygon points="24,22 42,22 50,52 36,22" fill="white" fill-opacity="0.04"/>
+        </svg>
+      </div>
+      <div class="size-block">
+        <span class="size-label">120px (ホーム画面)</span>
+        <svg width="120" height="120" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F172A"/>
+          <rect x="21" y="15" width="58" height="7" rx="3.5" fill="#334155"/>
+          <rect x="21" y="78" width="58" height="7" rx="3.5" fill="#F59E0B"/>
+          <polygon points="24,22 76,22 50,52" fill="#1E293B" stroke="#334155" stroke-width="1" stroke-linejoin="round"/>
+          <polygon points="24,78 76,78 50,52" fill="#F59E0B"/>
+          <circle cx="50" cy="52" r="3.5" fill="#0F172A"/>
+          <circle cx="50" cy="52" r="1.8" fill="#F59E0B"/>
+          <polygon points="24,22 42,22 50,52 36,22" fill="white" fill-opacity="0.04"/>
+        </svg>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="bg-label">背景色バリエーション</div>
+    <div class="bg-row">
+      <div>
+        <div class="bg-label">明るい背景</div>
+        <div class="on-light">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#0F172A"/>
+            <rect x="21" y="15" width="58" height="7" rx="3.5" fill="#334155"/>
+            <rect x="21" y="78" width="58" height="7" rx="3.5" fill="#F59E0B"/>
+            <polygon points="24,22 76,22 50,52" fill="#1E293B" stroke="#334155" stroke-width="1" stroke-linejoin="round"/>
+            <polygon points="24,78 76,78 50,52" fill="#F59E0B"/>
+            <circle cx="50" cy="52" r="3.5" fill="#0F172A"/>
+            <circle cx="50" cy="52" r="1.8" fill="#F59E0B"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="bg-label">暗い背景</div>
+        <div class="on-dark">
+          <svg width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#0F172A"/>
+            <rect x="21" y="15" width="58" height="7" rx="3.5" fill="#334155"/>
+            <rect x="21" y="78" width="58" height="7" rx="3.5" fill="#F59E0B"/>
+            <polygon points="24,22 76,22 50,52" fill="#1E293B" stroke="#334155" stroke-width="1" stroke-linejoin="round"/>
+            <polygon points="24,78 76,78 50,52" fill="#F59E0B"/>
+            <circle cx="50" cy="52" r="3.5" fill="#0F172A"/>
+            <circle cx="50" cy="52" r="1.8" fill="#F59E0B"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleDark() {
+      document.body.classList.toggle('dark')
+      const btn = document.getElementById('darkToggle')
+      btn.classList.toggle('active')
+      btn.textContent = document.body.classList.contains('dark')
+        ? '☀️ ライトモード' : '🌙 ダークモード'
+    }
+  </script>
+</body>
+</html>
