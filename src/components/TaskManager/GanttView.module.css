@@ -1,0 +1,308 @@
+/* GanttView.module.css */
+
+.gantt {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Controls ── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.startLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.dateInput {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.btnToday {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 7px;
+  border: 0.5px solid var(--color-amber-border);
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
+  font-family: inherit;
+}
+.btnToday:hover { background: var(--color-amber-bg-hover); }
+
+.btnNav {
+  font-size: 0.75rem;
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 0.5px solid var(--color-border-medium);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+}
+.btnNav:hover { background: var(--color-bg-secondary); }
+
+/* ── Scrollable wrapper ── */
+.wrapper {
+  flex: 1;
+  overflow: auto;
+  border: 0.5px solid var(--color-border);
+  border-radius: 8px;
+  min-height: 200px;
+}
+
+/* Full-width inner container; min-width injected via JS inline style */
+.inner {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Sticky date header ── */
+.dateHeader {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  border-bottom: 0.5px solid var(--color-border);
+  background: var(--color-bg-primary);
+}
+
+/* Corner cell: sticky in both axes */
+.headerLeft {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+  border-right: 0.5px solid var(--color-border);
+  gap: 6px;
+}
+
+.headerStatusLabel {
+  margin-left: auto;
+}
+
+.dateColumns {
+  flex-shrink: 0;
+}
+
+/* Month label row */
+.monthRow {
+  display: flex;
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.monthCell {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: 3px 6px;
+  border-right: 0.5px solid var(--color-border);
+  overflow: hidden;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 18px;
+}
+
+/* Day number row */
+.dayRow {
+  display: flex;
+}
+
+.dayCell {
+  font-size: 0.5625rem;
+  text-align: center;
+  line-height: 22px;
+  color: var(--color-text-tertiary);
+  border-right: 0.5px solid var(--color-border);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.dayCellToday {
+  background: #fff7ed;
+  color: #c05621;
+  font-weight: 700;
+}
+
+.dayCellWeekend {
+  background: var(--color-bg-secondary);
+}
+
+/* ── Group header row ── */
+.groupRow {
+  display: flex;
+  border-bottom: 0.5px solid var(--color-border);
+  background: var(--color-bg-secondary);
+}
+
+.groupLeft {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-bg-secondary);
+  border-right: 0.5px solid var(--color-border);
+}
+
+.groupDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.groupName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.groupCount {
+  font-size: 0.5625rem;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.groupRight {
+  flex-shrink: 0;
+}
+
+/* ── Task row ── */
+.taskRow {
+  display: flex;
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.taskRow:last-child {
+  border-bottom: none;
+}
+
+.taskRow:hover .taskLeft,
+.taskRow:hover .taskRight {
+  background: var(--color-bg-secondary) !important;
+}
+
+.taskLeft {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  min-height: 36px;
+  background: var(--color-bg-primary);
+  border-right: 0.5px solid var(--color-border);
+  transition: background 0.1s;
+}
+
+.taskTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskStatus {
+  font-size: 0.5rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.statusPending { background: var(--color-bg-secondary);  color: var(--color-text-secondary); }
+.statusRunning { background: var(--color-amber-bg);      color: var(--color-amber-text); }
+.statusDone    { background: var(--color-green-bg);      color: var(--color-green-text); }
+.statusOnHold  { background: var(--color-purple-bg);     color: var(--color-purple-text); }
+
+/* Right (bar area) */
+.taskRight {
+  position: relative;
+  flex-shrink: 0;
+  min-height: 36px;
+  transition: background 0.1s;
+}
+
+.taskRightNoDate {
+  opacity: 0.35;
+}
+
+/* Today vertical indicator */
+.todayLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #f97316;
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
+  transform: translateX(-50%);
+}
+
+/* Task bar */
+.bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  opacity: 0.82;
+  transition: opacity 0.12s, filter 0.12s;
+  overflow: hidden;
+  min-width: 4px;
+}
+.bar:hover {
+  opacity: 1;
+  filter: brightness(1.08);
+}
+
+.barLabel {
+  font-size: 0.5625rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* Empty state */
+.empty {
+  padding: 3rem;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+}

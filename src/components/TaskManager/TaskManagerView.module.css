@@ -70,6 +70,14 @@
 /* ニュートラルトグル（定期・Backlog） */
 .toggleBtnActiveNeutral { background: var(--color-bg-secondary); color: var(--color-text-primary); font-weight: 600; }
 
+.viewToggleGroup {
+  display: flex;
+  border: 0.5px solid var(--color-border-medium);
+  border-radius: 7px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
 .csvBtnGroup {
   display: flex;
   gap: 5px;
