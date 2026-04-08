@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { sortByRecent } from '@/lib/recentClients'
 import { getClientColor } from '@/lib/clientColor'
+import { syncBacklogTasks, shouldAutoSync } from '@/lib/backlogSync'
 import TaskEditModal  from './TaskEditModal'
 import CsvImportModal from './CsvImportModal'
 import BacklogBadge   from '@/components/Backlog/BacklogBadge'
@@ -29,9 +30,28 @@ function fmtDate(d) {
 
 export default function TaskManagerView({ onAddToToday }) {
   const {
-    appTasks, setAppTasks, addAppTask, clients, projects, categories,
-    session, backlogToken,
+    appTasks, setAppTasks, addAppTask, updateAppTask, clients, projects, categories,
+    session, backlogToken, setBacklogToken,
   } = useStore()
+
+  const [syncStatus, setSyncStatus] = useState(null)  // null | 'syncing' | { updated: number }
+  const syncStartedRef = useRef(false)
+
+  // タスク管理タブ表示時に自動同期（15 分クールダウン）
+  useEffect(() => {
+    if (!backlogToken || !shouldAutoSync() || syncStartedRef.current) return
+    syncStartedRef.current = true
+    setSyncStatus('syncing')
+    syncBacklogTasks({ backlogToken, session, appTasks, updateAppTask, setBacklogToken })
+      .then(({ updated }) => {
+        setSyncStatus({ updated })
+        setTimeout(() => setSyncStatus(null), 3000)
+      })
+      .catch(err => {
+        console.warn('[Backlog auto-sync]', err)
+        setSyncStatus(null)
+      })
+  }, [])   // eslint-disable-line react-hooks/exhaustive-deps
 
   const [searchQuery,      setSearchQuery]      = useState('')
   const [filterClient,     setFilterClient]     = useState('')
@@ -168,6 +188,15 @@ export default function TaskManagerView({ onAddToToday }) {
             </button>
           ))}
         </div>
+
+        {syncStatus === 'syncing' && (
+          <span className={styles.syncBadge}>↺ Backlog同期中</span>
+        )}
+        {syncStatus && syncStatus !== 'syncing' && (
+          <span className={`${styles.syncBadge} ${styles.syncBadgeDone}`}>
+            {syncStatus.updated > 0 ? `↺ ${syncStatus.updated}件更新` : '↺ 最新'}
+          </span>
+        )}
 
         <button className={styles.btnCsvImport} onClick={() => setShowCsvImport(true)}>CSV 取込</button>
         <button className={styles.btnAdd} onClick={() => setShowNew(true)}>＋ 新規タスク</button>

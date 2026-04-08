@@ -173,3 +173,23 @@
 .btnDel  { font-size: 0.6875rem; background: none; border: none; cursor: pointer; color: #A32D2D; padding: 2px 5px; font-family: inherit; }
 
 .empty { text-align: center; padding: 2rem; color: var(--color-text-tertiary); }
+
+/* Backlog 同期ステータスバッジ */
+.syncBadge {
+  font-size: 0.625rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #EFF6FF;
+  color: #3B82F6;
+  white-space: nowrap;
+  align-self: center;
+  animation: syncFadeIn 0.2s ease;
+}
+.syncBadgeDone {
+  background: #F0FDF4;
+  color: #16A34A;
+}
+@keyframes syncFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

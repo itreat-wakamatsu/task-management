@@ -2,19 +2,21 @@ import { useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { getAuthUrl, getMyself, getMyIssues, refreshAccessToken } from '@/lib/backlog'
+import { syncBacklogTasks } from '@/lib/backlogSync'
 import styles from './BacklogModal.module.css'
 
 const CLIENT_ID = import.meta.env.VITE_BACKLOG_CLIENT_ID
 
 export default function BacklogModal({ onClose }) {
-  const { session, backlogToken, setBacklogToken, clients, projects, addAppTask } = useStore()
+  const { session, backlogToken, setBacklogToken, appTasks, updateAppTask, clients, projects, addAppTask } = useStore()
 
-  const [view,     setView]     = useState('settings')
-  const [spaceKey, setSpaceKey] = useState(backlogToken?.space_key ?? '')
-  const [issues,   setIssues]   = useState([])
-  const [selected, setSelected] = useState(new Set())
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState(null)
+  const [view,       setView]       = useState('settings')
+  const [spaceKey,   setSpaceKey]   = useState(backlogToken?.space_key ?? '')
+  const [issues,     setIssues]     = useState([])
+  const [selected,   setSelected]   = useState(new Set())
+  const [loading,    setLoading]    = useState(false)
+  const [error,      setError]      = useState(null)
+  const [syncResult, setSyncResult] = useState(null)  // null | { updated: number }
 
   const connected = !!backlogToken
 
@@ -32,6 +34,26 @@ export default function BacklogModal({ onClose }) {
     if (!confirm('Backlog との連携を解除しますか？')) return
     await supabase.from('backlog_tokens').delete().eq('user_id', session.user.id)
     setBacklogToken(null)
+  }
+
+  async function handleSync() {
+    setLoading(true)
+    setError(null)
+    setSyncResult(null)
+    try {
+      const result = await syncBacklogTasks({
+        backlogToken,
+        session,
+        appTasks,
+        updateAppTask,
+        setBacklogToken,
+      })
+      setSyncResult(result)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function ensureFreshToken() {
@@ -144,11 +166,29 @@ export default function BacklogModal({ onClose }) {
         {view === 'settings' && (
           <>
             {connected ? (
-              <div className={styles.connectedCard}>
-                <span className={styles.connectedDot} />
-                <span className={styles.connectedText}>{backlogToken.space_key}.backlog.com と連携済み</span>
-                <button className={styles.btnDisconnect} onClick={handleDisconnect}>連携解除</button>
-              </div>
+              <>
+                <div className={styles.connectedCard}>
+                  <span className={styles.connectedDot} />
+                  <span className={styles.connectedText}>{backlogToken.space_key}.backlog.com と連携済み</span>
+                  <button className={styles.btnDisconnect} onClick={handleDisconnect}>連携解除</button>
+                </div>
+                <div className={styles.syncRow}>
+                  <button
+                    className={styles.btnSync}
+                    onClick={handleSync}
+                    disabled={loading}
+                  >
+                    {loading ? '同期中...' : '↺ 今すぐ同期'}
+                  </button>
+                  {syncResult && (
+                    <span className={styles.syncResult}>
+                      {syncResult.updated > 0
+                        ? `${syncResult.updated} 件を更新しました`
+                        : 'すべて最新です'}
+                    </span>
+                  )}
+                </div>
+              </>
             ) : (
               <div className={styles.field}>
                 <label className={styles.label}>スペースキー</label>

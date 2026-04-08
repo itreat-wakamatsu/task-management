@@ -115,6 +115,30 @@
   margin-bottom: 0.75rem;
 }
 
+/* 手動同期行 */
+.syncRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+.btnSync {
+  font-size: 0.8125rem;
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 0.5px solid #93C5FD;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnSync:hover:not(:disabled) { background: #DBEAFE; }
+.btnSync:disabled { opacity: 0.5; cursor: not-allowed; }
+.syncResult {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
 .footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 0.75rem; }
 .btnCancel {
   font-size: 0.875rem; padding: 8px 14px; border-radius: 8px;
