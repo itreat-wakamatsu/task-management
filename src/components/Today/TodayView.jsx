@@ -575,9 +575,10 @@ export default function TodayView() {
     }
   }
 
-  const activeEvent = todayEvents.find(e => e.id === activeEventId) || null
-  const doneCount   = todayEvents.filter(e => e.status === 'done').length
-  const hiddenCount = todayEvents.filter(e => hiddenIds.has(e.id)).length
+  const activeEvent    = todayEvents.find(e => e.id === activeEventId) || null
+  const visibleEvents  = todayEvents.filter(e => !hiddenIds.has(e.id))
+  const doneCount      = visibleEvents.filter(e => e.status === 'done').length
+  const hiddenCount    = todayEvents.filter(e => hiddenIds.has(e.id)).length
 
   // ── サマリー計算 ──
   const now = Date.now()
@@ -721,7 +722,7 @@ export default function TodayView() {
       <div className={styles.listHeader}>
         <span className={styles.listLabel}>本日のスケジュール</span>
         <div className={styles.headerRight}>
-          <span className={styles.listCount}>{doneCount}/{todayEvents.length} 完了</span>
+          <span className={styles.listCount}>{doneCount}/{visibleEvents.length} 完了</span>
 
           {/* 非表示トグル */}
           {hiddenCount > 0 && (
@@ -883,6 +884,8 @@ export default function TodayView() {
           onOpenDetail={setDetailTarget}
           refreshKey={weeklyRefreshKey}
           onCreateAt={(start, end) => setCreateSlot({ start, end })}
+          hiddenIds={hiddenIds}
+          showHidden={showHidden}
         />
       )}
 
