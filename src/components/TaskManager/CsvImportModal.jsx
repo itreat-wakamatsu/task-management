@@ -2,27 +2,24 @@ import { useState, useRef, useCallback } from 'react'
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import styles from './CsvImportModal.module.css'
-
-/* ── CSV ヘッダー定義 ── */
-const CSV_COLUMNS = [
-  { key: 'title',       label: 'タスク名',   required: true  },
-  { key: 'client',      label: 'クライアント', required: false },
-  { key: 'project',     label: '案件',       required: false },
-  { key: 'category',    label: '第一区分',   required: false },
-  { key: 'subcategory', label: '第二区分',   required: false },
-  { key: 'status',      label: 'ステータス', required: false },
-  { key: 'start_date',  label: '開始日',     required: false },
-  { key: 'due_date',    label: '期日',       required: false },
-  { key: 'is_recurring',label: '定期',       required: false },
-]
+import { ALL_COLS, LABEL_ALIASES, buildColState, saveSettings } from './csvColumns'
 
 const STATUS_MAP = {
   '未着手': 0, '進行中': 1, '完了': 2, '保留中': 3, '保留': 3,
   '0': 0, '1': 1, '2': 2, '3': 3,
 }
 
-const TEMPLATE_HEADER = CSV_COLUMNS.map(c => c.label).join(',')
-const TEMPLATE_EXAMPLE = 'サンプルタスク,クライアントA,案件B,設計,,未着手,2026-04-07,2026-04-30,false'
+const EXAMPLE_VALUES = {
+  title:        'サンプルタスク',
+  client:       'クライアントA',
+  project:      '案件B',
+  category:     '設計',
+  subcategory:  '',
+  status:       '未着手',
+  start_date:   '2026-04-07',
+  due_date:     '2026-04-30',
+  is_recurring: '非定期',
+}
 
 /* ── CSV パーサー（ダブルクオート・カンマ対応） ── */
 function parseCsvLine(line) {
@@ -51,7 +48,6 @@ function readFileAsText(file) {
     const reader = new FileReader()
     reader.onload = () => {
       const text = reader.result
-      // Shift-JIS の場合は文字化けする可能性があるためチェック
       if (text.includes('\ufffd')) {
         const sjisReader = new FileReader()
         sjisReader.onload = () => resolve(sjisReader.result)
@@ -67,7 +63,6 @@ function readFileAsText(file) {
 /* ── 日付文字列を YYYY-MM-DD に正規化 ── */
 function normalizeDate(str) {
   if (!str) return null
-  // YYYY/MM/DD or YYYY-MM-DD
   const m = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/)
   if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`
   return null
@@ -87,12 +82,64 @@ export default function CsvImportModal({ onClose, onImported }) {
   const { session, clients, projects, categories, appTasks } = useStore()
   const fileRef = useRef(null)
 
-  const [rows,      setRows]      = useState([])      // パース済み行
+  /* ── 列設定（出力と共有） ── */
+  const [cols, setCols] = useState(() => buildColState())
+  const [dragIdx,       setDragIdx]       = useState(null)
+  const [dropTargetIdx, setDropTargetIdx] = useState(null)
+
+  /* ── importable な列のみ表示（id / Backlogキー は取り込み対象外） ── */
+  const importableCols = cols.filter(c => c.importable !== false)
+
+  function toggleCol(importableIdx) {
+    const key = importableCols[importableIdx].key
+    setCols(prev => {
+      const next = prev.map(c => c.key === key ? { ...c, enabled: !c.enabled } : c)
+      saveSettings(next)
+      return next
+    })
+  }
+
+  function handleDragStart(e, idx) {
+    setDragIdx(idx)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  function handleDragOver(e, idx) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dropTargetIdx !== idx) setDropTargetIdx(idx)
+  }
+
+  function handleDrop(e, idx) {
+    e.preventDefault()
+    if (dragIdx === null || dragIdx === idx) {
+      setDragIdx(null); setDropTargetIdx(null); return
+    }
+    setCols(prev => {
+      // importable な列だけ並べ替え、non-importable は末尾に固定
+      const importable    = prev.filter(c => c.importable !== false)
+      const nonImportable = prev.filter(c => c.importable === false)
+      const next = [...importable]
+      const [item] = next.splice(dragIdx, 1)
+      next.splice(idx, 0, item)
+      const newFull = [...next, ...nonImportable]
+      saveSettings(newFull)
+      return newFull
+    })
+    setDragIdx(null); setDropTargetIdx(null)
+  }
+
+  function handleDragEnd() {
+    setDragIdx(null); setDropTargetIdx(null)
+  }
+
+  /* ── ファイル関連 ── */
+  const [rows,      setRows]      = useState([])
   const [selected,  setSelected]  = useState(new Set())
   const [dragOver,  setDragOver]  = useState(false)
   const [error,     setError]     = useState(null)
   const [importing, setImporting] = useState(false)
-  const [result,    setResult]    = useState(null)    // { count }
+  const [result,    setResult]    = useState(null)
 
   const existingTitles = new Set(appTasks.map(t => t.title.toLowerCase()))
 
@@ -111,11 +158,15 @@ export default function CsvImportModal({ onClose, onImported }) {
       return
     }
 
-    // ヘッダー解析：ラベル名 → key へのマッピング
+    // ヘッダー解析：ラベル名 → key へのマッピング（旧ラベル後方互換あり）
     const headerFields = parseCsvLine(lines[0])
     const colMap = []
     for (const h of headerFields) {
-      const col = CSV_COLUMNS.find(c => c.label === h.trim())
+      const trimmed = h.trim()
+      let col = ALL_COLS.find(c => c.label === trimmed && c.importable !== false)
+      if (!col && LABEL_ALIASES[trimmed]) {
+        col = ALL_COLS.find(c => c.key === LABEL_ALIASES[trimmed])
+      }
       colMap.push(col ? col.key : null)
     }
 
@@ -132,9 +183,8 @@ export default function CsvImportModal({ onClose, onImported }) {
       colMap.forEach((key, idx) => {
         if (key) row[key] = fields[idx] || ''
       })
-      if (!row.title) continue  // タスク名なしはスキップ
+      if (!row.title) continue
 
-      // マスタマッチング
       const matchedClient   = findByName(clients, row.client)
       const clientProjects  = matchedClient
         ? projects.filter(p => p.client_id === matchedClient.id)
@@ -162,7 +212,7 @@ export default function CsvImportModal({ onClose, onImported }) {
         statusRaw:         row.status || '',
         start_date:        normalizeDate(row.start_date),
         due_date:          normalizeDate(row.due_date),
-        is_recurring:      ['true', '1', 'はい', 'yes', 'TRUE'].includes(row.is_recurring),
+        is_recurring:      ['true', '1', 'はい', 'yes', 'TRUE', '定期'].includes(row.is_recurring),
         matchedClient,
         matchedProject,
         matchedCategory,
@@ -185,14 +235,14 @@ export default function CsvImportModal({ onClose, onImported }) {
     if (e.target.files?.[0]) processFile(e.target.files[0])
   }
 
-  function handleDrop(e) {
+  function handleFileDrop(e) {
     e.preventDefault()
     setDragOver(false)
     if (e.dataTransfer.files?.[0]) processFile(e.dataTransfer.files[0])
   }
 
-  function handleDragOver(e) { e.preventDefault(); setDragOver(true) }
-  function handleDragLeave() { setDragOver(false) }
+  function handleFileDragOver(e) { e.preventDefault(); setDragOver(true) }
+  function handleFileDragLeave() { setDragOver(false) }
 
   function toggleRow(idx) {
     setSelected(prev => {
@@ -212,10 +262,13 @@ export default function CsvImportModal({ onClose, onImported }) {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  /* ── テンプレートダウンロード ── */
+  /* ── テンプレートダウンロード（現在の列設定を反映） ── */
   function downloadTemplate() {
+    const activeCols = importableCols.filter(c => c.enabled)
+    const header  = activeCols.map(c => c.label).join(',')
+    const example = activeCols.map(c => EXAMPLE_VALUES[c.key] ?? '').join(',')
     const bom = '\uFEFF'
-    const csv = bom + TEMPLATE_HEADER + '\n' + TEMPLATE_EXAMPLE + '\n'
+    const csv = bom + header + '\n' + example + '\n'
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -303,9 +356,9 @@ export default function CsvImportModal({ onClose, onImported }) {
               <div
                 className={`${styles.dropZone} ${dragOver ? styles.dropZoneActive : ''}`}
                 onClick={() => fileRef.current?.click()}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
+                onDrop={handleFileDrop}
+                onDragOver={handleFileDragOver}
+                onDragLeave={handleFileDragLeave}
               >
                 <div className={styles.dropIcon}>&#128196;</div>
                 <div className={styles.dropText}>
@@ -321,6 +374,36 @@ export default function CsvImportModal({ onClose, onImported }) {
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
+
+              {/* 列設定（出力と共有） */}
+              <div className={styles.formatSection}>
+                <div className={styles.formatLabel}>列設定（CSV 出力と共有）</div>
+                <div className={styles.formatHint}>クリックで ON/OFF、ドラッグで順序を変更。テンプレートと出力の両方に反映されます</div>
+                <div className={styles.colList}>
+                  {importableCols.map((col, idx) => (
+                    <div
+                      key={col.key}
+                      className={[
+                        styles.colItem,
+                        col.enabled             ? styles.colItemOn       : styles.colItemOff,
+                        dragIdx === idx         ? styles.colItemDragging : '',
+                        dropTargetIdx === idx && dragIdx !== idx ? styles.colItemDropTarget : '',
+                      ].filter(Boolean).join(' ')}
+                      draggable
+                      onDragStart={e => handleDragStart(e, idx)}
+                      onDragOver={e  => handleDragOver(e, idx)}
+                      onDrop={e      => handleDrop(e, idx)}
+                      onDragEnd={handleDragEnd}
+                      onClick={() => toggleCol(idx)}
+                    >
+                      <span className={styles.colDragHandle} onClick={e => e.stopPropagation()}>⠿</span>
+                      <span className={styles.colCheck}>{col.enabled ? '✓' : ''}</span>
+                      <span className={styles.colLabel}>{col.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className={styles.templateRow}>
                 <button className={styles.btnTemplate} onClick={downloadTemplate}>
                   テンプレート CSV をダウンロード
