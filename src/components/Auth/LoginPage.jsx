@@ -16,6 +16,10 @@ export default function LoginPage() {
       options: {
         scopes: 'https://www.googleapis.com/auth/calendar',
         redirectTo: window.location.origin,
+        queryParams: {
+          access_type: 'offline',  // リフレッシュトークンを取得する
+          prompt: 'consent',       // 再ログイン時もリフレッシュトークンを返させる
+        },
       },
     })
   }
