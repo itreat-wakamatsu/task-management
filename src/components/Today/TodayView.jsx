@@ -206,7 +206,7 @@ export default function TodayView() {
     const prevEnd   = ev.plannedEnd
     updateEvent(eventId, { plannedStart: newStart, plannedEnd: newEnd })
 
-    const token = session?.provider_token
+    const token = providerToken || session?.provider_token
     if (!token) return
 
     try {
@@ -269,7 +269,7 @@ export default function TodayView() {
         .update({ actual_start: now.toISOString(), actual_end: null, pause_log: [] })
         .eq('id', ev.detailId)
     } else {
-      const { data } = await supabase
+      const { data, error: startInsertErr } = await supabase
         .from('app_record_details')
         .insert({
           record_id:            todayRecord.id,
@@ -283,6 +283,7 @@ export default function TodayView() {
         })
         .select()
         .single()
+      if (startInsertErr) console.error('[handleStart] DB保存失敗:', startInsertErr)
       if (data) updateEvent(eventId, { detailId: data.id })
     }
   }, [activeEventId, todayEvents, todayRecord])
@@ -323,6 +324,24 @@ export default function TodayView() {
         .from('app_record_details')
         .update({ actual_end: now.toISOString(), pause_log: pauseLog, override_elapsed_ms: ev.overrideElapsedMs })
         .eq('id', ev.detailId)
+    } else if (todayRecord && ev.actualStart) {
+      // 開始時のDB保存に失敗していた場合、終了時に補完挿入する
+      const { data: endInsert } = await supabase
+        .from('app_record_details')
+        .insert({
+          record_id:            todayRecord.id,
+          task_id:              ev.taskId,
+          calendar_event_id:    ev.calendarEventId,
+          calendar_event_title: ev.calendarEventTitle,
+          planned_start:        ev.plannedStart?.toISOString(),
+          planned_end:          ev.plannedEnd?.toISOString(),
+          actual_start:         ev.actualStart?.toISOString(),
+          actual_end:           now.toISOString(),
+          pause_log:            pauseLog,
+          override_elapsed_ms:  ev.overrideElapsedMs ?? null,
+        })
+        .select().single()
+      if (endInsert) updateEvent(eventId, { detailId: endInsert.id })
     }
 
     // app_tasks のステータスを更新
@@ -566,6 +585,7 @@ export default function TodayView() {
   let remainingPlannedMs = 0
 
   for (const ev of todayEvents) {
+    if (hiddenIds.has(ev.id)) continue   // 「隠す」にした予定は集計から除外
     const plannedDur = (ev.plannedEnd && ev.plannedStart)
       ? (new Date(ev.plannedEnd) - new Date(ev.plannedStart))
       : 0
@@ -623,17 +643,26 @@ export default function TodayView() {
     return (
       <div className={styles.authError}>
         <p className={styles.authErrorMsg}>
-          Google カレンダーへのアクセストークンの有効期限が切れています。
+          Google カレンダーの認証が切れています。
         </p>
         <p className={styles.authErrorSub}>
-          一度ログアウトして再ログインすると解決します。
+          「再試行」で解決することがあります。解決しない場合は再ログインしてください。
         </p>
-        <button
-          className={styles.authErrorBtn}
-          onClick={async () => { await supabase.auth.signOut() }}
-        >
-          ログアウトして再ログイン
-        </button>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '12px' }}>
+          <button
+            className={styles.authErrorBtn}
+            style={{ background: '#F1F5F9', color: '#0F172A', border: '1.5px solid #CBD5E1' }}
+            onClick={() => { setAuthError(false); loadToday(true) }}
+          >
+            再試行
+          </button>
+          <button
+            className={styles.authErrorBtn}
+            onClick={async () => { await supabase.auth.signOut() }}
+          >
+            再ログイン
+          </button>
+        </div>
       </div>
     )
   }
