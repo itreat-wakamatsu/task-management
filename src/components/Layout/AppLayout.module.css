@@ -61,17 +61,15 @@
   margin-top: 1px;
 }
 
-.datePicker {
-  font-size: 0.6875rem;
-  font-family: var(--font-mono);
-  color: var(--color-text-secondary);
-  background: var(--color-bg-secondary, #f5f5f5);
-  border: 0.5px solid var(--color-border);
-  border-radius: 4px;
-  padding: 2px 6px;
-  cursor: pointer;
+/* showPicker() で開く非表示 input（DOM に残しておく必要あり） */
+.hiddenDateInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
-.datePicker:focus { outline: none; border-color: var(--color-amber-muted); }
 
 /* 「今日」リセットボタン */
 .todayResetBtn {

@@ -25,7 +25,6 @@ export default function AppLayout() {
   const [activeTab,       setActiveTab]      = useState('today')
   const [showBacklog,     setShowBacklog]    = useState(false)
   const [addToTodayTask,  setAddToTodayTask] = useState(null)
-  const [showDatePicker,  setShowDatePicker] = useState(false)
   const datePickerRef = useRef(null)
   const [showMcpSettings, setShowMcpSettings] = useState(false)
   const [showFeedback,    setShowFeedback]   = useState(false)
@@ -118,12 +117,18 @@ export default function AppLayout() {
   function handleDateChange(e) {
     const [y, m, d] = e.target.value.split('-').map(Number)
     setDevDate(new Date(y, m - 1, d))
-    setShowDatePicker(false)
   }
 
   function handleGoToToday() {
     setDevDate(new Date())
-    setShowDatePicker(false)
+  }
+
+  function handleDateClick() {
+    try {
+      datePickerRef.current?.showPicker()
+    } catch {
+      datePickerRef.current?.click()
+    }
   }
 
   // 残り空き時間の表示文字列
@@ -143,30 +148,26 @@ export default function AppLayout() {
           <div className={styles.dateRow}>
             <button
               className={`${styles.dateTrigger} ${!isToday ? styles.dateTriggerOff : ''}`}
-              onClick={() => setShowDatePicker(v => !v)}
+              onClick={handleDateClick}
               title="日付を変更"
             >
               <span className={styles.dateStr}>{dateStr}</span>
-              <span className={styles.dateChevron}>{showDatePicker ? '▴' : '▾'}</span>
+              <span className={styles.dateChevron}>▾</span>
             </button>
+            {/* 非表示 input: showPicker() で直接開く */}
+            <input
+              ref={datePickerRef}
+              type="date"
+              className={styles.hiddenDateInput}
+              value={dateInputValue}
+              onChange={handleDateChange}
+            />
             {!isToday && (
               <button className={styles.todayResetBtn} onClick={handleGoToToday}>
                 今日
               </button>
             )}
           </div>
-          {showDatePicker && (
-            <div className={styles.datePickerRow}>
-              <input
-                ref={datePickerRef}
-                type="date"
-                className={styles.datePicker}
-                value={dateInputValue}
-                onChange={handleDateChange}
-                autoFocus
-              />
-            </div>
-          )}
           <div className={styles.appNameRow}>
             <span className={styles.appName}>タスクタイマー</span>
             {isDev && <span className={styles.devBadge}>DEV</span>}

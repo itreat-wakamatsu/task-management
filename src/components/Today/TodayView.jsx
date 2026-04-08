@@ -67,7 +67,7 @@ export default function TodayView() {
   // サマリーバーを30秒ごとに更新（進行中タスクの経過時間反映）
   useEffect(() => {
     if (!activeEventId) return
-    const id = setInterval(() => setSummaryTick(t => t + 1), 30000)
+    const id = setInterval(() => setSummaryTick(t => t + 1), 10000)
     return () => clearInterval(id)
   }, [activeEventId])
 
@@ -633,7 +633,7 @@ export default function TodayView() {
   const consumedPct = totalPlannedMs > 0 && isFinite(totalActualMs)
     ? Math.min(100, Math.round(totalActualMs / totalPlannedMs * 100))
     : 0
-  const remainingCount = todayEvents.filter(e => e.status !== 'done').length
+  const remainingCount = todayEvents.filter(e => e.status !== 'done' && !hiddenIds.has(e.id)).length
 
   if (loading) {
     return <div className={styles.loading}>カレンダーを読み込んでいます...</div>
@@ -971,7 +971,7 @@ export default function TodayView() {
       {/* 報告書モーダル */}
       {showReport && (
         <DailyReportModal
-          events={todayEvents}
+          events={todayEvents.filter(e => !hiddenIds.has(e.id))}
           dateStr={todayStr}
           onClose={() => setShowReport(false)}
         />
