@@ -1,3 +1,4 @@
+/* ── モーダル基本構造 ── */
 .backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.45);
@@ -9,22 +10,24 @@
   border-radius: 14px;
   border: 0.5px solid var(--color-border);
   padding: 1.25rem 1.5rem;
-  width: 100%; max-width: 420px;
+  width: 100%;
+  max-width: 680px;      /* 週間ビューのため広めに */
   max-height: 92vh;
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; gap: 10px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
 }
+
+/* ── ヘッダー ── */
 .header {
   display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 4px;
 }
-.headerTitle { display: flex; flex-direction: column; gap: 2px; }
+.headerLeft { display: flex; flex-direction: column; gap: 2px; }
 .title { font-size: 0.9375rem; font-weight: 600; }
 .taskName {
   font-size: 0.75rem;
   color: var(--color-amber-text);
   font-weight: 500;
-  max-width: 280px;
+  max-width: 480px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .btnClose {
@@ -33,27 +36,58 @@
 }
 .btnClose:hover { color: var(--color-text-primary); }
 
-.desc {
-  font-size: 0.6875rem;
-  color: var(--color-text-tertiary);
-  margin: 0 0 0.75rem;
+/* ── ツールバー（日付ナビ + ビュー切替） ── */
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
 
+/* 日付ナビ */
+.dateNav {
+  display: flex; align-items: center; gap: 4px;
+}
+.navBtn {
+  font-size: 1rem; background: none; border: none;
+  color: var(--color-text-secondary); cursor: pointer;
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; transition: background 0.12s;
+}
+.navBtn:hover { background: var(--color-bg-secondary); }
+.dateLabel {
+  font-size: 0.8125rem; font-weight: 600;
+  color: var(--color-text-primary);
+  min-width: 100px; text-align: center;
+}
+.dateLabelToday { color: var(--color-amber-text); }
+
+/* ビュー切替 */
+.viewToggle {
+  display: flex;
+  border: 0.5px solid var(--color-border-medium);
+  border-radius: 7px; overflow: hidden;
+}
+.viewBtn {
+  font-size: 0.6875rem; padding: 4px 12px; border: none;
+  background: none; color: var(--color-text-secondary);
+  cursor: pointer; font-family: inherit;
+}
+.viewBtn:hover { background: var(--color-bg-secondary); }
+.viewBtnActive {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary); font-weight: 600;
+}
+
+/* ── 1日ビュー ── */
 .calWrap {
-  overflow-y: auto;
-  flex: 1;
+  overflow-y: auto; flex: 1; min-height: 0;
   border: 0.5px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-bg-primary);
-  min-height: 0;
-  max-height: 440px;
+  border-radius: 8px; background: var(--color-bg-primary);
+  max-height: 400px;
 }
 .grid { position: relative; width: 100%; }
 
 .hourRow {
   position: absolute; left: 0; right: 0;
-  display: flex; align-items: flex-start;
-  pointer-events: none;
+  display: flex; align-items: flex-start; pointer-events: none;
 }
 .hourLabel {
   width: 48px; padding: 0 5px 0 6px;
@@ -63,39 +97,32 @@
 }
 .hourLine { flex: 1; border-top: 0.5px solid var(--color-border); }
 
-/* 業務時間帯ハイライト */
 .workZone {
   position: absolute; left: 48px; right: 0;
-  background: rgba(0,0,0,0.02);
-  pointer-events: none;
+  background: rgba(0,0,0,0.02); pointer-events: none;
 }
 
 /* 既存イベント */
 .existingEvent {
-  position: absolute;
-  border-radius: 4px;
+  position: absolute; border-radius: 4px;
   background: var(--color-bg-secondary);
   border: 0.5px solid var(--color-border-medium);
-  padding: 2px 5px;
-  overflow: hidden;
-  pointer-events: none;
+  padding: 2px 5px; overflow: hidden; pointer-events: none;
 }
 .existingTitle {
-  font-size: 0.5625rem;
-  color: var(--color-text-secondary);
+  font-size: 0.5625rem; color: var(--color-text-secondary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* 新規イベントブロック */
 .newEvent {
-  position: absolute;
-  border-radius: 6px;
+  position: absolute; border-radius: 6px;
   background: var(--color-amber-bg);
   border: 1.5px solid var(--color-amber-border);
-  cursor: grab;
-  user-select: none;
+  cursor: grab; user-select: none;
   display: flex; flex-direction: column;
   box-shadow: 0 2px 8px var(--color-amber-bg-hover);
+  z-index: 2;
 }
 .newEvent:active { cursor: grabbing; }
 .newEventInner { flex: 1; padding: 3px 6px; overflow: hidden; }
@@ -109,7 +136,6 @@
   overflow: hidden; display: -webkit-box;
   -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
-
 .resizeHandle {
   position: absolute; bottom: 0; left: 0; right: 0;
   height: 7px; cursor: ns-resize;
@@ -117,20 +143,108 @@
   border-radius: 0 0 4px 4px;
 }
 
+/* ── 週間ビュー ── */
+.weekHeader {
+  display: flex;
+  border: 0.5px solid var(--color-border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+.weekTimeGutter {
+  width: 44px; flex-shrink: 0;
+  background: var(--color-bg-secondary);
+  border-right: 0.5px solid var(--color-border);
+}
+.weekDayHead {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 2px;
+  cursor: pointer;
+  border-right: 0.5px solid var(--color-border);
+  transition: background 0.12s;
+}
+.weekDayHead:last-child { border-right: none; }
+.weekDayHead:hover { background: var(--color-bg-secondary); }
+.weekDayHeadActive {
+  background: var(--color-amber-bg);
+  border-bottom: 2px solid var(--color-amber-border);
+}
+.weekDayHeadToday .weekDayDate { color: var(--color-amber-text); font-weight: 700; }
+.weekDayName { font-size: 0.6875rem; font-weight: 600; color: var(--color-text-secondary); }
+.weekDayDate { font-size: 0.75rem; color: var(--color-text-primary); }
+.weekDayHeadActive .weekDayName,
+.weekDayHeadActive .weekDayDate { color: var(--color-amber-text); }
+
+.weekCalWrap {
+  overflow-y: auto; flex: 1; min-height: 0;
+  border: 0.5px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  background: var(--color-bg-primary);
+  max-height: 380px;
+}
+.weekGrid {
+  position: relative; width: 100%;
+  /* 全カラム分の background 区切り線は ::after で */
+}
+
+/* 週間ビューの時間ラベル */
+.weekHourRow {
+  position: absolute; left: 0; right: 0;
+  display: flex; align-items: flex-start; pointer-events: none; z-index: 0;
+}
+.weekHourLabel {
+  width: 44px; padding: 0 4px 0 6px;
+  font-size: 0.5625rem; font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0; line-height: 1; transform: translateY(-6px);
+}
+.weekHourLine { flex: 1; border-top: 0.5px solid var(--color-border); }
+
+.weekWorkZone {
+  position: absolute; left: 44px; right: 0;
+  background: rgba(0,0,0,0.015); pointer-events: none; z-index: 0;
+}
+
+/* 各日列 */
+.weekCol {
+  position: absolute; top: 0; bottom: 0;
+  border-left: 0.5px solid var(--color-border);
+  cursor: pointer;
+  z-index: 1;
+}
+.weekCol:first-of-type { border-left: none; }
+.weekColActive { background: rgba(var(--color-amber-rgb, 251,191,36), 0.04); }
+
+/* 週間ビュー内の既存イベント */
+.weekExistingEvent {
+  border-radius: 3px;
+  background: var(--color-bg-secondary);
+  border: 0.5px solid var(--color-border-medium);
+  padding: 1px 3px; overflow: hidden; pointer-events: none;
+}
+
+/* ── フッター ── */
 .footer {
   display: flex; align-items: center; gap: 8px;
-  margin-top: 0.75rem;
 }
 .timeDisplay {
   flex: 1;
   font-size: 0.75rem; font-family: var(--font-mono);
   color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.timeDur {
+  color: var(--color-text-tertiary);
+  font-size: 0.6875rem;
 }
 .btnCancel {
   font-size: 0.875rem; padding: 7px 14px; border-radius: 8px;
   border: 0.5px solid var(--color-border-medium); background: none;
   color: var(--color-text-secondary); cursor: pointer; font-family: inherit;
 }
+.btnCancel:hover { background: var(--color-bg-secondary); }
 .btnSave {
   font-size: 0.875rem; padding: 7px 16px; border-radius: 8px;
   border: 0.5px solid var(--color-amber-border); background: var(--color-amber-bg);

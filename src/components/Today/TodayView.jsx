@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useStore } from '@/store/useStore'
 import { fetchTodayEvents, updateCalendarEvent, createCalendarEvent } from '@/lib/googleCalendar'
 import { autoLink } from '@/lib/autoLink'
@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import DailyReportModal  from './DailyReportModal'
 import TimerHero         from '@/components/Timer/TimerHero'
 import TimerControls     from '@/components/Timer/TimerControls'
-import TaskCard          from './TaskCard'
+import TaskCard, { MergedTaskGroup } from './TaskCard'
 import CalendarDayView   from './CalendarDayView'
 import WeeklyView        from './WeeklyView'
 import EventDetailPopup  from './EventDetailPopup'
@@ -36,7 +36,7 @@ export default function TodayView() {
     session, todayEvents, setTodayEvents, activeEventId, setActiveEventId,
     isPaused, setIsPaused, setPausedAt, pausedAt, appTasks, updateEvent,
     devDate, rawCalEvents, rawCalDate, setRawCalEvents, addAppTask, updateAppTask,
-    providerToken,
+    providerToken, clients,
   } = useStore()
 
   const targetDate = devDate ?? new Date()
@@ -63,6 +63,7 @@ export default function TodayView() {
   const [, setSummaryTick]                     = useState(0)
   const [endDialogTarget,  setEndDialogTarget]  = useState(null) // タイマー終了ダイアログ対象
   const [startConfirmTarget, setStartConfirmTarget] = useState(null) // 開始確認ダイアログ対象
+  const [listGroupMode,    setListGroupMode]    = useState('time') // 'time' | 'client'
 
   // サマリーバーを30秒ごとに更新（進行中タスクの経過時間反映）
   useEffect(() => {
@@ -635,6 +636,48 @@ export default function TodayView() {
     : 0
   const remainingCount = todayEvents.filter(e => e.status !== 'done' && !hiddenIds.has(e.id)).length
 
+  // ── 一覧ビュー：タスクIDでグループ化（重複統合）＋クライアント別セクション ──
+  function buildDisplaySections(events, hiddenIds, showHidden, groupMode) {
+    const visible = events.filter(ev => showHidden || !hiddenIds.has(ev.id))
+
+    const byTaskId = new Map()
+    const noTask   = []
+    for (const ev of visible) {
+      if (!ev.taskId) {
+        noTask.push(ev)
+      } else {
+        if (!byTaskId.has(ev.taskId)) byTaskId.set(ev.taskId, [])
+        byTaskId.get(ev.taskId).push(ev)
+      }
+    }
+
+    const groups = []
+    for (const ev of noTask) {
+      groups.push({ events: [ev], taskId: null, sortKey: new Date(ev.plannedStart).getTime() || 0 })
+    }
+    for (const [taskId, evs] of byTaskId) {
+      const sorted = [...evs].sort((a, b) => new Date(a.plannedStart) - new Date(b.plannedStart))
+      groups.push({ events: sorted, taskId, sortKey: new Date(sorted[0].plannedStart).getTime() || 0 })
+    }
+    groups.sort((a, b) => a.sortKey - b.sortKey)
+
+    if (groupMode === 'time') return [{ clientId: null, groups }]
+
+    // クライアント別グループ
+    const byClient = new Map()
+    const noClient = []
+    for (const group of groups) {
+      const clientId = group.events[0].task?.client_id ?? null
+      if (!clientId) { noClient.push(group); continue }
+      if (!byClient.has(clientId)) byClient.set(clientId, [])
+      byClient.get(clientId).push(group)
+    }
+    const sections = []
+    for (const [clientId, gs] of byClient) sections.push({ clientId, groups: gs })
+    if (noClient.length > 0) sections.push({ clientId: null, groups: noClient })
+    return sections
+  }
+
   if (loading) {
     return <div className={styles.loading}>カレンダーを読み込んでいます...</div>
   }
@@ -705,6 +748,22 @@ export default function TodayView() {
             {refreshing ? '更新中…' : '↺ 更新'}
           </button>
 
+          {/* グルーピング（一覧のみ） */}
+          {viewMode === 'list' && (
+            <div className={styles.viewToggle}>
+              <button
+                className={`${styles.viewBtn} ${listGroupMode === 'time' ? styles.viewBtnActive : ''}`}
+                onClick={() => setListGroupMode('time')}
+                title="時系列順"
+              >時系列</button>
+              <button
+                className={`${styles.viewBtn} ${listGroupMode === 'client' ? styles.viewBtnActive : ''}`}
+                onClick={() => setListGroupMode('client')}
+                title="クライアント別"
+              >クライアント別</button>
+            </div>
+          )}
+
           {/* ビュー切替 */}
           <div className={styles.viewToggle}>
             <button
@@ -765,27 +824,56 @@ export default function TodayView() {
               今日の予定が見つかりません。Googleカレンダーに予定を追加してください。
             </div>
           )}
-          {todayEvents
-            .filter(ev => showHidden || !hiddenIds.has(ev.id))
-            .map(ev => (
-              <TaskCard
-                key={ev.id}
-                event={ev}
-                isActive={ev.id === activeEventId}
-                isPaused={isPaused}
-                onStart={() => handleStartClick(ev.id)}
-                onEnd={() => handleEnd(ev.id)}
-                onUndo={() => handleUndo(ev.id)}
-                onOnTime={() => handleOnTime(ev.id)}
-                onResume={() => setResumeTarget(ev)}
-                onOpenLink={() => setLinkTarget(ev)}
-                onHide={toggleHide}
-                isHidden={hiddenIds.has(ev.id)}
-                onTimeChange={ev.canEdit !== false ? handleTimeChange : undefined}
-                onOpenDetail={setDetailTarget}
-              />
-            ))
-          }
+          {buildDisplaySections(todayEvents, hiddenIds, showHidden, listGroupMode).map((section, si) => (
+            <React.Fragment key={si}>
+              {section.clientId && (
+                <div className={styles.clientGroupHeader}>
+                  <span className={styles.clientGroupName}>
+                    {(() => { const c = clients.find(x => x.id === section.clientId); return c?.display_name || c?.name || '–' })()}
+                  </span>
+                  <span className={styles.clientGroupLine} />
+                </div>
+              )}
+              {section.groups.map(group => {
+                if (group.events.length === 1) {
+                  const ev = group.events[0]
+                  return (
+                    <TaskCard
+                      key={ev.id}
+                      event={ev}
+                      isActive={ev.id === activeEventId}
+                      isPaused={isPaused}
+                      onStart={() => handleStartClick(ev.id)}
+                      onEnd={() => handleEnd(ev.id)}
+                      onUndo={() => handleUndo(ev.id)}
+                      onOnTime={() => handleOnTime(ev.id)}
+                      onResume={() => setResumeTarget(ev)}
+                      onOpenLink={() => setLinkTarget(ev)}
+                      onHide={toggleHide}
+                      isHidden={hiddenIds.has(ev.id)}
+                      onTimeChange={ev.canEdit !== false ? handleTimeChange : undefined}
+                      onOpenDetail={setDetailTarget}
+                    />
+                  )
+                }
+                return (
+                  <MergedTaskGroup
+                    key={group.taskId}
+                    events={group.events}
+                    activeEventId={activeEventId}
+                    isPaused={isPaused}
+                    onStart={handleStartClick}
+                    onEnd={handleEnd}
+                    onUndo={handleUndo}
+                    onOnTime={handleOnTime}
+                    onResume={ev => setResumeTarget(ev)}
+                    onOpenLink={ev => setLinkTarget(ev)}
+                    onOpenDetail={setDetailTarget}
+                  />
+                )
+              })}
+            </React.Fragment>
+          ))}
         </div>
       )}
 

@@ -222,7 +222,7 @@ export default function AppLayout() {
       <main className={styles.main}>
         {activeTab === 'today'     && <TodayView />}
         {activeTab === 'tasks'     && (
-          <TaskManagerView onAddToToday={task => { setAddToTodayTask(task); setActiveTab('today') }} />
+          <TaskManagerView onAddToToday={task => setAddToTodayTask(task)} />
         )}
         {activeTab === 'analytics' && <AnalyticsView />}
       </main>

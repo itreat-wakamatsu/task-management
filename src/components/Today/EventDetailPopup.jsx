@@ -6,9 +6,9 @@ import styles from './EventDetailPopup.module.css'
 const STATUS_LABELS = { pending: '未開始', running: '進行中', done: '完了' }
 const STATUS_CLS    = { pending: styles.statusPending, running: styles.statusRunning, done: styles.statusDone }
 
-// タスクステータス（app_tasks.status）の表示
+// タスクステータス
 const TASK_STATUS_LABELS = ['未着手', '進行中', '完了', '保留中']
-const TASK_STATUS_COLORS = [null, 'var(--color-amber-text)', 'var(--color-green-text)', '#6D28D9']
+const TASK_STATUS_CLS    = [styles.taskStatusPending, styles.taskStatusRunning, styles.taskStatusDone, styles.taskStatusHold]
 
 const PERM_LABELS = { solo: '自分のみ', multi: '複数参加者', readonly: '編集不可（読み取り専用）' }
 
@@ -18,21 +18,23 @@ function fmtTime(d) {
   return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
 }
 
-/**
- * GCalイベントの詳細ポップアップ（カレンダービュー・一覧ビュー共通）
- *
- * @param {object}   event       - todayEvents の1件
- * @param {Function} onClose     - () => void
- * @param {Function} onEdit      - (task) => void  ※タスクが紐付いている場合のみ
- * @param {Function} onOpenLink  - () => void  ※タスク紐付けモーダルを開く
- */
+function fmtDate(s) {
+  if (!s) return null
+  return s.slice(0, 10).replace(/-/g, '/')
+}
+
 export default function EventDetailPopup({ event, onClose, onEdit, onEditEvent, onOpenLink }) {
-  const { clients, backlogToken } = useStore()
-  const client = clients.find(c => c.id === event.task?.client_id)
+  const { clients, projects, categories, backlogToken } = useStore()
+
+  const task    = event.task
+  const client  = clients.find(c => c.id === task?.client_id)
+  const project = projects.find(p => p.id === task?.project_id)
+  const category    = categories.find(c => c.id === task?.category_id)
+  const subcategory = categories.find(c => c.id === task?.subcategory_id)
   const clColor = getClientColor(client)
 
-  const backlogUrl = (event.task?.backlog_issue_key && backlogToken?.space_key)
-    ? `https://${backlogToken.space_key}.backlog.com/view/${event.task.backlog_issue_key}`
+  const backlogUrl = (task?.backlog_issue_key && backlogToken?.space_key)
+    ? `https://${backlogToken.space_key}.backlog.com/view/${task.backlog_issue_key}`
     : null
 
   return (
@@ -51,7 +53,7 @@ export default function EventDetailPopup({ event, onClose, onEdit, onEditEvent, 
           <button className={styles.btnClose} onClick={onClose}>×</button>
         </div>
 
-        {/* タイトル */}
+        {/* カレンダーイベントタイトル */}
         <div className={styles.title}>{event.calendarEventTitle}</div>
 
         {/* 時間 */}
@@ -59,7 +61,7 @@ export default function EventDetailPopup({ event, onClose, onEdit, onEditEvent, 
           {fmtTime(event.plannedStart)} – {fmtTime(event.plannedEnd)}
         </div>
 
-        {/* 参加者（multi/readonly） */}
+        {/* 参加者 */}
         {event.otherAttendees?.length > 0 && (
           <div className={styles.attendees}>
             参加者: {event.otherAttendees.map(a => a.displayName).join('、')}
@@ -69,18 +71,70 @@ export default function EventDetailPopup({ event, onClose, onEdit, onEditEvent, 
         <div className={styles.divider} />
 
         {/* タスク情報 */}
-        {event.task ? (
+        {task ? (
           <div className={styles.taskSection}>
             <div className={styles.sectionLabel}>紐付きタスク</div>
 
+            {/* タスク名 */}
             <div className={styles.taskRow}>
-              {event.task.backlog_issue_key && <BacklogBadge size={14} />}
-              <span className={styles.taskName}>{event.task.title}</span>
+              {task.backlog_issue_key && <BacklogBadge size={14} />}
+              <span className={styles.taskName}>{task.title}</span>
             </div>
 
-            {client && (
-              <div className={styles.clientChip} style={{ background: `${clColor}18`, color: clColor }}>
-                {client.display_name || client.name}
+            {/* タスクステータス */}
+            {task.status != null && (
+              <span className={`${styles.taskStatusBadge} ${TASK_STATUS_CLS[task.status] || ''}`}>
+                {TASK_STATUS_LABELS[task.status] ?? '–'}
+              </span>
+            )}
+
+            {/* クライアント / 案件 */}
+            <div className={styles.metaRow}>
+              {client && (
+                <span className={styles.clientChip} style={{ background: `${clColor}18`, color: clColor }}>
+                  {client.display_name || client.name}
+                </span>
+              )}
+              {project && (
+                <span className={styles.projectChip}>
+                  {project.name}
+                </span>
+              )}
+            </div>
+
+            {/* 日付 */}
+            {(task.start_date || task.due_date) && (
+              <div className={styles.datesRow}>
+                {task.start_date && (
+                  <span className={styles.dateItem}>
+                    <span className={styles.dateLabel}>開始日</span>
+                    <span className={styles.dateVal}>{fmtDate(task.start_date)}</span>
+                  </span>
+                )}
+                {task.due_date && (
+                  <span className={styles.dateItem}>
+                    <span className={styles.dateLabel}>期日</span>
+                    <span className={styles.dateVal}>{fmtDate(task.due_date)}</span>
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* 区分 */}
+            {(category || subcategory) && (
+              <div className={styles.catsRow}>
+                {category && (
+                  <span className={styles.catChip}>
+                    <span className={styles.catLabel}>第1区分</span>
+                    {category.name}
+                  </span>
+                )}
+                {subcategory && (
+                  <span className={styles.catChip}>
+                    <span className={styles.catLabel}>第2区分</span>
+                    {subcategory.name}
+                  </span>
+                )}
               </div>
             )}
 
@@ -93,7 +147,7 @@ export default function EventDetailPopup({ event, onClose, onEdit, onEditEvent, 
                 className={styles.backlogLink}
               >
                 <BacklogBadge size={13} />
-                {event.task.backlog_issue_key} を Backlog で開く
+                {task.backlog_issue_key} を Backlog で開く
               </a>
             )}
           </div>
@@ -123,8 +177,8 @@ export default function EventDetailPopup({ event, onClose, onEdit, onEditEvent, 
               予定を編集
             </button>
           )}
-          {event.task && onEdit && (
-            <button className={styles.btnEdit} onClick={() => onEdit(event.task)}>
+          {task && onEdit && (
+            <button className={styles.btnEdit} onClick={() => onEdit(task)}>
               タスクを編集
             </button>
           )}

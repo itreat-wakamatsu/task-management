@@ -189,6 +189,16 @@
 }
 .clientChip:hover { filter: brightness(0.92); }
 
+.projectChip {
+  font-size: 0.5625rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+  border: 0.5px solid var(--color-border);
+}
+
 .actual { font-size: 0.625rem; color: var(--color-text-tertiary); font-family: var(--font-mono); }
 .over   { color: var(--color-danger-text); }
 .under  { color: var(--color-success-text); }
@@ -244,3 +254,29 @@
   font-weight: 500;
 }
 .btnOnTime:hover { background: var(--color-emerald-bg-hover); }
+
+/* ── 統合カード（MergedTaskGroup）── */
+.mergedRow1 {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+}
+.mergedSlots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.mergedSlot {
+  font-size: 0.5625rem;
+  font-family: var(--font-mono);
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.slotPending { background: var(--color-bg-secondary);  color: var(--color-text-tertiary); }
+.slotRun     { background: var(--color-amber-bg);      color: var(--color-amber-text); }
+.slotPause   { background: var(--color-blue-bg);       color: var(--color-blue-text); }
+.slotDone    { background: var(--color-green-bg);      color: var(--color-green-text); }

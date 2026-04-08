@@ -464,7 +464,7 @@ export default function TaskManagerView({ onAddToToday }) {
                   <td>
                     <div className={styles.tdActions}>
                       {onAddToToday && (
-                        <button className={styles.btnAddToday} onClick={() => onAddToToday(task)} title="今日の予定に追加">＋今日</button>
+                        <button className={styles.btnAddToday} onClick={() => onAddToToday(task)} title="予定に追加">＋予定</button>
                       )}
                       <button className={styles.btnEdit} onClick={() => setEditTarget(task)}>編集</button>
                       <button className={styles.btnDel}  onClick={() => handleDelete(task.id)}>削除</button>
