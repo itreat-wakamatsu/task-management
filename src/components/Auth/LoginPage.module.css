@@ -66,7 +66,7 @@
   font-size: 0.5625rem;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #f59e0b;
+  color: var(--color-amber-muted);
   margin-bottom: 0.75rem;
 }
 
@@ -87,11 +87,11 @@
   font-family: inherit;
   box-sizing: border-box;
 }
-.devInput:focus { outline: none; border-color: #f59e0b; }
+.devInput:focus { outline: none; border-color: var(--color-amber-muted); }
 
 .devError {
   font-size: 0.75rem;
-  color: #e53e3e;
+  color: var(--color-danger-text);
   text-align: left;
 }
 
@@ -99,13 +99,13 @@
   width: 100%;
   padding: 7px;
   border-radius: 8px;
-  border: 0.5px solid #f59e0b;
-  background: #FEF3C7;
-  color: #92400E;
+  border: 0.5px solid var(--color-amber-border);
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
 }
-.devBtn:hover:not(:disabled) { background: #FDE68A; }
+.devBtn:hover:not(:disabled) { background: var(--color-amber-bg-hover); }
 .devBtn:disabled { opacity: 0.5; cursor: not-allowed; }

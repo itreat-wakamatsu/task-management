@@ -65,7 +65,7 @@
 .toggleBtn0.toggleBtnActive { background: var(--color-bg-secondary); color: var(--color-text-primary); font-weight: 600; }
 .toggleBtn1.toggleBtnActive { background: var(--color-amber-bg); color: var(--color-amber-text); font-weight: 600; }
 .toggleBtn2.toggleBtnActive { background: var(--color-green-bg);  color: var(--color-green-text); font-weight: 600; }
-.toggleBtn3.toggleBtnActive { background: #EDE9FE; color: #6D28D9; font-weight: 600; }
+.toggleBtn3.toggleBtnActive { background: var(--color-purple-bg); color: var(--color-purple-text); font-weight: 600; }
 
 /* ニュートラルトグル（定期・Backlog） */
 .toggleBtnActiveNeutral { background: var(--color-bg-secondary); color: var(--color-text-primary); font-weight: 600; }
@@ -127,7 +127,7 @@
 }
 .tdSub   { font-size: 0.6875rem; color: var(--color-text-secondary); }
 .tdDate  { font-size: 0.6875rem; color: var(--color-text-secondary); font-family: var(--font-mono); white-space: nowrap; }
-.tdOverdue { color: #C53030; font-weight: 600; }
+.tdOverdue { color: var(--color-danger-text); font-weight: 600; }
 
 /* 定期インラインバッジ（タスク名の先頭） */
 .recInline {
@@ -150,7 +150,7 @@
   text-decoration: none;
   font-weight: 600;
 }
-.backlogLink:hover { color: #4DAE00; text-decoration: underline; }
+.backlogLink:hover { color: var(--color-backlog); text-decoration: underline; }
 
 .clientChip { font-size: 0.625rem; padding: 1px 5px; border-radius: 3px; white-space: nowrap; border: none; cursor: pointer; font-family: inherit; }
 .clientChip:hover { opacity: 0.8; }
@@ -159,7 +159,7 @@
 .statusPending { background: var(--color-bg-secondary); color: var(--color-text-secondary); }
 .statusRunning { background: var(--color-amber-bg); color: var(--color-amber-text); }
 .statusDone    { background: var(--color-green-bg);  color: var(--color-green-text); }
-.statusOnHold  { background: #EDE9FE; color: #6D28D9; }
+.statusOnHold  { background: var(--color-purple-bg); color: var(--color-purple-text); }
 
 .tdActions { display: flex; gap: 4px; align-items: center; }
 .btnAddToday {
@@ -170,7 +170,7 @@
 .btnAddToday:hover { background: var(--color-amber-bg-hover); }
 .btnEdit { font-size: 0.6875rem; background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 2px 5px; font-family: inherit; }
 .btnEdit:hover { color: var(--color-text-primary); }
-.btnDel  { font-size: 0.6875rem; background: none; border: none; cursor: pointer; color: #A32D2D; padding: 2px 5px; font-family: inherit; }
+.btnDel  { font-size: 0.6875rem; background: none; border: none; cursor: pointer; color: var(--color-danger-text); padding: 2px 5px; font-family: inherit; }
 
 .empty { text-align: center; padding: 2rem; color: var(--color-text-tertiary); }
 
@@ -191,10 +191,10 @@
 
 /* 選択済み行 */
 .rowSelected {
-  background: #FFFBEB !important;
+  background: var(--color-row-selected-bg) !important;
 }
 .rowSelected:hover {
-  background: #FEF3C7 !important;
+  background: var(--color-row-selected-hover-bg) !important;
 }
 
 /* ── 一括編集バー ── */
@@ -205,8 +205,8 @@
   flex-wrap: wrap;
   padding: 8px 12px;
   margin-bottom: 10px;
-  background: #FFFBEB;
-  border: 1px solid #FDE68A;
+  background: var(--color-bulk-bar-bg);
+  border: 1px solid var(--color-bulk-bar-border);
   border-radius: 8px;
   font-size: 0.75rem;
 }
@@ -227,8 +227,8 @@
   font-size: 0.75rem;
   padding: 4px 8px;
   border-radius: 6px;
-  border: 0.5px solid #FCD34D;
-  background: #FFFFFF;
+  border: 0.5px solid var(--color-bulk-select-border);
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: inherit;
   cursor: pointer;
@@ -269,15 +269,15 @@
   font-size: 0.625rem;
   padding: 2px 8px;
   border-radius: 10px;
-  background: #EFF6FF;
-  color: #3B82F6;
+  background: var(--color-sync-badge-bg);
+  color: var(--color-sync-badge-text);
   white-space: nowrap;
   align-self: center;
   animation: syncFadeIn 0.2s ease;
 }
 .syncBadgeDone {
-  background: #F0FDF4;
-  color: #16A34A;
+  background: var(--color-sync-ok-bg);
+  color: var(--color-sync-ok-text);
 }
 @keyframes syncFadeIn {
   from { opacity: 0; }

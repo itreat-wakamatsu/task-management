@@ -52,7 +52,7 @@
 .dateTrigger:hover .dateStr { color: var(--color-text-secondary); }
 
 /* 今日以外の日付を表示中 */
-.dateTriggerOff .dateStr { color: #d97706; }
+.dateTriggerOff .dateStr { color: var(--color-amber-strong); }
 
 .dateChevron {
   font-size: 0.5rem;
@@ -71,23 +71,23 @@
   padding: 2px 6px;
   cursor: pointer;
 }
-.datePicker:focus { outline: none; border-color: #f59e0b; }
+.datePicker:focus { outline: none; border-color: var(--color-amber-muted); }
 
 /* 「今日」リセットボタン */
 .todayResetBtn {
   font-size: 0.5625rem;
   font-family: inherit;
   font-weight: 600;
-  color: #d97706;
-  background: #fef3c7;
-  border: 0.5px solid #f59e0b;
+  color: var(--color-amber-strong);
+  background: var(--color-amber-bg);
+  border: 0.5px solid var(--color-amber-muted);
   border-radius: 3px;
   padding: 1px 6px;
   cursor: pointer;
   line-height: 1.6;
   letter-spacing: 0.02em;
 }
-.todayResetBtn:hover { background: #fde68a; }
+.todayResetBtn:hover { background: var(--color-amber-bg-hover); }
 
 .appNameRow {
   display: flex;
@@ -104,8 +104,8 @@
   font-size: 0.5625rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: #fff;
-  background: #f59e0b;
+  color: var(--color-bg-primary);
+  background: var(--color-amber-muted);
   border-radius: 3px;
   padding: 1px 5px;
   line-height: 1.5;
@@ -126,11 +126,11 @@
 }
 .btnBacklog:hover { background: var(--color-bg-secondary); }
 .btnBacklogConnected {
-  border-color: #C3E59D;
-  color: #275400;
-  background: #F0FAE8;
+  border-color: var(--color-connected-border);
+  color: var(--color-connected-text);
+  background: var(--color-connected-bg);
 }
-.btnBacklogConnected:hover { background: #D6F3B8; }
+.btnBacklogConnected:hover { background: var(--color-backlog-hover-bg); }
 
 .btnMcp {
   font-size: 0.6875rem;

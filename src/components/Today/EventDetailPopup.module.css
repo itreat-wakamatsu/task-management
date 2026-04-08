@@ -116,7 +116,7 @@
   align-items: center;
   gap: 3px;
   font-size: 0.75rem;
-  color: #4DAE00;
+  color: var(--color-backlog);
   text-decoration: none;
   padding: 4px 0;
   width: fit-content;

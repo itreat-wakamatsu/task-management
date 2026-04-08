@@ -44,9 +44,9 @@
 .fetchError {
   padding: 8px 12px;
   font-size: 0.75rem;
-  color: #A32D2D;
-  background: #FFF5F5;
-  border-bottom: 0.5px solid #FFD0D0;
+  color: var(--color-error-text);
+  background: var(--color-error-bg);
+  border-bottom: 0.5px solid var(--color-error-border);
 }
 
 .navBtnToday {
@@ -147,7 +147,7 @@
 .nowLine {
   position: absolute;
   height: 2px;
-  background: #C53030;
+  background: var(--color-danger-text);
   pointer-events: none;
   z-index: 5;
   border-radius: 1px;
@@ -218,7 +218,7 @@
 .loadingOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(255,255,255,0.7);
+  background: var(--color-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;

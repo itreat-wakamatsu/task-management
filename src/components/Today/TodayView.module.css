@@ -174,10 +174,10 @@
 }
 
 .resumeBtnContinue {
-  border: 1.5px solid #6366f1;
-  background: #eef2ff;
+  border: 1.5px solid var(--color-indigo-main);
+  background: var(--color-indigo-bg);
 }
-.resumeBtnContinue:hover { background: #e0e7ff; }
+.resumeBtnContinue:hover { background: var(--color-indigo-bg-hover); }
 
 .resumeBtnFresh {
   border: 1.5px solid var(--color-border-medium);
@@ -190,13 +190,13 @@
   font-weight: 600;
   color: var(--color-text-primary);
 }
-.resumeBtnContinue .resumeBtnLabel { color: #4338ca; }
+.resumeBtnContinue .resumeBtnLabel { color: var(--color-indigo-text); }
 
 .resumeBtnHint {
   font-size: 0.6875rem;
   color: var(--color-text-tertiary);
 }
-.resumeBtnContinue .resumeBtnHint { color: #6366f1; }
+.resumeBtnContinue .resumeBtnHint { color: var(--color-indigo-main); }
 
 .resumeCancel {
   align-self: center;
@@ -254,13 +254,13 @@
 }
 .summaryBar_fill {
   height: 100%;
-  background: #6366f1;
+  background: var(--color-indigo-main);
   border-radius: 2px;
   transition: width 0.4s ease;
 }
 .summaryPct {
   font-size: 0.5625rem;
-  color: #6366f1;
+  color: var(--color-indigo-main);
   font-weight: 700;
   font-family: var(--font-mono);
   white-space: nowrap;
@@ -369,19 +369,19 @@
 
 /* 完了 */
 .endBtnDone {
-  background: #F0FDF4;
-  border-color: #16A34A;
+  background: var(--color-green-bg-strong);
+  border-color: var(--color-green-border);
 }
-.endBtnDone:hover { background: #DCFCE7; }
-.endBtnDone .endBtnLabel { color: #15803D; }
+.endBtnDone:hover { background: var(--color-green-bg-hover); }
+.endBtnDone .endBtnLabel { color: var(--color-green-text-strong); }
 
 /* 保留中 */
 .endBtnHold {
-  background: #F5F3FF;
-  border-color: #7C3AED;
+  background: var(--color-purple-bg);
+  border-color: var(--color-purple-text);
 }
-.endBtnHold:hover { background: #EDE9FE; }
-.endBtnHold .endBtnLabel { color: #6D28D9; }
+.endBtnHold:hover { background: var(--color-purple-bg); }
+.endBtnHold .endBtnLabel { color: var(--color-purple-text); }
 
 /* 進行中のまま */
 .endBtnInProgress {
@@ -462,9 +462,9 @@
   padding: 9px 22px;
   border-radius: 8px;
   border: none;
-  background: #1E3A5F;
-  color: #fff;
+  background: var(--color-action-btn-bg);
+  color: var(--color-action-btn-text);
   cursor: pointer;
   font-family: inherit;
 }
-.startConfirmOk:hover { background: #153050; }
+.startConfirmOk:hover { background: var(--color-action-btn-hover-bg); }

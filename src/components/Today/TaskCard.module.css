@@ -190,8 +190,8 @@
 .clientChip:hover { filter: brightness(0.92); }
 
 .actual { font-size: 0.625rem; color: var(--color-text-tertiary); font-family: var(--font-mono); }
-.over   { color: #A32D2D; }
-.under  { color: #3B6D11; }
+.over   { color: var(--color-danger-text); }
+.under  { color: var(--color-success-text); }
 
 .actions { display: flex; gap: 4px; flex-shrink: 0; }
 
@@ -211,14 +211,14 @@
   font-size: 0.6875rem;
   padding: 4px 10px;
   border-radius: 6px;
-  border: 0.5px solid #6366f1;
-  background: #eef2ff;
-  color: #4338ca;
+  border: 0.5px solid var(--color-indigo-main);
+  background: var(--color-indigo-bg);
+  color: var(--color-indigo-text);
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;
 }
-.btnResume:hover { background: #e0e7ff; }
+.btnResume:hover { background: var(--color-indigo-bg-hover); }
 
 .btnUndo {
   font-size: 0.6875rem;
@@ -236,11 +236,11 @@
   font-size: 0.6875rem;
   padding: 4px 10px;
   border-radius: 6px;
-  border: 0.5px solid #10b981;
-  background: #ecfdf5;
-  color: #065f46;
+  border: 0.5px solid var(--color-emerald-border);
+  background: var(--color-emerald-bg);
+  color: var(--color-emerald-text);
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;
 }
-.btnOnTime:hover { background: #d1fae5; }
+.btnOnTime:hover { background: var(--color-emerald-bg-hover); }

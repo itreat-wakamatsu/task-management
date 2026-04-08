@@ -4,9 +4,9 @@
   border: 0.5px solid var(--color-border);
   padding: 12px 14px;
 }
-.over { border-left: 3px solid #E24B4A; }
-.warn { border-left: 3px solid #EF9F27; }
-.ok   { border-left: 3px solid #639922; }
+.over { border-left: 3px solid var(--color-danger-text); }
+.warn { border-left: 3px solid var(--color-amber-border); }
+.ok   { border-left: 3px solid var(--color-success-text); }
 
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
 .title  { font-size: 0.8125rem; font-weight: 600; flex: 1; line-height: 1.35; }

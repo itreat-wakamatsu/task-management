@@ -76,6 +76,70 @@ a { color: inherit; text-decoration: none; }
 
   /* Selected option */
   --color-selected-bg:      #FFFDF5;
+
+  /* Focus ring */
+  --color-focus-ring:  #378ADD;
+
+  /* Purple / 保留中 */
+  --color-purple-bg:   #EDE9FE;
+  --color-purple-text: #6D28D9;
+
+  /* Indigo / timer resume actions */
+  --color-indigo-bg:       #EEF2FF;
+  --color-indigo-bg-hover: #E0E7FF;
+  --color-indigo-text:     #4338CA;
+  --color-indigo-main:     #6366F1;
+
+  /* Emerald / on-time button */
+  --color-emerald-bg:       #ECFDF5;
+  --color-emerald-bg-hover: #D1FAE5;
+  --color-emerald-border:   #10B981;
+  --color-emerald-text:     #065F46;
+
+  /* Backlog brand green */
+  --color-backlog:          #4DAE00;
+  --color-backlog-bg:       #F0FAE8;
+  --color-backlog-hover-bg: #D6F3B8;
+
+  /* Amber variants for date trigger */
+  --color-amber-strong: #D97706;
+  --color-amber-muted:  #F59E0B;
+
+  /* Sync badge / sync button */
+  --color-sync-badge-bg:     #EFF6FF;
+  --color-sync-badge-text:   #3B82F6;
+  --color-sync-ok-bg:        #F0FDF4;
+  --color-sync-ok-text:      #16A34A;
+  --color-sync-btn-bg:       #EFF6FF;
+  --color-sync-btn-text:     #1D4ED8;
+  --color-sync-btn-border:   #93C5FD;
+  --color-sync-btn-hover-bg: #DBEAFE;
+
+  /* Selected rows / bulk-edit bar */
+  --color-row-selected-bg:       #FFFBEB;
+  --color-row-selected-hover-bg: #FEF3C7;
+  --color-bulk-bar-bg:           #FFFBEB;
+  --color-bulk-bar-border:       #FDE68A;
+  --color-bulk-select-border:    #FCD34D;
+
+  /* Primary action button (confirm dialog) */
+  --color-action-btn-bg:       #1E3A5F;
+  --color-action-btn-text:     #FFFFFF;
+  --color-action-btn-hover-bg: #153050;
+
+  /* Green / done button */
+  --color-green-bg-strong:   #F0FDF4;
+  --color-green-bg-hover:    #DCFCE7;
+  --color-green-text-strong: #15803D;
+  --color-green-text-main:   #16A34A;
+  --color-green-border:      #16A34A;
+
+  /* SearchableSelect selected option */
+  --color-option-selected-bg:   #EBF3FB;
+  --color-option-selected-text: #2472B3;
+
+  /* Loading overlay */
+  --color-overlay-bg: rgba(255, 255, 255, 0.7);
 }
 
 /* ── ダークモード ── */
@@ -130,6 +194,70 @@ a { color: inherit; text-decoration: none; }
 
     /* Selected option */
     --color-selected-bg:      rgba(239, 159, 39, 0.12);
+
+    /* Focus ring */
+    --color-focus-ring:  #60A5FA;
+
+    /* Purple / 保留中 */
+    --color-purple-bg:   rgba(109, 40, 217, 0.22);
+    --color-purple-text: #C4B5FD;
+
+    /* Indigo / timer resume actions */
+    --color-indigo-bg:       rgba(99, 102, 241, 0.18);
+    --color-indigo-bg-hover: rgba(99, 102, 241, 0.28);
+    --color-indigo-text:     #A5B4FC;
+    --color-indigo-main:     #818CF8;
+
+    /* Emerald / on-time button */
+    --color-emerald-bg:       rgba(16, 185, 129, 0.16);
+    --color-emerald-bg-hover: rgba(16, 185, 129, 0.26);
+    --color-emerald-border:   #34D399;
+    --color-emerald-text:     #6EE7B7;
+
+    /* Backlog brand green */
+    --color-backlog:          #6EE7B7;
+    --color-backlog-bg:       rgba(77, 174, 0, 0.16);
+    --color-backlog-hover-bg: rgba(77, 174, 0, 0.28);
+
+    /* Amber variants for date trigger */
+    --color-amber-strong: #FCD34D;
+    --color-amber-muted:  #FCD34D;
+
+    /* Sync badge / sync button */
+    --color-sync-badge-bg:     rgba(59, 130, 246, 0.16);
+    --color-sync-badge-text:   #93C5FD;
+    --color-sync-ok-bg:        rgba(22, 163, 74, 0.16);
+    --color-sync-ok-text:      #86EFAC;
+    --color-sync-btn-bg:       rgba(59, 130, 246, 0.14);
+    --color-sync-btn-text:     #93C5FD;
+    --color-sync-btn-border:   rgba(147, 197, 253, 0.40);
+    --color-sync-btn-hover-bg: rgba(59, 130, 246, 0.24);
+
+    /* Selected rows / bulk-edit bar */
+    --color-row-selected-bg:       rgba(239, 159, 39, 0.12);
+    --color-row-selected-hover-bg: rgba(239, 159, 39, 0.22);
+    --color-bulk-bar-bg:           rgba(239, 159, 39, 0.10);
+    --color-bulk-bar-border:       rgba(253, 230, 138, 0.35);
+    --color-bulk-select-border:    rgba(253, 230, 138, 0.35);
+
+    /* Primary action button (confirm dialog) */
+    --color-action-btn-bg:       #2563EB;
+    --color-action-btn-text:     #FFFFFF;
+    --color-action-btn-hover-bg: #1D4ED8;
+
+    /* Green / done button */
+    --color-green-bg-strong:   rgba(22, 163, 74, 0.16);
+    --color-green-bg-hover:    rgba(22, 163, 74, 0.26);
+    --color-green-text-strong: #86EFAC;
+    --color-green-text-main:   #86EFAC;
+    --color-green-border:      #34D399;
+
+    /* SearchableSelect selected option */
+    --color-option-selected-bg:   rgba(36, 114, 179, 0.22);
+    --color-option-selected-text: #93C5FD;
+
+    /* Loading overlay */
+    --color-overlay-bg: rgba(28, 28, 30, 0.80);
   }
 }
 

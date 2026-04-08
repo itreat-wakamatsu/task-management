@@ -91,11 +91,11 @@
   position: absolute;
   border-radius: 6px;
   background: var(--color-amber-bg);
-  border: 1.5px solid #EF9F27;
+  border: 1.5px solid var(--color-amber-border);
   cursor: grab;
   user-select: none;
   display: flex; flex-direction: column;
-  box-shadow: 0 2px 8px rgba(239,159,39,0.25);
+  box-shadow: 0 2px 8px var(--color-amber-bg-hover);
 }
 .newEvent:active { cursor: grabbing; }
 .newEventInner { flex: 1; padding: 3px 6px; overflow: hidden; }
@@ -113,7 +113,7 @@
 .resizeHandle {
   position: absolute; bottom: 0; left: 0; right: 0;
   height: 7px; cursor: ns-resize;
-  background: linear-gradient(transparent, rgba(239,159,39,0.3));
+  background: linear-gradient(transparent, var(--color-amber-bg-hover));
   border-radius: 0 0 4px 4px;
 }
 

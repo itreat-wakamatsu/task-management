@@ -47,14 +47,14 @@
 .nowDot {
   width: 9px; height: 9px;
   border-radius: 50%;
-  background: #C53030;
+  background: var(--color-danger-text);
   margin-left: 48px;
   flex-shrink: 0;
 }
 .nowBar {
   flex: 1;
   height: 1.5px;
-  background: #C53030;
+  background: var(--color-danger-text);
 }
 
 /* ── イベントブロック ── */
@@ -78,18 +78,19 @@
 /* ステータス別スタイル（クライアント色がない場合のフォールバック） */
 .eventDefault {
   background: var(--color-amber-bg);
-  border-top-color: rgba(239, 159, 39, 0.35);
-  border-right-color: rgba(239, 159, 39, 0.35);
-  border-bottom-color: rgba(239, 159, 39, 0.35);
-  border-left-color: #EF9F27;
+  border-top-color: var(--color-amber-border);
+  border-right-color: var(--color-amber-border);
+  border-bottom-color: var(--color-amber-border);
+  border-left-color: var(--color-amber-border);
+  opacity: 0.8;
 }
 .eventActive {
   background: var(--color-amber-bg);
-  border-top-color: #EF9F27;
-  border-right-color: #EF9F27;
-  border-bottom-color: #EF9F27;
-  border-left-color: #EF9F27;
-  box-shadow: 0 0 0 2px rgba(239, 159, 39, 0.25);
+  border-top-color: var(--color-amber-border);
+  border-right-color: var(--color-amber-border);
+  border-bottom-color: var(--color-amber-border);
+  border-left-color: var(--color-amber-border);
+  box-shadow: 0 0 0 2px var(--color-amber-bg-hover);
 }
 .eventDone {
   background: var(--color-bg-secondary);
@@ -235,9 +236,9 @@
   display: flex; align-items: center; justify-content: center;
   line-height: 1;
 }
-.btnPlay { background: rgba(239, 159, 39, 0.7); color: white; }
-.btnPlay:hover { background: #EF9F27; }
-.btnStop { background: #C53030; color: white; }
+.btnPlay { background: var(--color-amber-border); color: white; }
+.btnPlay:hover { background: var(--color-amber-text); }
+.btnStop { background: var(--color-danger-text); color: white; }
 .btnStop:hover { opacity: 0.85; }
 
 .btnHideEv {

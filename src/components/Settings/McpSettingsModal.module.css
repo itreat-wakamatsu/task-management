@@ -234,5 +234,5 @@
   flex-shrink: 0;
   transition: background 0.15s;
 }
-.btnDanger:hover    { background: rgba(192,57,43,0.08); }
+.btnDanger:hover    { background: var(--color-red-bg); }
 .btnDanger:disabled { opacity: 0.45; cursor: default; }
