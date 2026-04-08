@@ -20,6 +20,7 @@ const TABS = [
 ]
 
 const isDev = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development'
+const HIDDEN_KEY = 'hidden_calendar_events'
 
 export default function AppLayout() {
   const [activeTab,       setActiveTab]      = useState('today')
@@ -53,6 +54,15 @@ export default function AppLayout() {
       .then(events => setRawCalEvents(events, todayStr))
       .catch(err => console.error('GCal 初回取得エラー:', err))
   }, [session?.provider_token])
+
+  // 非表示イベントを除いた今日のイベント一覧（予定に追加モーダル用）
+  const visibleTodayEvents = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(HIDDEN_KEY)
+      const hiddenIds = new Set(raw ? JSON.parse(raw) : [])
+      return todayEvents.filter(ev => !hiddenIds.has(ev.id))
+    } catch { return todayEvents }
+  }, [todayEvents])
 
   // 残り空き時間（1分ごとに更新）
   const [freeMins, setFreeMins] = useState(0)
@@ -234,7 +244,7 @@ export default function AppLayout() {
       {addToTodayTask && (
         <AddToTodayModal
           task={addToTodayTask}
-          existingEvents={todayEvents}
+          existingEvents={visibleTodayEvents}
           targetDateStr={targetDateStr}
           onSave={handleAddToToday}
           onClose={() => setAddToTodayTask(null)}
