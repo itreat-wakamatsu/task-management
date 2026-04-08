@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useStore } from '@/store/useStore'
+import { fetchTodayEvents } from '@/lib/googleCalendar'
 import styles from './AddToTodayModal.module.css'
 
 const HOUR_HEIGHT = 56
@@ -105,6 +107,22 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
   const weekContainerRef = useRef(null)
   const dragRef  = useRef(null)
 
+  // GCal トークン（日付別イベント取得用）
+  const { providerToken, session } = useStore(s => ({ providerToken: s.providerToken, session: s.session }))
+
+  // 日付ごとのイベントキャッシュ（dateStr → events[]）
+  const eventsCache = useRef({})
+  const [cacheVersion, setCacheVersion] = useState(0) // eslint-disable-line no-unused-vars
+
+  // キャッシュ取得・更新ヘルパー
+  function getCachedEvents(d) {
+    return eventsCache.current[dateToStr(d)] || []
+  }
+  function cacheSet(d, evs) {
+    eventsCache.current[dateToStr(d)] = evs
+    setCacheVersion(v => v + 1)
+  }
+
   // 選択中の日付
   const [selectedDate, setSelectedDate] = useState(() => {
     const [y, m, d] = (targetDateStr || dateToStr(new Date())).split('-').map(Number)
@@ -126,6 +144,40 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
   const [saving,   setSaving]   = useState(false)
 
   const weekDays = getWeekDays(selectedDate)
+
+  // モーダル初期化：targetDate 分は既存イベントでキャッシュ埋め
+  useEffect(() => {
+    const initStr = targetDateStr || dateToStr(new Date())
+    if (!eventsCache.current[initStr]) {
+      eventsCache.current[initStr] = existingEvents
+      setCacheVersion(v => v + 1)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 選択日が変わったら未キャッシュならフェッチ
+  useEffect(() => {
+    const dateStr = dateToStr(selectedDate)
+    if (eventsCache.current[dateStr] !== undefined) return
+    const token = providerToken || session?.provider_token
+    if (!token) return
+    fetchTodayEvents(token, selectedDate)
+      .then(evs => cacheSet(selectedDate, evs))
+      .catch(() => cacheSet(selectedDate, []))
+  }, [selectedDate, providerToken, session?.provider_token]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 週ビュー切替時に5日分を先行フェッチ
+  useEffect(() => {
+    if (viewMode !== 'week') return
+    const token = providerToken || session?.provider_token
+    if (!token) return
+    weekDays.forEach(d => {
+      const dateStr = dateToStr(d)
+      if (eventsCache.current[dateStr] !== undefined) return
+      fetchTodayEvents(token, d)
+        .then(evs => cacheSet(d, evs))
+        .catch(() => cacheSet(d, []))
+    })
+  }, [viewMode, weekDays[0]?.toDateString()]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 8:00 付近へスクロール
   useEffect(() => {
@@ -250,10 +302,9 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
 
   const dateLabel = `${selectedDate.getMonth()+1}/${selectedDate.getDate()}（${DAY_NAMES[selectedDate.getDay()]}）`
 
-  // 今日の既存イベント（1日ビュー用）
-  const todayExisting = existingEvents.filter(ev =>
-    !ev.isAllDay && ev.plannedStart && ev.plannedEnd &&
-    isSameDay(new Date(ev.plannedStart), selectedDate)
+  // 選択日の既存イベント（1日ビュー用）※キャッシュから取得
+  const todayExisting = getCachedEvents(selectedDate).filter(ev =>
+    !ev.isAllDay && ev.plannedStart && ev.plannedEnd
   )
 
   return (
@@ -304,7 +355,7 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
                 height: minsToY(WORK_END) - minsToY(WORK_START),
               }} />
 
-              {/* 既存イベント（今日分のみ） */}
+              {/* 既存イベント（キャッシュから） */}
               {todayExisting.map(ev => {
                 const h  = new Date(ev.plannedStart).getHours()
                 const m  = new Date(ev.plannedStart).getMinutes()
@@ -312,8 +363,9 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
                 const em = new Date(ev.plannedEnd).getMinutes()
                 const top    = timeToY(h, m)
                 const height = Math.max(timeToY(eh, em) - top, 12)
+                const key = ev.calendarEventId || ev.id
                 return (
-                  <div key={ev.id} className={styles.existingEvent} style={{ top, height, left: 56, right: 4 }}>
+                  <div key={key} className={styles.existingEvent} style={{ top, height, left: 56, right: 4 }}>
                     <span className={styles.existingTitle}>{ev.calendarEventTitle}</span>
                   </div>
                 )
@@ -380,17 +432,17 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
                 {/* 5列のカラム */}
                 {weekDays.map((d, colIdx) => {
                   const isSelected = colIdx === weekDayCol
+                  // ヘッダーと幅を合わせる: (全幅 - 44px) / 5
                   const colStyle = {
                     position: 'absolute',
-                    left:  `calc(44px + ${colIdx * 20}%)`,
-                    width: '20%',
+                    left:  `calc(44px + ${colIdx} * (100% - 44px) / 5)`,
+                    width: 'calc((100% - 44px) / 5)',
                     top: 0,
                     bottom: 0,
                   }
-                  // 今日の既存イベントをこの列に表示
-                  const colEvents = existingEvents.filter(ev =>
-                    !ev.isAllDay && ev.plannedStart && ev.plannedEnd &&
-                    isSameDay(new Date(ev.plannedStart), d)
+                  // キャッシュから該当日の既存イベントを取得
+                  const colEvents = getCachedEvents(d).filter(ev =>
+                    !ev.isAllDay && ev.plannedStart && ev.plannedEnd
                   )
                   return (
                     <div
@@ -416,8 +468,9 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
                         const em = new Date(ev.plannedEnd).getMinutes()
                         const top    = timeToY(h, m)
                         const height = Math.max(timeToY(eh, em) - top, 10)
+                        const key = ev.calendarEventId || ev.id
                         return (
-                          <div key={ev.id} className={styles.weekExistingEvent}
+                          <div key={key} className={styles.weekExistingEvent}
                             style={{ position: 'absolute', top, height, left: 2, right: 2 }}>
                             <span className={styles.existingTitle}>{ev.calendarEventTitle}</span>
                           </div>

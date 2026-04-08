@@ -238,7 +238,6 @@ export default function TaskCard({
 // ── 重複タスク統合カード ──
 // 同一 taskId を持つ複数イベントを1枚のカードにまとめて表示する。
 const SLOT_STATUS_CLS = { done: styles.slotDone, running: styles.slotRun, paused: styles.slotPause, pending: styles.slotPending }
-const SLOT_STATUS_LBL = { done: '完了', running: '進行中', paused: '停止中', pending: '未開始' }
 
 export function MergedTaskGroup({
   events, activeEventId, isPaused,
