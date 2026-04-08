@@ -86,9 +86,11 @@ export default function CsvExportModal({ tasks, onClose }) {
       case 'status':       return STATUS_LABELS[task.status] ?? ''
       case 'start_date':   return task.start_date || ''
       case 'due_date':     return task.due_date || ''
-      case 'id':           return task.id
-      case 'backlog_key':  return task.backlog_issue_key || ''
-      case 'is_recurring': return task.is_recurring ? '定期' : '非定期'
+      case 'planned_hours': return task.planned_hours != null ? String(task.planned_hours) : ''
+      case 'actual_hours':  return task.actual_hours  != null ? String(task.actual_hours)  : ''
+      case 'id':            return task.id
+      case 'backlog_key':   return task.backlog_issue_key || ''
+      case 'is_recurring':  return task.is_recurring ? '定期' : '非定期'
       default:             return ''
     }
   }
