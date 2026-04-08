@@ -93,10 +93,15 @@ export default function CalendarDayView({
   const gridRef      = useRef(null)
   const dragRef      = useRef(null)
   const didDragRef   = useRef(false)   // ドラッグが実際に行われたか
+  const createDragRef  = useRef(null)
+  const onCreateAtRef  = useRef(onCreateAt)
   const [nowY, setNowY] = useState(null)
+  const [createPreview, setCreatePreview] = useState(null) // { top, height }
 
   // カラーピッカー: イベントIDと位置で管理（複数の同一クライアント対策）
   const [colorPicker, setColorPicker] = useState(null)  // { eventId, client, top, left }
+
+  onCreateAtRef.current = onCreateAt
 
   const totalHeight = TOTAL_HOURS * HOUR_HEIGHT
 
@@ -207,6 +212,56 @@ export default function CalendarDayView({
     window.addEventListener('mouseup',   onMouseUp)
   }
 
+  // ── ドラッグで新規作成 ──
+  const onCreateMouseMove = useCallback((e) => {
+    const drag = createDragRef.current
+    if (!drag) return
+    const rect = gridRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const y = e.clientY - rect.top
+    const snappedMins = Math.round(((y / HOUR_HEIGHT) * 60) / SNAP_MIN) * SNAP_MIN
+    const endAbsMins = Math.max(START_HOUR * 60 + snappedMins, drag.startAbsMins + SNAP_MIN)
+    drag.endAbsMins = endAbsMins
+    drag.isDragging = true
+    const startY = ((drag.startAbsMins - START_HOUR * 60) / 60) * HOUR_HEIGHT
+    const endY   = ((endAbsMins        - START_HOUR * 60) / 60) * HOUR_HEIGHT
+    setCreatePreview({ top: startY, height: Math.max(endY - startY, HOUR_HEIGHT / 4) })
+  }, [])
+
+  const onCreateMouseUp = useCallback(() => {
+    const drag = createDragRef.current
+    createDragRef.current = null
+    window.removeEventListener('mousemove', onCreateMouseMove)
+    window.removeEventListener('mouseup',   onCreateMouseUp)
+    setCreatePreview(null)
+    if (!drag?.isDragging) return
+    didDragRef.current = true
+    const base = new Date()
+    base.setSeconds(0, 0)
+    const start = new Date(base)
+    start.setHours(Math.floor(drag.startAbsMins / 60), drag.startAbsMins % 60, 0, 0)
+    const end = new Date(base)
+    end.setHours(Math.floor(drag.endAbsMins / 60), drag.endAbsMins % 60, 0, 0)
+    onCreateAtRef.current?.(start, end)
+  }, [onCreateMouseMove])
+
+  function handleGridMouseDown(e) {
+    if (!onCreateAt) return
+    if (e.button !== 0) return
+    if (e.target.closest('[id^="cal-ev-"]')) return
+    if (e.target.closest('button')) return
+    if (e.target.closest('[data-resize]')) return
+    if (dragRef.current) return
+    const rect = gridRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const y = e.clientY - rect.top
+    const snappedMins = Math.round(((y / HOUR_HEIGHT) * 60) / SNAP_MIN) * SNAP_MIN
+    const startAbsMins = START_HOUR * 60 + snappedMins
+    createDragRef.current = { startAbsMins, endAbsMins: startAbsMins + 30, isDragging: false }
+    window.addEventListener('mousemove', onCreateMouseMove)
+    window.addEventListener('mouseup',   onCreateMouseUp)
+  }
+
   // グリッドの空白クリックで新規作成
   function handleGridClick(e) {
     if (!onCreateAt) return
@@ -214,6 +269,7 @@ export default function CalendarDayView({
     if (e.target.closest('button')) return
     if (e.target.closest('[data-resize]')) return
     if (dragRef.current) return
+    if (didDragRef.current) { didDragRef.current = false; return }
 
     const rect = gridRef.current.getBoundingClientRect()
     const y = e.clientY - rect.top
@@ -246,7 +302,7 @@ export default function CalendarDayView({
   return (
     <>
       <div className={styles.wrap} ref={containerRef}>
-        <div className={styles.grid} style={{ height: totalHeight }} ref={gridRef} onClick={handleGridClick}>
+        <div className={styles.grid} style={{ height: totalHeight }} ref={gridRef} onMouseDown={handleGridMouseDown} onClick={handleGridClick}>
           {/* 時間ラベル + 横線 */}
           {hours.map(h => (
             <div key={h} className={styles.hourRow} style={{ top: (h - START_HOUR) * HOUR_HEIGHT }}>
@@ -421,6 +477,19 @@ export default function CalendarDayView({
               </div>
             )
           })}
+
+          {/* ドラッグ作成プレビュー */}
+          {createPreview && (
+            <div
+              className={styles.createPreview}
+              style={{
+                top:    createPreview.top,
+                height: createPreview.height,
+                left:   'calc(56px)',
+                right:  '4px',
+              }}
+            />
+          )}
         </div>
       </div>
 

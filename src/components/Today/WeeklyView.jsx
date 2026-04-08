@@ -67,7 +67,7 @@ function PermIcon({ type }) {
   return null
 }
 
-export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt }) {
+export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt, hiddenIds, showHidden }) {
   const { session, appTasks, todayEvents, clients } = useStore()
   const providerToken = useStore(s => s.providerToken)
   const devDate = useStore(s => s.devDate)
@@ -75,12 +75,16 @@ export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt }) {
   const [weekEvents, setWeekEvents]  = useState([])
   const [loading, setLoading]        = useState(false)
   const [fetchError, setFetchError]  = useState(null)
+  const [createPreview, setCreatePreview] = useState(null) // { dayIdx, top, height }
   const scrollRef = useRef(null)
   const gridRef   = useRef(null)
   const dragRef   = useRef(null)
   const didDragRef = useRef(false)
+  const createDragRef = useRef(null)
+  const onCreateAtRef = useRef(onCreateAt)
   const tokenRef   = useRef(null)
   const loadWeekRef = useRef(null)
+  onCreateAtRef.current = onCreateAt
 
   const token     = providerToken || session?.provider_token
   const weekDates = getWeekDates(devDate ?? new Date(), weekOffset)
@@ -199,6 +203,65 @@ export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt }) {
     })
   }, [onMouseMove])
 
+  // ── ドラッグで新規作成 ──
+  const onCreateMouseMove = useCallback((e) => {
+    const drag = createDragRef.current
+    if (!drag) return
+    const rect = gridRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const y = e.clientY - rect.top
+    const snappedMins = Math.round(((y / HOUR_HEIGHT) * 60) / SNAP_MIN) * SNAP_MIN
+    const endAbsMins = Math.max(START_HOUR * 60 + snappedMins, drag.startAbsMins + SNAP_MIN)
+    drag.endAbsMins = endAbsMins
+    drag.isDragging = true
+    const startY = ((drag.startAbsMins - START_HOUR * 60) / 60) * HOUR_HEIGHT
+    const endY   = ((endAbsMins        - START_HOUR * 60) / 60) * HOUR_HEIGHT
+    setCreatePreview({ dayIdx: drag.dayIdx, top: startY, height: Math.max(endY - startY, HOUR_HEIGHT / 4) })
+  }, [])
+
+  const onCreateMouseUp = useCallback(() => {
+    const drag = createDragRef.current
+    createDragRef.current = null
+    window.removeEventListener('mousemove', onCreateMouseMove)
+    window.removeEventListener('mouseup',   onCreateMouseUp)
+    setCreatePreview(null)
+    if (!drag?.isDragging) return
+    didDragRef.current = true
+    const start = new Date(drag.dayDate)
+    start.setHours(Math.floor(drag.startAbsMins / 60), drag.startAbsMins % 60, 0, 0)
+    const end = new Date(drag.dayDate)
+    end.setHours(Math.floor(drag.endAbsMins / 60), drag.endAbsMins % 60, 0, 0)
+    onCreateAtRef.current?.(start, end)
+  }, [onCreateMouseMove])
+
+  function handleGridMouseDown(e) {
+    if (!onCreateAt) return
+    if (e.button !== 0) return
+    if (e.target.closest('[id^="week-ev-"]')) return
+    if (e.target.closest('button')) return
+    if (e.target.closest('[data-action]')) return
+    if (dragRef.current) return
+    const rect = gridRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const gutterW = 52
+    const colW = (rect.width - gutterW) / 5
+    const dayIdx = Math.floor((x - gutterW) / colW)
+    if (dayIdx < 0 || dayIdx >= 5) return
+    const snappedMins = Math.round(((y / HOUR_HEIGHT) * 60) / SNAP_MIN) * SNAP_MIN
+    const startAbsMins = START_HOUR * 60 + snappedMins
+    createDragRef.current = {
+      dayIdx,
+      dayDate:       new Date(weekDates[dayIdx]),
+      startAbsMins,
+      endAbsMins:    startAbsMins + 30,
+      isDragging:    false,
+    }
+    window.addEventListener('mousemove', onCreateMouseMove)
+    window.addEventListener('mouseup',   onCreateMouseUp)
+  }
+
   function startDrag(e, ev, dayIdx, isResize = false) {
     if (!ev.canEdit) return
     e.preventDefault()
@@ -298,6 +361,7 @@ export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt }) {
           className={styles.grid}
           style={{ height: totalH }}
           ref={gridRef}
+          onMouseDown={handleGridMouseDown}
           onClick={handleGridClick}
         >
           {/* 時間軸 */}
@@ -343,7 +407,8 @@ export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt }) {
           {/* 各日のイベント */}
           {weekDates.map((d, dayIdx) => {
             const dayEvs = weekEvents.filter(ev =>
-              ev.plannedStart && isSameDay(new Date(ev.plannedStart), d)
+              ev.plannedStart && isSameDay(new Date(ev.plannedStart), d) &&
+              (showHidden || !hiddenIds?.has(ev.calendarEventId))
             )
             const enriched = dayEvs.map(ev => {
               const te = todayEvents.find(t => t.calendarEventId === ev.calendarEventId)
@@ -412,6 +477,19 @@ export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt }) {
               )
             })
           })}
+
+          {/* ドラッグ作成プレビュー */}
+          {createPreview && (
+            <div
+              className={styles.createPreview}
+              style={{
+                top:    createPreview.top,
+                height: createPreview.height,
+                left:   `calc(52px + ${createPreview.dayIdx} * ((100% - 52px) / 5) + 2px)`,
+                width:  `calc((100% - 52px) / 5 - 4px)`,
+              }}
+            />
+          )}
 
           {loading && <div className={styles.loadingOverlay}>読み込み中...</div>}
         </div>

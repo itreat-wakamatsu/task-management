@@ -215,6 +215,15 @@
   border-radius: 0 0 4px 4px;
 }
 
+.createPreview {
+  position: absolute;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.18);
+  border: 1.5px solid rgba(59, 130, 246, 0.5);
+  pointer-events: none;
+  z-index: 4;
+}
+
 .loadingOverlay {
   position: absolute;
   inset: 0;
