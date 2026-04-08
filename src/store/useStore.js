@@ -70,14 +70,30 @@ export const useStore = create((set, get) => ({
 
   // ── Master data loaders ──
   loadMasters: async () => {
+    // Supabase のデフォルトは 1000 行まで。
+    // project_categories は 1000 件超のためページネーションで全件取得する。
+    async function fetchAll(query) {
+      const PAGE = 1000
+      let offset = 0
+      let all = []
+      while (true) {
+        const { data, error } = await query().range(offset, offset + PAGE - 1)
+        if (error) throw error
+        all = all.concat(data || [])
+        if (!data || data.length < PAGE) break
+        offset += PAGE
+      }
+      return all
+    }
+
     const [
       { data: clients },
       { data: projects },
-      { data: categories },
+      categories,
     ] = await Promise.all([
       supabase.from('clients').select('*').is('deleted_at', null).order('id'),
       supabase.from('projects').select('*').is('deleted_at', null).order('id'),
-      supabase.from('project_categories').select('*').is('deleted_at', null).order('project_id,order_no'),
+      fetchAll(() => supabase.from('project_categories').select('*').is('deleted_at', null).order('project_id,order_no')),
     ])
     set({
       clients:    clients    || [],
