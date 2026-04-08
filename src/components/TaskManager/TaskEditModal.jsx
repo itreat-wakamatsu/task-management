@@ -34,9 +34,17 @@ export default function TaskEditModal({ task, initialValues = {}, onSave, onClos
 
   const [showBacklogLink, setShowBacklogLink] = useState(false)
 
-  const filteredProjects = projects.filter(p => p.client_id === parseInt(form.client_id))
-  const cat1List         = categories.filter(c => c.project_id === parseInt(form.project_id) && !c.parent_id)
-  const cat2List         = categories.filter(c => c.parent_id  === parseInt(form.category_id))
+  // Supabase の bigint は環境によって数値 or 文字列で返るため
+  // String() に統一して比較する（parseInt との型不一致を防ぐ）
+  const filteredProjects = form.client_id
+    ? projects.filter(p => String(p.client_id) === form.client_id)
+    : []
+  const cat1List = form.project_id
+    ? categories.filter(c => String(c.project_id) === form.project_id && !c.parent_id)
+    : []
+  const cat2List = form.category_id
+    ? categories.filter(c => String(c.parent_id) === form.category_id)
+    : []
 
   const clientOptions  = sortByRecent(clients.map(c => ({ value: String(c.id), label: c.display_name || c.name })))
   const projectOptions = filteredProjects.map(p => ({ value: String(p.id), label: p.name }))
