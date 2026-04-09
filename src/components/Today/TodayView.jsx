@@ -255,7 +255,7 @@ export default function TodayView() {
     setActiveEventId(eventId)
     setIsPaused(false)
     setPausedAt(null)
-    updateEvent(eventId, { status: 'running', actualStart: now, actualEnd: null, pauseLog: [] })
+    updateEvent(eventId, { status: 'running', actualStart: now, actualEnd: null, pauseLog: [], overrideElapsedMs: null })
 
     // app_tasks のステータスを「進行中」(1) に自動更新
     if (ev.taskId && ev.task?.status !== 1) {
@@ -267,7 +267,7 @@ export default function TodayView() {
     if (ev.detailId) {
       await supabase
         .from('app_record_details')
-        .update({ actual_start: now.toISOString(), actual_end: null, pause_log: [] })
+        .update({ actual_start: now.toISOString(), actual_end: null, pause_log: [], override_elapsed_ms: null })
         .eq('id', ev.detailId)
     } else {
       const { data, error: startInsertErr } = await supabase

@@ -45,9 +45,9 @@ export default function TimerControls({ event, onEnd }) {
   }
 
   function handleReset() {
-    updateEvent(event.id, { overrideElapsedMs: 0 })
+    updateEvent(event.id, { overrideElapsedMs: null })
     const sl = document.getElementById('adj-slider')
-    if (sl) sl.value = 0
+    if (sl) sl.value = displayed
   }
 
   function handleSlider(val) {
