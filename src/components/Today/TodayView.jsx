@@ -351,7 +351,7 @@ export default function TodayView() {
       updateAppTask(ev.taskId, { status: newTaskStatus })
       updateEvent(eventId, { task: ev.task ? { ...ev.task, status: newTaskStatus } : ev.task })
     }
-  }, [todayEvents, isPaused])
+  }, [todayEvents, isPaused, todayRecord])
 
   // ── 再開 ──
   // mode: 'continue' → 既存経過時間の続きから / 'fresh' → 0から新規
@@ -421,11 +421,11 @@ export default function TodayView() {
   async function handleUndo(eventId) {
     const ev = todayEvents.find(e => e.id === eventId)
     if (!ev) return
-    updateEvent(eventId, { status: 'pending', actualStart: null, actualEnd: null, pauseLog: [] })
+    updateEvent(eventId, { status: 'pending', actualStart: null, actualEnd: null, pauseLog: [], overrideElapsedMs: null })
     if (ev.detailId) {
       await supabase
         .from('app_record_details')
-        .update({ actual_start: null, actual_end: null, pause_log: [] })
+        .update({ actual_start: null, actual_end: null, pause_log: [], override_elapsed_ms: null })
         .eq('id', ev.detailId)
     }
   }
@@ -461,6 +461,7 @@ export default function TodayView() {
       await supabase
         .from('app_record_details')
         .update({
+          actual_start:        actualStart.toISOString(),
           actual_end:          now.toISOString(),
           pause_log:           pauseLog,
           override_elapsed_ms: plannedDurationMs,
