@@ -73,10 +73,10 @@ export default function TaskCard({
     : event.status === 'done' ? styles.badgeDone : styles.badgePending
 
   let actualInfo = null
-  if (event.status === 'done' && event.actualStart) {
+  if (event.status === 'done' && (event.actualStart || event.overrideElapsedMs != null)) {
     const elapsed = event.overrideElapsedMs != null
       ? event.overrideElapsedMs
-      : (event.actualEnd ? event.actualEnd - event.actualStart : 0)
+      : (event.actualEnd && event.actualStart ? event.actualEnd - event.actualStart : 0)
     const planned = event.plannedEnd - event.plannedStart
     const diff    = elapsed - planned
     const diffCls = diff > 5 * 60000 ? styles.over : diff < -5 * 60000 ? styles.under : ''
