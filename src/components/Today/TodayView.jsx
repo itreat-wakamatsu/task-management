@@ -149,7 +149,7 @@ export default function TodayView() {
             actualStart:         detail?.actual_start ? new Date(detail.actual_start) : null,
             actualEnd:           detail?.actual_end   ? new Date(detail.actual_end)   : null,
             pauseLog:            detail?.pause_log    || [],
-            overrideElapsedMs:   detail?.override_elapsed_ms ?? null,
+            overrideElapsedMs:   detail?.override_elapsed_ms > 0 ? detail.override_elapsed_ms : null,
             status:              detail?.actual_end   ? 'done'
                                : detail?.actual_start ? 'running'
                                : 'pending',
@@ -321,10 +321,11 @@ export default function TodayView() {
     updateEvent(eventId, { status: 'done', actualEnd: now, pauseLog })
 
     if (ev.detailId) {
-      await supabase
+      const { error: endErr } = await supabase
         .from('app_record_details')
-        .update({ actual_end: now.toISOString(), pause_log: pauseLog, override_elapsed_ms: ev.overrideElapsedMs })
+        .update({ actual_end: now.toISOString(), pause_log: pauseLog, override_elapsed_ms: ev.overrideElapsedMs ?? null })
         .eq('id', ev.detailId)
+      if (endErr) console.error('[handleEnd] DB保存失敗:', endErr)
     } else if (todayRecord && ev.actualStart) {
       // 開始時のDB保存に失敗していた場合、終了時に補完挿入する
       const { data: endInsert } = await supabase
