@@ -47,6 +47,7 @@ export default function TodayView() {
   const [authError,    setAuthError]    = useState(false)
   const [linkTarget,   setLinkTarget]   = useState(null)
   const [todayRecord,  setTodayRecord]  = useState(null)
+  const todayRecordRef = useRef(null)
   const [viewMode,     setViewMode]     = useState('list')
   const [hiddenIds,    setHiddenIds]    = useState(() => loadHiddenIds())
   const [showHidden,   setShowHidden]   = useState(false)
@@ -78,12 +79,39 @@ export default function TodayView() {
     loadToday()
   }, [devDate?.toDateString()])
 
+  // appTasks ロード後に自動リンクと task 補完のみ再実行（DB 再取得しない）
+  // loadToday(false) を呼ぶとユーザー操作中の in-memory 状態が上書きされるため軽量処理に変更
   useEffect(() => {
-    if (!mergedOnceRef.current && appTasks.length > 0 && rawCalEvents.length > 0) {
-      mergedOnceRef.current = true
-      loadToday(false)
-    }
-  }, [appTasks.length, rawCalEvents.length])
+    if (mergedOnceRef.current) return
+    const freshTasks = useStore.getState().appTasks
+    const current    = useStore.getState().todayEvents
+    if (freshTasks.length === 0 || current.length === 0) return
+    mergedOnceRef.current = true
+
+    let changed = false
+    const updated = current.map(ev => {
+      // DB に task_id があるが appTasks 未ロードだったため task が null のケース
+      if (ev.taskId && !ev.task) {
+        const task = freshTasks.find(t => t.id === ev.taskId)
+        if (task) { changed = true; return { ...ev, task } }
+      }
+      // 未紐付けイベントに自動リンクを適用
+      if (!ev.taskId) {
+        const linked = autoLink(ev.calendarEventTitle, freshTasks)
+        if (linked.confidence === 'high') {
+          changed = true
+          return {
+            ...ev,
+            taskId: linked.taskId,
+            autoLinked: true,
+            task: freshTasks.find(t => t.id === linked.taskId) || null,
+          }
+        }
+      }
+      return ev
+    })
+    if (changed) setTodayEvents(updated)
+  }, [appTasks.length, todayEvents.length])
 
   async function fetchCalEvents(forceRefresh = false) {
     const token = providerToken || session?.provider_token
@@ -121,6 +149,7 @@ export default function TodayView() {
         record = newRecord
       }
       setTodayRecord(record)
+      todayRecordRef.current = record
 
       const { data: details } = await supabase
         .from('app_record_details')
@@ -244,12 +273,15 @@ export default function TodayView() {
 
   // ── タスク開始（内部処理） ──
   // UIからは handleStartClick 経由で呼ぶ（ステータス確認が必要な場合はダイアログ経由）
+  // ※ useStore.getState() で常に最新のストア状態を参照し stale closure を回避
   const handleStart = useCallback(async (eventId) => {
-    if (activeEventId && activeEventId !== eventId) {
-      await handleEnd(activeEventId)
+    const { activeEventId: currActive, todayEvents: events } = useStore.getState()
+    if (currActive && currActive !== eventId) {
+      await handleEnd(currActive)
     }
-    const ev = todayEvents.find(e => e.id === eventId)
-    if (!ev || !todayRecord) return
+    const ev = events.find(e => e.id === eventId)
+    const record = todayRecordRef.current
+    if (!ev || !record) return
 
     const now = new Date()
     setActiveEventId(eventId)
@@ -273,7 +305,7 @@ export default function TodayView() {
       const { data, error: startInsertErr } = await supabase
         .from('app_record_details')
         .insert({
-          record_id:            todayRecord.id,
+          record_id:            record.id,
           task_id:              ev.taskId,
           calendar_event_id:    ev.calendarEventId,
           calendar_event_title: ev.calendarEventTitle,
@@ -287,11 +319,11 @@ export default function TodayView() {
       if (startInsertErr) console.error('[handleStart] DB保存失敗:', startInsertErr)
       if (data) updateEvent(eventId, { detailId: data.id })
     }
-  }, [activeEventId, todayEvents, todayRecord])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- useStore.getState() で最新値を参照するため deps 不要
 
   // ── タスク開始（UIからの呼び出し）── 完了・保留中の場合は確認ダイアログを表示
   function handleStartClick(eventId) {
-    const ev = todayEvents.find(e => e.id === eventId)
+    const ev = useStore.getState().todayEvents.find(e => e.id === eventId)
     if (!ev) return
     const taskStatus = ev.task?.status
     if (taskStatus === 2 || taskStatus === 3) {
@@ -303,12 +335,14 @@ export default function TodayView() {
 
   // ── タスク終了 ──
   // newTaskStatus: null=タスクステータス変更なし, 1=進行中, 2=完了, 3=保留中
+  // ※ useStore.getState() で常に最新のストア状態を参照し stale closure を回避
   const handleEnd = useCallback(async (eventId, newTaskStatus = null) => {
-    const ev = todayEvents.find(e => e.id === eventId)
+    const { todayEvents: events, isPaused: paused } = useStore.getState()
+    const ev = events.find(e => e.id === eventId)
     if (!ev) return
 
     const now = new Date()
-    const pauseLog = isPaused
+    const pauseLog = paused
       ? (ev.pauseLog || []).map((p, i) =>
           i === ev.pauseLog.length - 1 ? { ...p, e: now.toISOString() } : p
         )
@@ -320,24 +354,25 @@ export default function TodayView() {
     setEndDialogTarget(null)
     updateEvent(eventId, { status: 'done', actualEnd: now, pauseLog })
 
+    const record = todayRecordRef.current
     if (ev.detailId) {
       const { error: endErr } = await supabase
         .from('app_record_details')
         .update({ actual_end: now.toISOString(), pause_log: pauseLog, override_elapsed_ms: ev.overrideElapsedMs ?? null })
         .eq('id', ev.detailId)
       if (endErr) console.error('[handleEnd] DB保存失敗:', endErr)
-    } else if (todayRecord && ev.actualStart) {
-      // 開始時のDB保存に失敗していた場合、終了時に補完挿入する
+    } else if (record) {
+      // detailId がない場合は補完挿入（actualStart が null でも now をフォールバック使用）
       const { data: endInsert } = await supabase
         .from('app_record_details')
         .insert({
-          record_id:            todayRecord.id,
+          record_id:            record.id,
           task_id:              ev.taskId,
           calendar_event_id:    ev.calendarEventId,
           calendar_event_title: ev.calendarEventTitle,
           planned_start:        ev.plannedStart?.toISOString(),
           planned_end:          ev.plannedEnd?.toISOString(),
-          actual_start:         ev.actualStart?.toISOString(),
+          actual_start:         ev.actualStart?.toISOString() || now.toISOString(),
           actual_end:           now.toISOString(),
           pause_log:            pauseLog,
           override_elapsed_ms:  ev.overrideElapsedMs ?? null,
@@ -352,16 +387,19 @@ export default function TodayView() {
       updateAppTask(ev.taskId, { status: newTaskStatus })
       updateEvent(eventId, { task: ev.task ? { ...ev.task, status: newTaskStatus } : ev.task })
     }
-  }, [todayEvents, isPaused, todayRecord])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- useStore.getState() で最新値を参照するため deps 不要
 
   // ── 再開 ──
   // mode: 'continue' → 既存経過時間の続きから / 'fresh' → 0から新規
+  // ※ useStore.getState() で常に最新のストア状態を参照し stale closure を回避
   const handleResume = useCallback(async (eventId, mode) => {
-    if (activeEventId && activeEventId !== eventId) {
-      await handleEnd(activeEventId)
+    const { activeEventId: currActive, todayEvents: events } = useStore.getState()
+    if (currActive && currActive !== eventId) {
+      await handleEnd(currActive)
     }
-    const ev = todayEvents.find(e => e.id === eventId)
-    if (!ev || !todayRecord) return
+    const ev = events.find(e => e.id === eventId)
+    const record = todayRecordRef.current
+    if (!ev || !record) return
 
     const now = new Date()
 
@@ -402,7 +440,7 @@ export default function TodayView() {
     } else {
       const { data } = await supabase.from('app_record_details')
         .insert({
-          record_id:            todayRecord.id,
+          record_id:            record.id,
           task_id:              ev.taskId,
           calendar_event_id:    ev.calendarEventId,
           calendar_event_title: ev.calendarEventTitle,
@@ -416,11 +454,11 @@ export default function TodayView() {
     }
 
     setResumeTarget(null)
-  }, [activeEventId, todayEvents, todayRecord, isPaused])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- useStore.getState() で最新値を参照するため deps 不要
 
   // ── 取消 ──
   async function handleUndo(eventId) {
-    const ev = todayEvents.find(e => e.id === eventId)
+    const ev = useStore.getState().todayEvents.find(e => e.id === eventId)
     if (!ev) return
     updateEvent(eventId, { status: 'pending', actualStart: null, actualEnd: null, pauseLog: [], overrideElapsedMs: null })
     if (ev.detailId) {
@@ -434,14 +472,16 @@ export default function TodayView() {
   // ── 予定通り完了（予定所要時間を実績工数として記録） ──
   // ボタンを押した実時刻は無関係。「20分の予定 → 20分で完了」と記録する。
   // 未開始タスクにも対応（actualStart = now、detailレコードを新規作成）。
+  // ※ useStore.getState() で常に最新のストア状態を参照し stale closure を回避
   const handleOnTime = useCallback(async (eventId) => {
-    const ev = todayEvents.find(e => e.id === eventId)
+    const { todayEvents: events, isPaused: paused } = useStore.getState()
+    const ev = events.find(e => e.id === eventId)
     if (!ev) return
 
     const now = new Date()
     const actualStart = ev.actualStart || now
     const plannedDurationMs = new Date(ev.plannedEnd) - new Date(ev.plannedStart)
-    const pauseLog = isPaused
+    const pauseLog = paused
       ? (ev.pauseLog || []).map((p, i) =>
           i === ev.pauseLog.length - 1 ? { ...p, e: now.toISOString() } : p
         )
@@ -458,6 +498,7 @@ export default function TodayView() {
       pauseLog,
     })
 
+    const record = todayRecordRef.current
     if (ev.detailId) {
       await supabase
         .from('app_record_details')
@@ -468,11 +509,11 @@ export default function TodayView() {
           override_elapsed_ms: plannedDurationMs,
         })
         .eq('id', ev.detailId)
-    } else if (todayRecord) {
+    } else if (record) {
       const { data } = await supabase
         .from('app_record_details')
         .insert({
-          record_id:            todayRecord.id,
+          record_id:            record.id,
           task_id:              ev.taskId,
           calendar_event_id:    ev.calendarEventId,
           calendar_event_title: ev.calendarEventTitle,
@@ -493,7 +534,7 @@ export default function TodayView() {
       updateAppTask(ev.taskId, { status: 2 })
       updateEvent(eventId, { task: ev.task ? { ...ev.task, status: 2 } : ev.task })
     }
-  }, [todayEvents, isPaused, todayRecord])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- useStore.getState() で最新値を参照するため deps 不要
 
   // ── カレンダー・週間ビューから新規予定作成 ──
   async function handleCreateFromCalendar({ title, start, end, task }) {
@@ -553,17 +594,18 @@ export default function TodayView() {
 
   // ── タスク紐付け ──
   async function handleLinked(eventId, task, isUnlink) {
-    const ev = todayEvents.find(e => e.id === eventId)
+    const ev = useStore.getState().todayEvents.find(e => e.id === eventId)
     if (!ev) return
+    const record = todayRecordRef.current
     const newTaskId = isUnlink ? null : task?.id
     updateEvent(eventId, { taskId: newTaskId, autoLinked: false, task: isUnlink ? null : task })
     if (ev.detailId) {
       await supabase.from('app_record_details').update({ task_id: newTaskId }).eq('id', ev.detailId)
-    } else if (todayRecord && newTaskId) {
+    } else if (record && newTaskId) {
       const { data } = await supabase
         .from('app_record_details')
         .insert({
-          record_id:            todayRecord.id,
+          record_id:            record.id,
           task_id:              newTaskId,
           calendar_event_id:    ev.calendarEventId,
           calendar_event_title: ev.calendarEventTitle,
