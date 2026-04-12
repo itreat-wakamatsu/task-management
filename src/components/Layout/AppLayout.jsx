@@ -62,15 +62,16 @@ export default function AppLayout() {
 
   // アプリ起動時に GCal を1回取得（キャッシュがなければ）
   useEffect(() => {
-    const token = session?.provider_token
-    if (!token) return
+    if (!session) return
     const targetDate = devDate ?? new Date()
     const todayStr   = targetDate.toISOString().slice(0, 10)
     if (rawCalDate === todayStr) return
+    // トークンが null でも gFetch() がリフレッシュトークン経由で自動取得する
+    const token = session?.provider_token || null
     fetchTodayEvents(token, targetDate)
       .then(events => setRawCalEvents(events, todayStr))
       .catch(err => console.error('GCal 初回取得エラー:', err))
-  }, [session?.provider_token])
+  }, [session?.user?.id])
 
   // 非表示イベントを除いた今日のイベント一覧（予定に追加モーダル用）
   const visibleTodayEvents = useMemo(() => {
@@ -96,8 +97,7 @@ export default function AppLayout() {
 
   // 今日の予定に追加（GCal POST → todayEvents 更新）
   async function handleAddToToday({ title, start, end, taskId }) {
-    const token = session?.provider_token
-    if (!token) { alert('Google アクセストークンがありません'); return }
+    const token = session?.provider_token || null
 
     try {
       const newEv = await createCalendarEvent(token, {

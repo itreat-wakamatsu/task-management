@@ -86,14 +86,14 @@ export default function TodayView() {
   }, [appTasks.length, rawCalEvents.length])
 
   async function fetchCalEvents(forceRefresh = false) {
-    const token = providerToken || session?.provider_token
-    if (!token) throw new Error('Google アクセストークンがありません')
-
     // キャッシュヒット
     if (!forceRefresh && rawCalDate === todayStr && rawCalEvents.length > 0) {
       return rawCalEvents
     }
 
+    // トークンが null でも gFetch() がリフレッシュトークン経由で自動取得するため
+    // ここでは事前チェックせずそのまま渡す
+    const token = providerToken || session?.provider_token || null
     const events = await fetchTodayEvents(token, targetDate)
     setRawCalEvents(events, todayStr)
     return events
@@ -207,8 +207,7 @@ export default function TodayView() {
     const prevEnd   = ev.plannedEnd
     updateEvent(eventId, { plannedStart: newStart, plannedEnd: newEnd })
 
-    const token = providerToken || session?.provider_token
-    if (!token) return
+    const token = providerToken || session?.provider_token || null
 
     try {
       await updateCalendarEvent(token, ev.calendarEventId, {
@@ -497,11 +496,10 @@ export default function TodayView() {
 
   // ── カレンダー・週間ビューから新規予定作成 ──
   async function handleCreateFromCalendar({ title, start, end, task }) {
-    const token = providerToken || session?.provider_token
+    const token = providerToken || session?.provider_token || null
     setCreateSlot(null)
 
     try {
-      if (!token) throw new Error('トークンがありません')
 
       // Google Calendar にイベント作成
       const newEv = await createCalendarEvent(token, {
@@ -888,6 +886,7 @@ export default function TodayView() {
           onCreateAt={(start, end) => setCreateSlot({ start, end })}
           hiddenIds={hiddenIds}
           showHidden={showHidden}
+          onAuthError={() => setAuthError(true)}
         />
       )}
 
