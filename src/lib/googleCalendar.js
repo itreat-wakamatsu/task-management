@@ -40,9 +40,20 @@ function getBestToken(fallbackToken) {
 
 /**
  * Google API を fetch し、401 なら自動リフレッシュしてリトライ
+ * fallbackToken が null でもリフレッシュトークン経由で自動取得する
  */
 async function gFetch(url, options, fallbackToken) {
-  const token = getBestToken(fallbackToken)
+  let token = getBestToken(fallbackToken)
+
+  // トークンが一切ない場合（ページリロード後など）はプロアクティブにリフレッシュ
+  if (!token) {
+    try {
+      token = await refreshGoogleToken()
+    } catch (e) {
+      throw new Error('GOOGLE_AUTH_EXPIRED')
+    }
+  }
+
   const makeReq = (t) => fetch(url, {
     ...options,
     headers: {

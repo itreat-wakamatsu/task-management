@@ -67,7 +67,7 @@ function PermIcon({ type }) {
   return null
 }
 
-export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt, hiddenIds, showHidden }) {
+export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt, hiddenIds, showHidden, onAuthError }) {
   const { session, appTasks, todayEvents, clients } = useStore()
   const providerToken = useStore(s => s.providerToken)
   const devDate = useStore(s => s.devDate)
@@ -101,17 +101,20 @@ export default function WeeklyView({ onOpenDetail, refreshKey, onCreateAt, hidde
   }, [loading])
 
   function loadWeek() {
-    if (!tokenRef.current) {
-      setFetchError('Googleトークンがありません。再ログインしてください。')
-      return
-    }
     setLoading(true)
     setFetchError(null)
-    fetchEventsRange(tokenRef.current, weekDates[0], weekDates[4])
+    // トークンが null でも gFetch() がリフレッシュトークン経由で自動取得する
+    const t = tokenRef.current || null
+    fetchEventsRange(t, weekDates[0], weekDates[4])
       .then(evs => setWeekEvents(evs.filter(ev => !ev.isAllDay)))
       .catch(err => {
         console.error(err)
-        setFetchError('読み込みに失敗しました。再度お試しください。')
+        if (err.message === 'GOOGLE_AUTH_EXPIRED') {
+          // 認証エラーは親コンポーネント（TodayView）に伝播
+          onAuthError?.()
+        } else {
+          setFetchError('読み込みに失敗しました。再度お試しください。')
+        }
       })
       .finally(() => setLoading(false))
   }

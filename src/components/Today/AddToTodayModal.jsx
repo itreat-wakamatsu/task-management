@@ -158,8 +158,7 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
   useEffect(() => {
     const dateStr = dateToStr(selectedDate)
     if (eventsCache.current[dateStr] !== undefined) return
-    const token = providerToken || session?.provider_token
-    if (!token) return
+    const token = providerToken || session?.provider_token || null
     fetchTodayEvents(token, selectedDate)
       .then(evs => cacheSet(selectedDate, evs))
       .catch(() => cacheSet(selectedDate, []))
@@ -168,8 +167,7 @@ export default function AddToTodayModal({ task, existingEvents, targetDateStr, o
   // 週ビュー切替時に5日分を先行フェッチ
   useEffect(() => {
     if (viewMode !== 'week') return
-    const token = providerToken || session?.provider_token
-    if (!token) return
+    const token = providerToken || session?.provider_token || null
     weekDays.forEach(d => {
       const dateStr = dateToStr(d)
       if (eventsCache.current[dateStr] !== undefined) return

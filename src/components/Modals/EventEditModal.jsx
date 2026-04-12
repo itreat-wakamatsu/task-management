@@ -26,7 +26,7 @@ function applyTimeToDate(base, hhmm) {
  */
 export default function EventEditModal({ event, onUpdated, onDeleted, onClose }) {
   const { providerToken, session } = useStore()
-  const token = providerToken || session?.provider_token
+  const token = providerToken || session?.provider_token || null
 
   const [title,    setTitle]    = useState(event.calendarEventTitle)
   const [startStr, setStartStr] = useState(fmtTimeInput(event.plannedStart))
