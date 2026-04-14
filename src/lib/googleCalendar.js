@@ -11,10 +11,29 @@ const CALENDAR_API = 'https://www.googleapis.com/calendar/v3'
 let _refreshedToken = null
 let _refreshedExpiry = 0
 
-/** Supabase JWT を使って /api/refresh-token からアクセストークンを取得 */
-async function refreshGoogleToken() {
+/**
+ * 有効な Supabase セッションを取得する。
+ * getSession() はキャッシュを返すだけで期限切れ JWT をリフレッシュしないため、
+ * expires_at を確認し、期限切れ or 期限切れ間近（60秒以内）なら明示的にリフレッシュする。
+ */
+async function getValidSupabaseSession() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('NOT_AUTHENTICATED')
+
+  const expiresAt = session.expires_at ? session.expires_at * 1000 : 0
+  if (Date.now() > expiresAt - 60000) {
+    // JWT が期限切れ or まもなく期限切れ → 明示的にリフレッシュ
+    const { data, error } = await supabase.auth.refreshSession()
+    if (error || !data.session) throw new Error('NOT_AUTHENTICATED')
+    return data.session
+  }
+
+  return session
+}
+
+/** Supabase JWT を使って /api/refresh-token からアクセストークンを取得 */
+async function refreshGoogleToken() {
+  const session = await getValidSupabaseSession()
 
   const res = await fetch('/api/refresh-token', {
     method: 'POST',
